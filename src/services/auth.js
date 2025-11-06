@@ -27,6 +27,25 @@ export async function register({ username, email, password, gender, dob }){
   return mock;
 }
 
+export async function changePassword({ currentPassword, newPassword }) {
+  // ถ้ามีแบ็คเอนด์จริง ให้ยิง API
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return api.request("/auth/change-password", {
+      method: "PATCH",
+      body: { currentPassword, newPassword },
+    });
+  }
+  // mock (สำหรับตอนนี้)
+  await delay(600);
+  if (!currentPassword || !newPassword) {
+    throw new Error("กรอกข้อมูลไม่ครบ");
+  }
+  if (currentPassword === newPassword) {
+    throw new Error("รหัสผ่านใหม่ต้องต่างจากรหัสผ่านปัจจุบัน");
+  }
+  return { ok: true };
+}
+
 export function logout(){ localStorage.removeItem('user'); }
 export function getCurrentUser(){ try{ return JSON.parse(localStorage.getItem('user')); }catch{ return null } }
 export function updateUser(partial){

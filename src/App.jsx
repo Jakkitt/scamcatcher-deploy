@@ -11,7 +11,7 @@ import SearchResults from './pages/SearchResults';
 import ReportList from './pages/ReportList';
 import About from './pages/About';
 import ChangePassword from './pages/ChangePassword';
-
+import Settings from './pages/Settings';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
@@ -46,7 +46,9 @@ export default function App() {
                 <Route path="/search/results" element={<RequireAuth><SearchResults /></RequireAuth>} />
                 <Route path="/reports" element={<RequireAuth><ReportList /></RequireAuth>} />
                 <Route path="/change-password" element={<RequireAuth><ChangePassword /></RequireAuth>} />
-
+                <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
+                <Route path="/change-password" element={<RequireAuth><ChangePassword /></RequireAuth>} />
+  
                 {/* fallback */}
                 <Route path="*" element={<div className="container py-20 text-center">404 - ไม่พบหน้า</div>} />
               </Routes>

@@ -1,39 +1,27 @@
-import React, { useRef, useState } from "react";
+// src/components/AvatarPicker.jsx
+import React, { useRef } from "react";
 
 export default function AvatarPicker({ value, onChange, size = 112 }) {
   const inputRef = useRef(null);
-  const [hover, setHover] = useState(false);
 
-  const openFile = () => inputRef.current?.click();
+  const openPicker = () => inputRef.current?.click();
 
-  const handleFile = (e) => {
+  const onFile = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      alert("กรุณาเลือกรูปภาพ");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      alert("ขนาดไฟล์ต้องไม่เกิน 2MB");
-      return;
-    }
     const reader = new FileReader();
-    reader.onload = () => onChange?.(reader.result);
+    reader.onload = () => onChange?.(reader.result); // base64
     reader.readAsDataURL(file);
   };
 
   return (
-    <div
-      className="relative inline-block"
-      style={{ width: size, height: size }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-    >
+    <div className="flex flex-col items-center">
       <button
         type="button"
-        onClick={openFile}
-        className="w-full h-full rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 ring-1 ring-black/5 focus:outline-none"
-        title="คลิกเพื่อเปลี่ยนรูป"
+        onClick={openPicker}
+        className="rounded-full overflow-hidden ring-1 ring-gray-200 hover:ring-gray-300 focus:outline-none"
+        style={{ width: size, height: size }}
+        title="เปลี่ยนรูปโปรไฟล์"
       >
         {value ? (
           <img
@@ -42,24 +30,17 @@ export default function AvatarPicker({ value, onChange, size = 112 }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full grid place-items-center text-gray-500">
-            <span>เลือกรูป</span>
-          </div>
-        )}
-        {/* overlay เมื่อ hover */}
-        {hover && (
-          <div className="absolute inset-0 bg-black/40 grid place-items-center text-white text-sm">
-            เปลี่ยนรูป
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
+            <span className="text-sm">เลือกรูป</span>
           </div>
         )}
       </button>
-
       <input
         ref={inputRef}
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={handleFile}
+        onChange={onFile}
       />
     </div>
   );
