@@ -34,11 +34,12 @@ export async function register({ username, email, password, gender, dob }){
 }
 
 export async function changePassword({ currentPassword, newPassword }) {
+  const user = getCurrentUser();
   // ถ้ามีแบ็คเอนด์จริง ให้ยิง API
   if (import.meta.env.VITE_API_BASE_URL) {
     return api.request("/auth/change-password", {
       method: "PATCH",
-      body: { currentPassword, newPassword },
+      body: { email: user?.email, currentPassword, newPassword },
     });
   }
   // mock (สำหรับตอนนี้)
