@@ -22,6 +22,7 @@ import AppToaster from './components/Toaster';
 import { ThemeProvider } from './contexts/ThemeContext';
 // ถ้ามี AuthProvider อยู่แล้วให้คงไว้
 import { AuthProvider } from './contexts/AuthContext';
+console.log("API BASE URL =", import.meta.env.VITE_API_BASE_URL);
 
 export default function App() {
   return (

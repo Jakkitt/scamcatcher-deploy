@@ -1,4 +1,5 @@
 import { api } from '../utils/api';
+const API = import.meta.env.VITE_API_BASE_URL;
 const delay = (ms)=>new Promise(r=>setTimeout(r, ms));
 
 export async function login({ email, password }){

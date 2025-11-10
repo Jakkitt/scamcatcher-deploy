@@ -1,5 +1,6 @@
 import { api } from '../utils/api';
 const delay = (ms)=>new Promise(r=>setTimeout(r, ms));
+const API = import.meta.env.VITE_API_BASE_URL;
 const KEY = 'reports';
 
 function getAll(){ try{ return JSON.parse(localStorage.getItem(KEY)) || []; }catch{ return []; } }
