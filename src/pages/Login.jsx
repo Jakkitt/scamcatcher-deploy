@@ -30,10 +30,14 @@ export default function Login() {
       await login({ email: formData.email, password: formData.password })
       navigate(from, { replace: true }) // ✅ เปลี่ยนหน้าเมื่อ login สำเร็จ
     } catch (err) {
-      const msg = String(err?.message || '')
-      const friendly = msg.includes('VITE_API_BASE_URL')
-        ? 'ระบบยังไม่พร้อมใช้งาน: โปรดตั้งค่า VITE_API_BASE_URL ในไฟล์ .env แล้วหยุด/รัน npm run dev ใหม่'
-        : msg || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ'
+      const raw = String(err?.message || '')
+      let friendly = raw || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ'
+      if (/invalid\s*credentials/i.test(raw) || /unauthorized/i.test(raw)) {
+        friendly = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
+      }
+      if (raw.includes('VITE_API_BASE_URL')) {
+        friendly = 'ระบบยังไม่พร้อมใช้งาน: โปรดตั้งค่า VITE_API_BASE_URL ในไฟล์ .env แล้วหยุด/รัน npm run dev ใหม่'
+      }
       setError(friendly)
     } finally {
       setIsSubmitting(false)
@@ -87,9 +91,9 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <p className="text-red-500 text-sm text-center">{error}</p>
-            )}
+            <div className="h-5 text-center text-sm">
+              <span className={error ? 'text-red-500' : 'opacity-0'}>{error || 'placeholder'}</span>
+            </div>
 
             {/* Email */}
             <div>

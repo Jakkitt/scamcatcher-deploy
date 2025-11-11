@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middlewares/auth.js';
-import { createReport, searchReports, listMyReports } from '../controllers/reports.controller.js';
+import { createReport, searchReports, listMyReports, deleteReport, purgeOrphans, countOrphans } from '../controllers/reports.controller.js';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -35,5 +35,9 @@ const upload = multer({
 router.get('/search', requireAuth, searchReports);
 router.post('/', requireAuth, upload.array('photos', 3), createReport);
 router.get('/mine', requireAuth, listMyReports);
+router.delete('/:id', requireAuth, deleteReport);
+// admin utilities
+router.get('/_orphans/count', requireAuth, countOrphans);
+router.delete('/_orphans/purge', requireAuth, purgeOrphans);
 
 export default router;

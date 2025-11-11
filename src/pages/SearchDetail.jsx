@@ -39,7 +39,7 @@ export default function SearchDetail() {
 
   return (
     <main className="container py-10">
-      <h1 className="text-3xl font-extrabold mb-6 text-center">ตรวจสอบและรายงานมิจฉาชีพ</h1>
+      <h1 className="text-3xl font-extrabold mb-6 text-center">ค้นหามิจฉาชีพ</h1>
 
       <form
         onSubmit={handleSubmit(onSubmit)}

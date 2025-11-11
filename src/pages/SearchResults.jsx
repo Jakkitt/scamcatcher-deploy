@@ -53,24 +53,20 @@ export default function SearchResults() {
 
   return (
     <main className="container py-10">
-      {/* แผงสรุปด้านบน */}
+      {/* แผงสรุปด้านบน (สไตล์การ์ดเดียวกับแบบฟอร์ม) */}
       <div className="grid lg:grid-cols-3 gap-6">
         <section className="lg:col-span-2">
-          <div
-            className={`rounded-2xl p-6 text-white ${
-              foundCount > 0 ? "bg-amber-500" : "bg-green-600"
-            }`}
-          >
-            <h2 className="text-3xl font-extrabold mb-6">
+          <div className="rounded-2xl p-6 bg-white text-gray-900 shadow-soft border border-gray-200 dark:bg-gray-900 dark:text-white dark:border-gray-800">
+            <h2 className="text-3xl font-extrabold mb-6 text-center">
               {foundCount > 0 ? "พบรายงานการร้องเรียน" : "ไม่พบรายงานการร้องเรียน"}
             </h2>
 
             <div className="grid grid-cols-2 gap-6">
-              <div className="bg-white/15 rounded-xl p-4 text-center">
+              <div className="rounded-xl p-4 text-center border border-gray-200 dark:border-gray-800">
                 <div className="text-4xl font-extrabold">{foundCount}</div>
                 <div className="mt-1 text-sm">จำนวนการร้องเรียน</div>
               </div>
-              <div className="bg-white/15 rounded-xl p-4 text-center">
+              <div className="rounded-xl p-4 text-center border border-gray-200 dark:border-gray-800">
                 <div className="text-4xl font-extrabold">{Math.max(searchCount, 1)}</div>
                 <div className="mt-1 text-sm">จำนวนการค้นหา</div>
               </div>
@@ -85,13 +81,13 @@ export default function SearchResults() {
       </div>
 
       {/* รายการผลลัพธ์ */}
-      <section className="mt-8">
-        <h3 className="font-bold text-lg mb-3">รายการเรื่องร้องเรียน / ประวัติการแจ้ง</h3>
+      <section className="mt-0 lg:-mt-6">
+        <h3 className="text-xl font-bold mb-2">รายการเรื่องร้องเรียน / ประวัติการแจ้ง</h3>
 
         {loading ? (
-          <div className="border rounded-2xl p-10 text-center text-gray-500">กำลังค้นหา…</div>
+          <div className="border rounded-2xl p-6 text-center text-gray-500 bg-white dark:bg-gray-900 dark:border-gray-800">กำลังค้นหา…</div>
         ) : items.length === 0 ? (
-          <div className="border rounded-2xl p-10 text-center text-gray-500">
+          <div className="border rounded-2xl p-6 text-center text-gray-500 bg-white dark:bg-gray-900 dark:border-gray-800">
             ยังไม่พบการแจ้งร้องเรียนในระบบ
           </div>
         ) : (

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import ProfileSidebar from "../components/ProfileSidebar";
-import { listMyReports } from "../services/reports";
+import { listMyReports, removeReport } from "../services/reports";
 
 function StatusBadge({ status }) {
   const map = {
@@ -18,6 +18,7 @@ function StatusBadge({ status }) {
 
 export default function ReportList() {
   const [items, setItems] = useState(null);
+  const [deleting, setDeleting] = useState('');
 
   useEffect(() => {
     let alive = true;
@@ -27,6 +28,19 @@ export default function ReportList() {
     })();
     return () => (alive = false);
   }, []);
+
+  const onDelete = async (id) => {
+    if (!confirm('ยืนยันลบรายงานนี้?')) return;
+    setDeleting(String(id));
+    try{
+      await removeReport(id);
+      setItems(prev => (prev || []).filter(x => String(x.id) !== String(id)));
+    }catch(e){
+      alert(e?.message || 'ลบไม่สำเร็จ');
+    }finally{
+      setDeleting('');
+    }
+  };
 
   return (
     <main className="container py-10 grid md:grid-cols-3 gap-8">
@@ -89,7 +103,7 @@ export default function ReportList() {
               {items.map((r) => (
                 <li
                   key={r.id}
-                  className="border rounded-lg p-4 flex items-start justify-between dark:border-gray-800"
+                  className="border rounded-lg p-4 flex items-start justify-between gap-4 dark:border-gray-800"
                 >
                   <div>
                     <div className="font-medium">{r.name || "ไม่ระบุชื่อ"}</div>
@@ -98,7 +112,14 @@ export default function ReportList() {
                       {new Date(r.createdAt).toLocaleDateString()}
                     </div>
                   </div>
-                  <StatusBadge status={r.status || "pending"} />
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={r.status || "pending"} />
+                    <button
+                      onClick={() => onDelete(r.id)}
+                      disabled={deleting === String(r.id)}
+                      className="px-3 py-1 rounded-lg border text-sm hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >{deleting === String(r.id) ? 'กำลังลบ…' : 'ลบ'}</button>
+                  </div>
                 </li>
               ))}
             </ul>
