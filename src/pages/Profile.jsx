@@ -18,7 +18,7 @@ export default function Profile() {
     defaultValues: {
       username: user?.username || "",
       gender: user?.gender || "",
-      dob: user?.dob || "",
+      dob: user?.dob ? (()=>{ try{ return new Date(user.dob).toISOString().slice(0,10); }catch{ return "" } })() : "",
     },
   });
 
@@ -26,7 +26,7 @@ export default function Profile() {
     reset({
       username: user?.username || "",
       gender: user?.gender || "",
-      dob: user?.dob || "",
+      dob: user?.dob ? (()=>{ try{ return new Date(user.dob).toISOString().slice(0,10); }catch{ return "" } })() : "",
     });
   }, [user, reset]);
 

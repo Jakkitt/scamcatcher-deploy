@@ -1,6 +1,15 @@
-const BASE = import.meta?.env?.VITE_API_BASE_URL || '';
+function resolveBase(){
+  const envBase = import.meta?.env?.VITE_API_BASE_URL;
+  if (envBase && String(envBase).trim()) return envBase;
+  try{
+    const origin = window.location.origin;
+    if (origin.includes(':5173')) return 'http://localhost:4000/api';
+    return origin + '/api';
+  }catch{ return ''; }
+}
 
 export async function request(path, { method='GET', body, token, headers={}, credentials='include' } = {}){
+  const BASE = resolveBase();
   if (!BASE) throw new Error('VITE_API_BASE_URL is not set');
   const isForm = (typeof FormData !== 'undefined') && body instanceof FormData;
   const init = {

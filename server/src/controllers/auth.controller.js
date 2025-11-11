@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import User from '../models/User.js';
 import { signAccessToken, signRefreshToken } from '../utils/jwt.js';
+import Report from '../models/Report.js';
 
 function toSafeUser(u) {
   return {
@@ -108,5 +109,19 @@ export async function updateProfile(req, res) {
     return res.json({ user: toSafeUser(user) });
   } catch (e) {
     return res.status(500).json({ error: { message: e.message } });
+  }
+}
+
+export async function deleteAccount(req, res) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error:{ message:'UNAUTHORIZED' } });
+    // ลบรายงานของผู้ใช้
+    await Report.deleteMany({ owner: userId });
+    // ลบผู้ใช้
+    await User.findByIdAndDelete(userId);
+    return res.status(204).end();
+  } catch (e) {
+    return res.status(500).json({ error:{ message: e.message } });
   }
 }

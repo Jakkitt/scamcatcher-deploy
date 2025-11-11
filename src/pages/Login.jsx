@@ -30,7 +30,11 @@ export default function Login() {
       await login({ email: formData.email, password: formData.password })
       navigate(from, { replace: true }) // ✅ เปลี่ยนหน้าเมื่อ login สำเร็จ
     } catch (err) {
-      setError(err.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ')
+      const msg = String(err?.message || '')
+      const friendly = msg.includes('VITE_API_BASE_URL')
+        ? 'ระบบยังไม่พร้อมใช้งาน: โปรดตั้งค่า VITE_API_BASE_URL ในไฟล์ .env แล้วหยุด/รัน npm run dev ใหม่'
+        : msg || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ'
+      setError(friendly)
     } finally {
       setIsSubmitting(false)
     }

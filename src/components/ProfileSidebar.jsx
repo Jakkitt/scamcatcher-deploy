@@ -14,8 +14,8 @@ export default function ProfileSidebar({
     <aside className="space-y-6">
       <div className="border rounded-xl p-6 text-center bg-white dark:bg-gray-900 dark:border-gray-800">
         <AvatarPicker
-          value={user?.avatar}
-          onChange={(img) => updateUser?.({ avatar: img })}
+          value={user?.avatarUrl}
+          onChange={(img) => updateUser?.({ avatarUrl: img })}
           size={112}
         />
         <div className="mt-3 font-semibold">{displayName}</div>

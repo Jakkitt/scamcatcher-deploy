@@ -16,7 +16,13 @@ export default function Register(){
       if(data.password!==data.confirmPassword){ throw new Error('รหัสผ่านไม่ตรงกัน') }
       await registerUser({ username:data.username, email:data.email, password:data.password, gender:data.gender, dob:data.dob });
       navigate('/profile',{replace:true})
-    }catch(e){ setServerError(e.message||'เกิดข้อผิดพลาด') }
+    }catch(e){
+      const msg = String(e?.message || '')
+      const friendly = msg.includes('VITE_API_BASE_URL')
+        ? 'ระบบยังไม่พร้อมใช้งาน: โปรดตั้งค่า VITE_API_BASE_URL ในไฟล์ .env แล้วหยุด/รัน npm run dev ใหม่'
+        : msg || 'เกิดข้อผิดพลาด';
+      setServerError(friendly)
+    }
   };
 
   return(
