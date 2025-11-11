@@ -31,7 +31,7 @@ const schema = z
   });
 
 export default function ChangePassword() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -54,7 +54,7 @@ export default function ChangePassword() {
       await changePassword({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
-      });
+      }, token);
       toast.success("เปลี่ยนรหัสผ่านสำเร็จ");
       navigate("/settings");
     } catch (e) {

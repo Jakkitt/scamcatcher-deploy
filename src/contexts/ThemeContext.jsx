@@ -4,7 +4,8 @@ const ThemeCtx = createContext({ theme: 'light', setTheme: () => {}, toggle: () 
 export const useTheme = () => useContext(ThemeCtx);
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  // ค่าเริ่มต้น: ใช้ธีมใหม่ (dark) เป็นค่า default หากยังไม่เคยตั้งค่า
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
@@ -17,6 +18,7 @@ export function ThemeProvider({ children }) {
 
     apply();
     localStorage.setItem('theme', theme);
+    try { document.cookie = 'theme=' + theme + '; path=/; max-age=' + (60*60*24*365) + '; SameSite=Lax'; } catch {}
 
     if (theme === 'system') {
       mql.addEventListener?.('change', apply);

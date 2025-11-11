@@ -11,27 +11,33 @@ export default function Report(){
   const navigate = useNavigate();
   const { register, handleSubmit, formState:{ errors, isSubmitting }, reset }=useForm({ resolver:zodResolver(schema) });
   const fileRef = React.useRef(null);
-  const [photos, setPhotos] = React.useState([]); // base64 strings
+  const [files, setFiles] = React.useState([]); // File[]
+  const [previews, setPreviews] = React.useState([]); // preview urls
 
-  const onFiles = async (e)=>{
-    const files = Array.from(e.target.files||[]).slice(0, Math.max(0, 3 - photos.length));
-    if (files.length === 0) return;
-    const readAsDataURL = (file)=> new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(file); });
-    const encoded = await Promise.all(files.map(readAsDataURL));
-    const next = [...photos, ...encoded].slice(0,3);
-    setPhotos(next);
+  const onFiles = (e)=>{
+    const picked = Array.from(e.target.files||[]);
+    if (picked.length === 0) return;
+    const next = [...files, ...picked].slice(0,3);
+    setFiles(next);
+    setPreviews(next.map(f => URL.createObjectURL(f)));
     e.target.value = '';
   };
 
-  const removePhoto = (idx)=> setPhotos(prev => prev.filter((_,i)=>i!==idx));
+  const removePhoto = (idx)=> {
+    setFiles(prev => prev.filter((_,i)=>i!==idx));
+    setPreviews(prev => prev.filter((_,i)=>i!==idx));
+  };
 
   const onSubmit=async(d)=>{
     try{
-      const payload = { ...d, photos };
-      await createReport(payload);
+      // Build FormData to upload files
+      const fd = new FormData();
+      Object.entries(d).forEach(([k,v])=> fd.append(k, String(v ?? '')));
+      files.forEach(f => fd.append('photos', f));
+      await createReport(fd);
       toast.success('ส่งรายงานสำเร็จ');
       reset();
-      setPhotos([]);
+      setFiles([]); setPreviews([]);
       navigate('/reports');
     }catch(e){
       toast.error(e?.message || 'ไม่สามารถส่งรายงานได้');
@@ -39,14 +45,17 @@ export default function Report(){
   };
 
   return(
-    <main className='container py-12'>
-      <h1 className='text-2xl font-bold text-center mb-6'>รายงานมิจฉาชีพ</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className='max-w-3xl mx-auto grid md:grid-cols-2 gap-6 border rounded-xl p-6 bg-white dark:bg-gray-900 dark:border-gray-800 shadow-soft'>
+    <main className='container py-10'>
+      <h1 className='text-3xl font-extrabold text-center mb-6'>รายงานมิจฉาชีพ</h1>
+      <form onSubmit={handleSubmit(onSubmit)} className='max-w-3xl mx-auto grid md:grid-cols-2 gap-6 rounded-2xl p-6 bg-white dark:bg-gray-900 shadow-soft'>
         <div><label className='block text-sm mb-1'>ชื่อ–นามสกุลผู้กระทำผิด *</label><input {...register('name')} placeholder='ระบุชื่อ–นามสกุล'/>{errors.name&&<p className='text-red-500 text-sm'>{errors.name.message}</p>}</div>
         <div><label className='block text-sm mb-1'>หมวดหมู่ *</label><input {...register('category')} placeholder='เช่น การลงทุน'/>{errors.category&&<p className='text-red-500 text-sm'>{errors.category.message}</p>}</div>
-        <div><label className='block text-sm mb-1'>ธนาคาร *</label><select {...register('bank')}>{BANKS.map(b=>
-          <option key={b.value} value={b.value}>{b.label}</option>
-        )}</select>{errors.bank&&<p className='text-red-500 text-sm'>{errors.bank.message}</p>}</div>
+        <div><label className='block text-sm mb-1'>ธนาคาร *</label><select {...register('bank')}>
+          <option value="">-- เลือกธนาคาร --</option>
+          {BANKS.map(b=>
+            <option key={b.value} value={b.value}>{b.label}</option>
+          )}
+        </select>{errors.bank&&<p className='text-red-500 text-sm'>{errors.bank.message}</p>}</div>
         <div><label className='block text-sm mb-1'>เลขบัญชี *</label><input {...register('account')} placeholder='เช่น 123-4-56789-0'/>{errors.account&&<p className='text-red-500 text-sm'>{errors.account.message}</p>}</div>
         <div><label className='block text-sm mb-1'>ยอดโอน (บาท) *</label><input type='number' {...register('amount')} placeholder='ระบุจำนวนเงิน'/>{errors.amount&&<p className='text-red-500 text-sm'>{errors.amount.message}</p>}</div>
         <div><label className='block text-sm mb-1'>วันที่โอนเงิน *</label><input type='date' {...register('date')}/>{errors.date&&<p className='text-red-500 text-sm'>{errors.date.message}</p>}</div>
@@ -55,13 +64,13 @@ export default function Report(){
         <div className='md:col-span-2'>
           <label className='block text-sm mb-2'>รูปภาพประกอบ (สูงสุด 3 รูป)</label>
           <div className='flex items-center gap-3 flex-wrap'>
-            {photos.map((src, idx)=> (
+            {previews.map((src, idx)=> (
               <div key={idx} className='relative w-20 h-20 rounded-lg overflow-hidden border dark:border-gray-800'>
                 <img src={src} alt={`evidence-${idx+1}`} className='w-full h-full object-cover'/>
                 <button type='button' onClick={()=>removePhoto(idx)} className='absolute -top-2 -right-2 bg-black text-white text-xs rounded-full px-1.5 py-0.5'>x</button>
               </div>
             ))}
-            {photos.length < 3 && (
+            {files.length < 3 && (
               <button type='button' onClick={()=>fileRef.current?.click()} className='w-20 h-20 rounded-lg border dark:border-gray-800 flex items-center justify-center text-sm text-gray-600 dark:text-gray-300'>+ รูป</button>
             )}
           </div>

@@ -34,7 +34,7 @@ export default function Settings() {
               to="/profile"
               className={({ isActive }) =>
                 `flex-1 text-center h-10 rounded-lg flex items-center justify-center ${
-                  isActive ? "bg-white dark:bg-gray-900 shadow-sm" : "text-gray-600"
+                  isActive ? "bg-white dark:bg-gray-900 shadow-sm font-semibold" : "text-gray-600"
                 }`
               }
             >
@@ -44,7 +44,7 @@ export default function Settings() {
               to="/reports"
               className={({ isActive }) =>
                 `flex-1 text-center h-10 rounded-lg flex items-center justify-center ${
-                  isActive ? "bg-white dark:bg-gray-900 shadow-sm" : "text-gray-600"
+                  isActive ? "bg-white dark:bg-gray-900 shadow-sm font-semibold" : "text-gray-600"
                 }`
               }
             >
@@ -54,7 +54,7 @@ export default function Settings() {
               to="/settings"
               className={({ isActive }) =>
                 `flex-1 text-center h-10 rounded-lg flex items-center justify-center ${
-                  isActive ? "bg-white dark:bg-gray-900 shadow-sm" : "text-gray-600"
+                  isActive ? "bg-white dark:bg-gray-900 shadow-sm font-semibold" : "text-gray-600"
                 }`
               }
             >

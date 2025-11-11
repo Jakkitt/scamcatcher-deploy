@@ -14,6 +14,12 @@ export default function SearchResults() {
   const q = useQuery();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchCount, setSearchCount] = useState(() => {
+    try {
+      const v = parseInt(localStorage.getItem('sc_search_count') || '0', 10);
+      return Number.isFinite(v) ? v : 0;
+    } catch { return 0; }
+  });
 
   const query = {
     name: q.get("name") || "",
@@ -29,6 +35,13 @@ export default function SearchResults() {
       if (alive) {
         setItems(res || []);
         setLoading(false);
+        // เพิ่มตัวนับจำนวนการค้นหาแบบถาวร (ต่อเบราว์เซอร์)
+        try {
+          const prev = parseInt(localStorage.getItem('sc_search_count') || '0', 10) || 0;
+          const next = prev + 1;
+          localStorage.setItem('sc_search_count', String(next));
+          setSearchCount(next);
+        } catch {}
       }
     })();
     return () => (alive = false);
@@ -36,7 +49,6 @@ export default function SearchResults() {
 
   // mock ตัวเลขสรุป + แหล่งภายนอก ให้ขึ้นตามภาพ
   const foundCount = items.length;
-  const searchCount = Math.max(2 * (foundCount || 1), 2);
   const externalSummary = { bls: foundCount > 0, checkgon: false };
 
   return (
@@ -59,7 +71,7 @@ export default function SearchResults() {
                 <div className="mt-1 text-sm">จำนวนการร้องเรียน</div>
               </div>
               <div className="bg-white/15 rounded-xl p-4 text-center">
-                <div className="text-4xl font-extrabold">{searchCount}</div>
+                <div className="text-4xl font-extrabold">{Math.max(searchCount, 1)}</div>
                 <div className="mt-1 text-sm">จำนวนการค้นหา</div>
               </div>
             </div>

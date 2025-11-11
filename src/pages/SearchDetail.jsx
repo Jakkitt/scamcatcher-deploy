@@ -43,7 +43,7 @@ export default function SearchDetail() {
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="max-w-3xl mx-auto grid md:grid-cols-2 gap-6 border rounded-2xl p-6 bg-white dark:bg-gray-900 shadow-soft"
+        className="max-w-3xl mx-auto grid md:grid-cols-2 gap-6 rounded-2xl p-6 bg-white dark:bg-gray-900 shadow-soft"
       >
         <div className="md:col-span-2">
           <label className="block text-sm mb-1">ชื่อ–นามสกุล (ถ้ามี)</label>

@@ -31,9 +31,13 @@ export default function Profile() {
   }, [user, reset]);
 
   const onSubmit = async (data) => {
-    await new Promise((r) => setTimeout(r, 300));
-    updateUser?.(data);
-    toast.success("บันทึกโปรไฟล์แล้ว");
+    await new Promise((r) => setTimeout(r, 150));
+    try{
+      await updateUser?.(data);
+      toast.success("บันทึกโปรไฟล์แล้ว");
+    }catch(e){
+      toast.error(e?.message || "บันทึกไม่สำเร็จ");
+    }
   };
 
   return (
@@ -50,7 +54,7 @@ export default function Profile() {
               to="/profile"
               className={({ isActive }) =>
                 `flex-1 text-center h-10 rounded-lg flex items-center justify-center ${
-                  isActive ? "bg-white dark:bg-gray-900 shadow-sm" : "text-gray-600"
+                  isActive ? "bg-white dark:bg-gray-900 shadow-sm font-semibold" : "text-gray-600"
                 }`
               }
             >
@@ -60,7 +64,7 @@ export default function Profile() {
               to="/reports"
               className={({ isActive }) =>
                 `flex-1 text-center h-10 rounded-lg flex items-center justify-center ${
-                  isActive ? "bg-white dark:bg-gray-900 shadow-sm" : "text-gray-600"
+                  isActive ? "bg-white dark:bg-gray-900 shadow-sm font-semibold" : "text-gray-600"
                 }`
               }
             >
@@ -70,7 +74,7 @@ export default function Profile() {
               to="/settings"
               className={({ isActive }) =>
                 `flex-1 text-center h-10 rounded-lg flex items-center justify-center ${
-                  isActive ? "bg-white dark:bg-gray-900 shadow-sm" : "text-gray-600"
+                  isActive ? "bg-white dark:bg-gray-900 shadow-sm font-semibold" : "text-gray-600"
                 }`
               }
             >
