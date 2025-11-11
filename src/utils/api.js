@@ -22,7 +22,12 @@ export async function request(path, { method='GET', body, token, headers={}, cre
   const res = await fetch(`${BASE}${path}`, init);
   const text = await res.text();
   const data = text ? (()=>{ try{return JSON.parse(text)}catch{return {}} })() : {};
-  if (!res.ok) throw new Error(data?.error?.message || data?.message || res.statusText);
+  if (!res.ok) {
+    const err = new Error(data?.error?.message || data?.message || res.statusText);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
   return data;
 }
 

@@ -32,6 +32,15 @@ export default function Login() {
     } catch (err) {
       const raw = String(err?.message || '')
       let friendly = raw || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ'
+      // field errors จาก backend
+      const fields = err?.data?.error?.fields || {}
+      const mapMsg = (code)=>({ invalid_email:'อีเมลไม่ถูกต้อง', min_8:'อย่างน้อย 8 ตัวอักษร', max_72:'ไม่เกิน 72 ตัวอักษร', max_bytes_72:'ไม่เกิน 72 ไบต์' }[code] || 'ข้อมูลไม่ถูกต้อง')
+      if (err?.status === 400 && fields){
+        if (fields.email) setError(mapMsg(fields.email))
+        else if (fields.password) setError(mapMsg(fields.password))
+        else setError('ข้อมูลไม่ถูกต้อง')
+        return
+      }
       if (/invalid\s*credentials/i.test(raw) || /unauthorized/i.test(raw)) {
         friendly = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
       }

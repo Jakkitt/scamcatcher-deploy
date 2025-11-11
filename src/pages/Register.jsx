@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Register(){
-  const { register, handleSubmit, watch, formState:{ errors, isSubmitting } }=useForm();
+  const { register, handleSubmit, watch, setError, formState:{ errors, isSubmitting } }=useForm();
   const navigate=useNavigate();
   const { register: registerUser } = useAuth();
   const [serverError,setServerError]=useState('');
@@ -19,6 +19,25 @@ export default function Register(){
     }catch(e){
       const raw = String(e?.message || '');
       let friendly = raw || 'เกิดข้อผิดพลาด';
+      // แสดง error รายช่องจาก backend (400 VALIDATION_ERROR)
+      const fields = e?.data?.error?.fields || {};
+      const mapMsg = (code)=>{
+        const m = {
+          invalid_email: 'อีเมลไม่ถูกต้อง',
+          min_8: 'อย่างน้อย 8 ตัวอักษร',
+          max_72: 'ไม่เกิน 72 ตัวอักษร',
+          max_bytes_72: 'ไม่เกิน 72 ไบต์',
+        };
+        return m[code] || 'ข้อมูลไม่ถูกต้อง';
+      };
+      if (e?.status === 400 && fields) {
+        if (fields.email) setError('email', { type:'server', message: mapMsg(fields.email) });
+        if (fields.password) setError('password', { type:'server', message: mapMsg(fields.password) });
+        if (fields.username) setError('username', { type:'server', message: 'ชื่อผู้ใช้ไม่ถูกต้อง' });
+        if (fields.dob) setError('dob', { type:'server', message: 'วันเกิดไม่ถูกต้อง' });
+        if (fields.gender) setError('gender', { type:'server', message: 'เพศไม่ถูกต้อง' });
+        friendly = 'ข้อมูลไม่ถูกต้อง';
+      }
       if (/email\s*already\s*exists/i.test(raw) || /duplicate/i.test(raw)) {
         friendly = 'อีเมลนี้มีผู้ใช้งานแล้ว';
       }
@@ -57,7 +76,7 @@ export default function Register(){
               <div className='w-1/2'>
                 <label className='block text-sm mb-2 font-medium text-gray-700 dark:text-cyan-300'>เพศ</label>
                 <select
-                  className='w-full h-12 rounded-xl transition-all outline-none bg-white border border-gray-300 text-gray-900 focus:border-gray-400 focus:ring-2 focus:ring-gray-200 dark:bg-gray-900/50 dark:border-cyan-400/30 dark:text-white dark:focus:border-cyan-400/60 dark:focus:ring-cyan-400/20'
+                  className='w-full h-12 rounded-xl transition-all outline-none bg-white border border-gray-300 text-gray-900 focus:border-gray-400 focus:ring-2 focus:ring-gray-200 dark:bg-gray-900/50 dark:border-cyan-400/30 dark:text-white dark:focus:border-cyan-400/60 dark:focus:ring-cyan-400/20 appearance-none pr-10 bg-no-repeat bg-[length:16px_16px] bg-[right_0.85rem_center] bg-[url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27 stroke=%27%236B7280%27 stroke-width=%272%27%3E%3Cpath d=%27M6 8l4 4 4-4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E")] dark:bg-[url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27 fill=%27none%27 stroke=%27%23D1D5DB%27 stroke-width=%272%27%3E%3Cpath d=%27M6 8l4 4 4-4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E")]'
                   {...register('gender',{required:'กรุณาเลือกเพศ'})}
                 >
                   <option value=''>เลือกเพศ</option>

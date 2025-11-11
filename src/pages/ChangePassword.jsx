@@ -37,6 +37,7 @@ export default function ChangePassword() {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
@@ -58,7 +59,15 @@ export default function ChangePassword() {
       toast.success("เปลี่ยนรหัสผ่านสำเร็จ");
       navigate("/settings");
     } catch (e) {
-      toast.error(e?.message || "ไม่สามารถเปลี่ยนรหัสผ่านได้");
+      const fields = e?.data?.error?.fields || {};
+      const mapMsg = (code)=>({ min_8:'อย่างน้อย 8 ตัวอักษร', max_72:'ไม่เกิน 72 ตัวอักษร', max_bytes_72:'ไม่เกิน 72 ไบต์' }[code] || 'ข้อมูลไม่ถูกต้อง');
+      if (e?.status === 400 && fields){
+        if (fields.currentPassword) setError('currentPassword', { type:'server', message: mapMsg(fields.currentPassword) });
+        if (fields.newPassword) setError('newPassword', { type:'server', message: mapMsg(fields.newPassword) });
+        toast.error('ข้อมูลไม่ถูกต้อง');
+      } else {
+        toast.error(e?.message || "ไม่สามารถเปลี่ยนรหัสผ่านได้");
+      }
     }
   };
 

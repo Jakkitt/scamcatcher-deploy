@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import { requireAuth } from '../middlewares/auth.js';
 import { createReport, searchReports, listMyReports, deleteReport, purgeOrphans, countOrphans } from '../controllers/reports.controller.js';
+import { validate, validateQuery } from '../middlewares/validate.js';
+import { createReportSchema, searchReportsSchema } from '../validators/reports.schema.js';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { ensureAtLeastOnePhoto } from '../middlewares/ensurePhotos.js';
 
 const router = Router();
 
@@ -32,8 +35,8 @@ const upload = multer({
 });
 
 // ทั้งสาม endpoint ต้อง login ตาม flow ของ frontend ตอนนี้
-router.get('/search', requireAuth, searchReports);
-router.post('/', requireAuth, upload.array('photos', 3), createReport);
+router.get('/search', requireAuth, validateQuery(searchReportsSchema), searchReports);
+router.post('/', requireAuth, upload.array('photos', 3), ensureAtLeastOnePhoto, validate(createReportSchema), createReport);
 router.get('/mine', requireAuth, listMyReports);
 router.delete('/:id', requireAuth, deleteReport);
 // admin utilities
@@ -41,3 +44,4 @@ router.get('/_orphans/count', requireAuth, countOrphans);
 router.delete('/_orphans/purge', requireAuth, purgeOrphans);
 
 export default router;
+

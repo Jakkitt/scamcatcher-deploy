@@ -101,7 +101,7 @@ export default function Profile() {
               <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">เพศ</label>
               <select
                 {...register("gender")}
-                className="w-full border rounded-lg h-10 px-3"
+                className="w-full border rounded-lg h-10 px-3 appearance-none pr-8 bg-no-repeat bg-[length:16px_16px] bg-[right_0.75rem_center] bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22none%22 stroke=%22%236B7280%22 stroke-width=%222%22%3E%3Cpath d=%22M6 8l4 4 4-4%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E')] dark:bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22none%22 stroke=%22%23D1D5DB%22 stroke-width=%222%22%3E%3Cpath d=%22M6 8l4 4 4-4%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E')]"
               >
                 <option value="">เลือกเพศ</option>
                 <option value="male">ชาย</option>

@@ -6,6 +6,7 @@
     "dev": "nodemon src/index.js"
   },
   "dependencies": {
+    "zod": "^3.23.8",
     "multer": "^1.4.5-lts.1",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",

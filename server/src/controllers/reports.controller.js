@@ -19,11 +19,12 @@ export async function createReport(req, res){
 
 export async function searchReports(req, res){
   try{
-    const { name = '', account = '', bank = '' } = req.query || {};
+    const { name = '', account = '', bank = '', channel = '' } = req.query || {};
     const cond = {};
     if (name) cond.name = { $regex: String(name), $options: 'i' };
     if (account) cond.account = { $regex: String(account), $options: 'i' };
     if (bank) cond.bank = String(bank);
+    if (channel) cond.channel = { $regex: String(channel), $options: 'i' };
     const list = await Report.find(cond).sort({ createdAt: -1 }).limit(200);
     return res.json(list.map(r => ({ id: r._id.toString(), ...r.toObject() })));
   }catch(e){
