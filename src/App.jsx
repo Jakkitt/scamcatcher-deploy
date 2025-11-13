@@ -33,7 +33,7 @@ export default function App() {
           <Navbar />
 
           <ErrorBoundary>
-            <div className="flex-1">
+            <div className="flex-1 pt-16">
               <Routes>
                 {/* public */}
                 <Route path="/" element={<Home1 />} />

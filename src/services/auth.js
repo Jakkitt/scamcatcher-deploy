@@ -64,6 +64,16 @@ export function updateUser(partial){
     });
 }
 
+export async function deleteAccount({ email }){
+  const token = getToken();
+  if (!import.meta?.env?.VITE_API_BASE_URL){
+    await delay(300);
+    logout();
+    return { ok:true };
+  }
+  return request('/auth/account', { method:'DELETE', body:{ email }, token });
+}
+
 function saveAuth(res){
   localStorage.setItem('user', JSON.stringify(res.user));
   localStorage.setItem('tokens', JSON.stringify(res.tokens));
