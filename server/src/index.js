@@ -19,7 +19,10 @@ const ORIGINS = [
 ];
 
 app.use(cors({ origin: ORIGINS, credentials: true }));
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 app.use(morgan('dev'));
 app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
@@ -44,8 +47,17 @@ const { PORT = 4000, MONGODB_URI } = process.env;
     // Serve frontend build (if exists)
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const distPath = path.resolve(__dirname, '../../dist');
-    const uploadsPath = path.resolve(__dirname, '../../uploads');
-    app.use('/uploads', express.static(uploadsPath));
+    const uploadsPath = path.resolve(__dirname, '../uploads');
+    app.use('/uploads', (req, res, next) => {
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      const origin = req.get('Origin');
+      if (origin && ORIGINS.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Vary', 'Origin');
+      }
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      next();
+    }, express.static(uploadsPath));
     app.use(express.static(distPath));
     app.get('*', (req, res, next) => {
       if (req.path.startsWith('/api/')) return next();

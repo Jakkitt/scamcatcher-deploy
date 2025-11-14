@@ -1,4 +1,4 @@
-function resolveBase(){
+export function resolveBase(){
   const envBase = import.meta?.env?.VITE_API_BASE_URL;
   if (envBase && String(envBase).trim()) return envBase;
   try{
@@ -6,6 +6,16 @@ function resolveBase(){
     if (origin.includes(':5173')) return 'http://localhost:4000/api';
     return origin + '/api';
   }catch{ return ''; }
+}
+
+export function resolveAssetUrl(path = ''){
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  const base = resolveBase();
+  if (!base) return path;
+  const origin = base.replace(/\/api$/, '');
+  if (path.startsWith('/')) return origin + path;
+  return `${origin}/uploads/${path}`;
 }
 
 export async function request(path, { method='GET', body, token, headers={}, credentials='include' } = {}){
