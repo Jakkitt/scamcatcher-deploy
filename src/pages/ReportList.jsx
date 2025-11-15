@@ -1,24 +1,17 @@
-﻿// src/pages/ReportList.jsx
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import ProfileSidebar from "../components/ProfileSidebar";
 import { listMyReports, removeReport } from "../services/reports";
-
-function StatusBadge({ status }) {
-  const map = {
-    pending: { label: "รอตรวจสอบ", cls: "bg-yellow-500 text-black" },
-    approved: { label: "อนุมัติแล้ว", cls: "bg-green-600 text-gray-900 dark:text-white" },
-    rejected: { label: "ปฏิเสธ", cls: "bg-red-600 text-gray-900 dark:text-white" },
-  };
-  const s = map[status] || map.pending;
-  return (
-    <span className={`px-3 py-1 rounded-lg text-sm font-medium ${s.cls}`}>
-      {s.label}
-    </span>
-  );
-}
+import toast from "react-hot-toast";
+import { t } from "../i18n/strings";
 
 export default function ReportList() {
+  const copy = t("reportListPage") || {};
+  const tabs = [
+    { to: "/profile", label: t("tabs.profile") },
+    { to: "/reports", label: t("tabs.reports") },
+    { to: "/settings", label: t("tabs.settings") },
+  ];
   const [items, setItems] = useState(null);
   const [deleting, setDeleting] = useState("");
 
@@ -28,17 +21,18 @@ export default function ReportList() {
       const data = await listMyReports();
       if (alive) setItems(data);
     })();
-    return () => (alive = false);
+    return () => { alive = false; };
   }, []);
 
   const onDelete = async (id) => {
-    if (!confirm("ยืนยันลบรายงานนี้?")) return;
+    if (!confirm(t("reports.deleteConfirm"))) return;
     setDeleting(String(id));
     try {
       await removeReport(id);
       setItems((prev) => (prev || []).filter((x) => String(x.id) !== String(id)));
+      toast.success(t("reports.deleteSuccess"));
     } catch (e) {
-      alert(e?.message || "ลบไม่สำเร็จ");
+      toast.error(e?.message || t("reports.deleteError"));
     } finally {
       setDeleting("");
     }
@@ -46,7 +40,6 @@ export default function ReportList() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gray-50 dark:bg-gradient-to-br dark:from-gray-950 dark:via-slate-950 dark:to-black py-10">
-      {/* พื้นหลังแบบเรืองแสง */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none hidden dark:block">
         <div className="absolute w-96 h-96 bg-cyan-400/30 rounded-full blur-3xl animate-pulse" style={{ left: "10%", top: "20%" }} />
         <div className="absolute w-96 h-96 bg-blue-400/25 rounded-full blur-3xl animate-pulse" style={{ right: "10%", bottom: "20%", animationDelay: "1s" }} />
@@ -56,64 +49,39 @@ export default function ReportList() {
       </div>
 
       <main className="container relative z-10 py-12 min-h-[calc(100vh-160px)] grid md:grid-cols-3 gap-8">
-        {/* ซ้าย */}
         <ProfileSidebar />
 
-        {/* ขวา */}
         <section className="md:col-span-2">
-          {/* แถบเมนู */}
           <div className="mb-6">
             <div className="w-full flex items-center gap-2 bg-white border border-gray-200 rounded-2xl p-2 shadow-lg dark:bg-[#08162c]/80 dark:border-cyan-400/30">
-              <NavLink
-                to="/profile"
-                className={({ isActive }) =>
-                  `flex-1 text-center h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                    isActive
-                      ? "bg-black text-white shadow-lg shadow-black/30 font-semibold dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-500 dark:shadow-cyan-500/30"
-                      : "text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-800/50"
-                  }`
-                }
-              >
-                โปรไฟล์
-              </NavLink>
-              <NavLink
-                to="/reports"
-                className={({ isActive }) =>
-                  `flex-1 text-center h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                    isActive
-                      ? "bg-black text-white shadow-lg shadow-black/30 font-semibold dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-500 dark:shadow-cyan-500/30"
-                      : "text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-800/50"
-                  }`
-                }
-              >
-                รายงานของฉัน
-              </NavLink>
-              <NavLink
-                to="/settings"
-                className={({ isActive }) =>
-                  `flex-1 text-center h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                    isActive
-                      ? "bg-black text-white shadow-lg shadow-black/30 font-semibold dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-500 dark:shadow-cyan-500/30"
-                      : "text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-800/50"
-                  }`
-                }
-              >
-                การตั้งค่า
-              </NavLink>
+              {tabs.map((tab) => (
+                <NavLink
+                  key={tab.to}
+                  to={tab.to}
+                  className={({ isActive }) =>
+                    `flex-1 text-center h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                      isActive
+                        ? "bg-black text-white shadow-lg shadow-black/30 font-semibold dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-500 dark:shadow-cyan-500/30"
+                        : "text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-800/50"
+                    }`
+                  }
+                >
+                  {tab.label}
+                </NavLink>
+              ))}
             </div>
           </div>
 
-          {/* รายการรายงาน */}
           <div className="bg-white text-gray-900 rounded-2xl p-6 shadow-xl border border-gray-200 dark:bg-[#061427]/90 dark:text-white dark:border-cyan-400/30 dark:shadow-[0_25px_80px_rgba(6,182,212,0.25)]">
-            <h1 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">รายงานของฉัน</h1>
+            <h1 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{copy.heading}</h1>
 
             {!items ? (
-              <div className="text-sm text-gray-400">กำลังโหลด…</div>
+              <div className="text-sm text-gray-400">{copy.loading}</div>
             ) : items.length === 0 ? (
               <div className="text-sm text-gray-500 dark:text-gray-300">
-                ยังไม่มีรายงานของคุณ หากพบเหตุสงสัย
+                {copy.empty}{" "}
                 <a href="/report" className="underline text-gray-900 font-semibold ml-1 dark:text-white">
-                  คลิกเพื่อส่งรายงาน
+                  {copy.emptyLink}
                 </a>
               </div>
             ) : (
@@ -124,14 +92,16 @@ export default function ReportList() {
                     className="border border-gray-200 rounded-xl p-4 flex items-start justify-between gap-4 bg-white dark:bg-[#0a1c32]/90 dark:border-cyan-400/30 dark:shadow-[0_15px_50px_rgba(6,182,212,0.25)]"
                   >
                     <div>
-                      <div className="font-medium text-gray-900 dark:text-white">{r.name || "ไม่ระบุชื่อ"}</div>
+                      <div className="font-medium text-gray-900 dark:text-white">{r.name || t('common.unknown')}</div>
                       <div className="text-sm text-gray-400">
-                        หมวดหมู่: {r.category || "-"} · วันที่ส่ง{" "}
+                        {copy.cardCategory}: {r.category || "-"} · {copy.cardDate}{" "}
                         {new Date(r.createdAt).toLocaleDateString()}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <StatusBadge status={r.status || "pending"} />
+                      <span className="px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 dark:bg-gray-700">
+                        {t(`admin.statuses.${r.status}`) || r.status}
+                      </span>
                       <button
                         onClick={() => onDelete(r.id)}
                         disabled={deleting === String(r.id)}
@@ -141,7 +111,7 @@ export default function ReportList() {
                             : "bg-red-600 hover:bg-red-700 text-gray-900 dark:text-white shadow-md shadow-red-500/20"
                         }`}
                       >
-                        {deleting === String(r.id) ? "กำลังลบ…" : "ลบ"}
+                        {deleting === String(r.id) ? copy.deleting : copy.delete}
                       </button>
                     </div>
                   </li>
@@ -154,7 +124,3 @@ export default function ReportList() {
     </div>
   );
 }
-
-
-
-

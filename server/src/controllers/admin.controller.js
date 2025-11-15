@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import Report from '../models/Report.js';
+import { deleteUploadsByUrls } from '../utils/uploads.js';
 
 export async function listUsers(req, res){
   try{
@@ -58,7 +59,9 @@ export async function deleteUserAdmin(req, res){
     if (u.role === 'admin' || String(u._id) === String(req.user.id)){
       return res.status(403).json({ error:{ message:'forbidden' } });
     }
+    const ownedReports = await Report.find({ owner: id }, { photos: 1 }).lean();
     await Report.deleteMany({ owner: id });
+    await Promise.all(ownedReports.map((doc) => deleteUploadsByUrls(doc?.photos || [])));
     await User.findByIdAndDelete(id);
     return res.status(204).end();
   }catch(e){ return res.status(500).json({ error:{ message:e.message } }); }

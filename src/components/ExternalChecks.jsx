@@ -1,5 +1,6 @@
 // src/components/ExternalChecks.jsx
 import React from "react";
+import { t } from "../i18n/strings";
 
 function Row({ title, found }) {
   return (
@@ -7,7 +8,7 @@ function Row({ title, found }) {
       <div>
         <div className="font-semibold">{title}</div>
         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          {found ? "พบบัญชีผู้กระทำผิดในฐานข้อมูล" : "ไม่พบข้อมูลในฐานข้อมูล"}
+          {found ? t('externalChecks.detailFound') : t('externalChecks.detailMissing')}
         </div>
       </div>
       <span
@@ -15,7 +16,7 @@ function Row({ title, found }) {
           found ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600"
         }`}
       >
-        {found ? "พบบัญชี" : "ไม่พบข้อมูล"}
+        {found ? t('externalChecks.badgeFound') : t('externalChecks.badgeMissing')}
       </span>
     </div>
   );
@@ -24,14 +25,14 @@ function Row({ title, found }) {
 export default function ExternalChecks({ summary = { bls: false, checkgon: false }, onReportHint }) {
   return (
     <aside className="space-y-4">
-      <div className="text-lg font-bold">ตรวจสอบจากแหล่งภายนอก</div>
+      <div className="text-lg font-bold">{t('externalChecks.title')}</div>
       <Row title="Blacklistseller.com" found={summary.bls} />
       <Row title="Checkgon.go.th" found={summary.checkgon} />
       <button
         onClick={onReportHint}
         className="w-full mt-2 px-4 py-2 rounded-xl bg-black text-white"
       >
-        แจ้งเบาะแส
+        {t('externalChecks.cta')}
       </button>
     </aside>
   );

@@ -1,15 +1,14 @@
-﻿import React from "react";
+import React from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import AvatarPicker from "./AvatarPicker";
 import { useAuth } from "../contexts/AuthContext";
-import { NavLink, useNavigate } from "react-router-dom";
 import { deleteAccount as deleteAccountApi } from "../services/auth";
+import { t } from "../i18n/strings";
 
-export default function ProfileSidebar({
-  showAccountActions = true,
-}) {
+export default function ProfileSidebar({ showAccountActions = true }) {
   const { user, updateUser, logout } = useAuth();
   const navigate = useNavigate();
-  const displayName = user?.username || user?.email || "ผู้ใช้";
+  const displayName = user?.username || user?.email || t("common.unknown");
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [emailInput, setEmailInput] = React.useState("");
   const [deleteError, setDeleteError] = React.useState("");
@@ -30,11 +29,11 @@ export default function ProfileSidebar({
   const handleDelete = async () => {
     const expected = (user?.email || "").trim().toLowerCase();
     if (!emailInput.trim()) {
-      setDeleteError("กรอกอีเมลเพื่อยืนยัน");
+      setDeleteError(t("profileSidebar.errors.missingEmail"));
       return;
     }
     if (emailInput.trim().toLowerCase() !== expected) {
-      setDeleteError("อีเมลไม่ตรงกับบัญชีของคุณ");
+      setDeleteError(t("profileSidebar.errors.mismatch"));
       return;
     }
     try {
@@ -43,7 +42,7 @@ export default function ProfileSidebar({
       logout?.();
       navigate("/login");
     } catch (err) {
-      setDeleteError(err?.message || "ลบบัญชีไม่สำเร็จ");
+      setDeleteError(err?.message || t("profileSidebar.errors.deleteFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -65,15 +64,15 @@ export default function ProfileSidebar({
 
       {showAccountActions && (
         <div className="border rounded-xl p-6 bg-white dark:bg-[#08162c]/90 dark:border-cyan-400/30 dark:text-white dark:shadow-[0_20px_60px_rgba(6,182,212,0.2)]">
-          <h3 className="font-semibold mb-3">การตั้งค่าบัญชี</h3>
+          <h3 className="font-semibold mb-3">{t("profileSidebar.accountSettings")}</h3>
           <NavLink
             to="/change-password"
             className="block text-center border rounded-lg h-10 leading-10 mb-3 dark:border-cyan-400/30 dark:text-white"
           >
-            เปลี่ยนรหัสผ่าน
+            {t("profileSidebar.changePassword")}
           </NavLink>
           <button className="w-full rounded-lg h-10 bg-red-600 text-white" onClick={openConfirm}>
-            ลบบัญชี
+            {t("profileSidebar.deleteAccount")}
           </button>
         </div>
       )}
@@ -81,14 +80,16 @@ export default function ProfileSidebar({
       {confirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl dark:bg-[#061025] dark:text-white space-y-4">
-            <h2 className="text-xl font-extrabold">คุณต้องลบบัญชี ScamCatcher ของคุณใช่ไหม</h2>
+            <h2 className="text-xl font-extrabold">{t("profileSidebar.deleteTitle")}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-300">
-              คุณแน่ใจหรือไม่ว่าต้องการลบบัญชี <span className="font-semibold">{user?.email}</span><br />
-              ข้อมูลทั้งหมดของคุณจะถูกลบอย่างถาวร และไม่สามารถกู้คืนได้หลังจากดำเนินการนี้
+              {t("profileSidebar.deleteDescriptionIntro")}{" "}
+              <span className="font-semibold">{user?.email}</span>
+              <br />
+              {t("profileSidebar.deleteDescriptionWarning")}
             </p>
             <input
               type="email"
-              placeholder="กรอกอีเมลของคุณเพื่อยืนยัน"
+              placeholder={t("profileSidebar.confirmPlaceholder")}
               className="w-full h-11 rounded-lg border px-3 text-sm text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-red-400 focus:border-red-400 dark:bg-[#0f1f34] dark:border-cyan-400/30 dark:text-white"
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
@@ -101,13 +102,13 @@ export default function ProfileSidebar({
                 disabled={submitting}
                 className="w-full h-11 rounded-lg bg-red-600 text-white font-semibold shadow-lg shadow-red-600/40 disabled:opacity-60"
               >
-                {submitting ? "กำลังลบบัญชี..." : "ลบบัญชี"}
+                {submitting ? t("profileSidebar.deleting") : t("profileSidebar.deleteButton")}
               </button>
               <button
                 onClick={closeConfirm}
                 className="w-full h-11 rounded-lg bg-gray-200 text-gray-800 font-semibold dark:bg-gray-700 dark:text-white"
               >
-                ยกเลิก
+                {t("profileSidebar.cancel")}
               </button>
             </div>
           </div>

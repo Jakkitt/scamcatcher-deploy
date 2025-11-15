@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => getCurrentUser());
   const [token, setToken] = useState(() => getToken());
 
-  // เมื่อรีเฟรชหน้า จะโหลด user จาก localStorage
+// Load user from localStorage when refreshing the page
   useEffect(() => {
     const saved = getCurrentUser();
     if (saved) setUser(saved);
@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
   };
 
   const handleUpdate = (partial) => {
-    // รองรับทั้งโหมด API (async) และ mock (sync)
+    // Support both API (async) mode and mock (sync) mode
     Promise.resolve(updateUser(partial)).then((updated)=>{
       setUser(updated);
     });

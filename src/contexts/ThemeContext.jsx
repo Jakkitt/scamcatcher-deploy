@@ -4,7 +4,7 @@ const ThemeCtx = createContext({ theme: 'light', setTheme: () => {}, toggle: () 
 export const useTheme = () => useContext(ThemeCtx);
 
 export function ThemeProvider({ children }) {
-  // ค่าเริ่มต้น: ใช้ธีมใหม่ (dark) เป็นค่า default หากยังไม่เคยตั้งค่า
+  // Default to the new dark theme if no preference is stored
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {

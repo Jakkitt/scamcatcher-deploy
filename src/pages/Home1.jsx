@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, AlertTriangle } from 'lucide-react'
+import { t } from '../i18n/strings'
 
 export default function Home1(){
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
@@ -57,22 +58,22 @@ export default function Home1(){
 
         {/* Heading */}
         <h1 className='text-4xl sm:text-5xl md:text-6xl font-black leading-tight mb-4'>
-          <span className='dark:bg-gradient-to-r dark:from-cyan-300 dark:via-blue-300 dark:to-indigo-300 dark:text-transparent dark:bg-clip-text text-gray-900'>ตรวจสอบและรายงาน</span>
+          <span className='dark:bg-gradient-to-r dark:from-cyan-300 dark:via-blue-300 dark:to-indigo-300 dark:text-transparent dark:bg-clip-text text-gray-900'>{t('home.titleLine1')}</span>
           <br />
-          <span className='text-gray-900 dark:text-white'>มิจฉาชีพออนไลน์</span>
+          <span className='text-gray-900 dark:text-white'>{t('home.titleLine2')}</span>
         </h1>
 
         <p className='mt-4 text-gray-600 dark:text-gray-300 text-lg max-w-2xl mx-auto'>
-          <strong className='dark:text-cyan-300'>ScamCatcher</strong> ช่วยให้คุณตรวจสอบข้อมูลผู้ที่มีประวัติการโกงและรายงานมิจฉาชีพเพื่อป้องกันผู้อื่น
+          <strong className='dark:text-cyan-300'>{t('layout.brand')}</strong> {t('home.description')}
         </p>
 
         {/* Actions */}
         <div className='mt-10 flex justify-center gap-4 flex-wrap'>
           <Link to='/search/detail' className='group flex items-center gap-2 px-6 py-3 rounded-2xl bg-black text-white font-medium hover:bg-gray-800 transition dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-500 dark:hover:from-cyan-400 dark:hover:to-blue-400 dark:shadow-xl dark:shadow-cyan-500/30'>
-            <Search className='w-5 h-5 group-hover:rotate-12 transition-transform'/> ค้นหาข้อมูลมิจฉาชีพ
+            <Search className='w-5 h-5 group-hover:rotate-12 transition-transform'/> {t('home.actions.search')}
           </Link>
           <Link to='/report' className='group flex items-center gap-2 px-6 py-3 rounded-2xl bg-white text-gray-900 font-medium border hover:bg-gray-50 transition dark:bg-transparent dark:text-white dark:border-cyan-400/30 dark:hover:bg-cyan-400/10'>
-            <AlertTriangle className='w-5 h-5 group-hover:rotate-12 transition-transform'/> รายงานมิจฉาชีพ
+            <AlertTriangle className='w-5 h-5 group-hover:rotate-12 transition-transform'/> {t('home.actions.report')}
           </Link>
         </div>
 

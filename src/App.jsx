@@ -22,8 +22,9 @@ import AppToaster from './components/Toaster';
 import AdminRoutes from './admin/routes';
 
 import { ThemeProvider } from './contexts/ThemeContext';
-// ถ้ามี AuthProvider อยู่แล้วให้คงไว้
+// Keep AuthProvider in place if it already exists
 import { AuthProvider } from './contexts/AuthContext';
+import { t } from './i18n/strings';
 
 export default function App() {
   return (
@@ -60,7 +61,7 @@ export default function App() {
                 } />
 
                 {/* fallback */}
-                <Route path="*" element={<div className="container py-20 text-center">404 - ไม่พบหน้า</div>} />
+                <Route path="*" element={<div className="container py-20 text-center">{t('error.notFound')}</div>} />
               </Routes>
             </div>
           </ErrorBoundary>

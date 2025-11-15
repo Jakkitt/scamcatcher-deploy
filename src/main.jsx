@@ -7,7 +7,7 @@ import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>   {/* มี BrowserRouter แค่ครั้งเดียว */}
+    <BrowserRouter>   {/* Ensure BrowserRouter wraps the app once */}
       <App />
     </BrowserRouter>
   </React.StrictMode>

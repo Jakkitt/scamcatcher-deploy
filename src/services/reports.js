@@ -78,6 +78,11 @@ export async function rejectReport(id){
   return request(`/reports/${id}/reject`, { method:'PATCH', token });
 }
 
+export async function resetReportStatus(id){
+  const token = getToken();
+  return request(`/reports/${id}/pending`, { method:'PATCH', token });
+}
+
 export async function purgeOrphans(){
   const token = getToken();
   return request('/reports/_orphans/purge', { method:'DELETE', token });

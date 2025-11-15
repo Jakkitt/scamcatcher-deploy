@@ -1,22 +1,18 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middlewares/auth.js';
-import { createReport, searchReports, listMyReports, deleteReport, purgeOrphans, countOrphans, listAllReports, approveReport, rejectReport } from '../controllers/reports.controller.js';
+import { createReport, searchReports, listMyReports, deleteReport, purgeOrphans, countOrphans, listAllReports, approveReport, rejectReport, resetReport } from '../controllers/reports.controller.js';
 import { validate, validateQuery } from '../middlewares/validate.js';
 import { createReportSchema, searchReportsSchema } from '../validators/reports.schema.js';
 import multer from 'multer';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
 import { ensureAtLeastOnePhoto } from '../middlewares/ensurePhotos.js';
+import { ensureUploadsDir } from '../utils/uploads.js';
+import { reportSubmissionLimiter } from '../middlewares/rateLimit.js';
 
 const router = Router();
 
 // Multer storage (store files in ../../uploads)
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = path.resolve(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+const uploadsDir = ensureUploadsDir();
 const storage = multer.diskStorage({
   destination: (_, __, cb) => cb(null, uploadsDir),
   filename: (_, file, cb) => {
@@ -36,7 +32,7 @@ const upload = multer({
 
 // ทั้งสาม endpoint ต้อง login ตาม flow ของ frontend ตอนนี้
 router.get('/search', requireAuth, validateQuery(searchReportsSchema), searchReports);
-router.post('/', requireAuth, upload.array('photos', 3), ensureAtLeastOnePhoto, validate(createReportSchema), createReport);
+router.post('/', requireAuth, reportSubmissionLimiter, upload.array('photos', 3), ensureAtLeastOnePhoto, validate(createReportSchema), createReport);
 router.get('/mine', requireAuth, listMyReports);
 router.delete('/:id', requireAuth, deleteReport);
 // admin utilities
@@ -45,6 +41,7 @@ router.delete('/_orphans/purge', requireAuth, requireRole('admin'), purgeOrphans
 router.get('/admin/all', requireAuth, requireRole('admin'), listAllReports);
 router.patch('/:id/approve', requireAuth, requireRole('admin'), approveReport);
 router.patch('/:id/reject', requireAuth, requireRole('admin'), rejectReport);
+router.patch('/:id/pending', requireAuth, requireRole('admin'), resetReport);
 
 export default router;
 

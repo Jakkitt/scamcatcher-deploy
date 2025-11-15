@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import User from '../models/User.js';
 import { signAccessToken, signRefreshToken } from '../utils/jwt.js';
 import Report from '../models/Report.js';
+import { deleteUploadsByUrls } from '../utils/uploads.js';
 
 function toSafeUser(u) {
   return {
@@ -116,9 +117,9 @@ export async function deleteAccount(req, res) {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error:{ message:'UNAUTHORIZED' } });
-    // ลบรายงานของผู้ใช้
+    const ownedReports = await Report.find({ owner: userId }, { photos: 1 }).lean();
     await Report.deleteMany({ owner: userId });
-    // ลบผู้ใช้
+    await Promise.all(ownedReports.map((doc) => deleteUploadsByUrls(doc?.photos || [])));
     await User.findByIdAndDelete(userId);
     return res.status(204).end();
   } catch (e) {

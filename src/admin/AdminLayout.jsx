@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { t } from '../i18n/strings';
 
 function Item({ to, children }){
   return (
@@ -27,10 +28,10 @@ export default function AdminLayout(){
       <div className="container max-w-[1600px] relative z-10 py-6 min-h-[calc(100vh-160px)] grid lg:grid-cols-12 gap-6">
         <aside className="lg:col-span-2">
           <div className="sticky top-6 space-y-2 border rounded-xl p-4 bg-white/90 dark:bg-gray-900/90 dark:border-gray-800">
-            <div className="text-lg font-bold mb-2 text-gray-800 dark:text-gray-100">แอดมิน</div>
-            <Item to="/admin">แดชบอร์ด</Item>
-            <Item to="/admin/reports">รายงานมิจฉาชีพ</Item>
-            <Item to="/admin/users">จัดการผู้ใช้งาน</Item>
+            <div className="text-lg font-bold mb-2 text-gray-800 dark:text-gray-100">{t('admin.sidebarTitle')}</div>
+            <Item to="/admin">{t('admin.menu.dashboard')}</Item>
+            <Item to="/admin/reports">{t('admin.menu.reports')}</Item>
+            <Item to="/admin/users">{t('admin.menu.users')}</Item>
           </div>
         </aside>
         <section className="lg:col-span-10">
