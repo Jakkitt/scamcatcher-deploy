@@ -1,5 +1,5 @@
 import { request } from '../utils/api';
-import { getToken, getCurrentUser } from './auth';
+import { getCurrentUser } from './auth';
 const delay = (ms)=>new Promise(r=>setTimeout(r, ms));
 const KEY = 'reports';
 
@@ -7,9 +7,8 @@ function getAll(){ try{ return JSON.parse(localStorage.getItem(KEY)) || []; }cat
 function saveAll(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
 
 export async function createReport(payload){
-  const token = getToken();
   try {
-    return await request('/reports', { method:'POST', body: payload, token });
+    return await request('/reports', { method:'POST', body: payload });
   } catch {
     // Fallback mock (offline/local) — ผูกกับผู้ใช้ปัจจุบันเสมอเพื่อไม่ให้ข้ามบัญชี
     await delay(200);
@@ -23,10 +22,9 @@ export async function createReport(payload){
 }
 
 export async function searchReports(params){
-  const token = getToken();
   const q = new URLSearchParams(params).toString();
   try{
-    return await request(`/reports/search?${q}`, { token });
+    return await request(`/reports/search?${q}`);
   }catch{
     await delay(150);
     const { name='', account='', bank='' } = params || {};
@@ -40,9 +38,8 @@ export async function searchReports(params){
 }
 
 export async function listMyReports(){
-  const token = getToken();
   try{
-    return await request('/reports/mine', { token });
+    return await request('/reports/mine');
   }catch{
     await delay(120);
     const me = getCurrentUser();
@@ -58,24 +55,24 @@ export async function removeReport(id){
     saveAll(list);
     return { ok:true };
   }
-  const token = getToken();
-  return request(`/reports/${id}`, { method:'DELETE', token });
+  return request(`/reports/${id}`, { method:'DELETE' });
 }
 
 // Admin services
 export async function adminListReports(){
-  const token = getToken();
-  return request('/reports/admin/all', { token });
+  return request('/reports/admin/all');
 }
 
 export async function approveReport(id){
-  const token = getToken();
-  return request(`/reports/${id}/approve`, { method:'PATCH', token });
+  return request(`/reports/${id}/approve`, { method:'PATCH' });
 }
 
 export async function rejectReport(id){
-  const token = getToken();
-  return request(`/reports/${id}/reject`, { method:'PATCH', token });
+  return request(`/reports/${id}/reject`, { method:'PATCH' });
+}
+
+export async function resetReportStatus(id){
+  return request(`/reports/${id}/pending`, { method:'PATCH' });
 }
 
 export async function resetReportStatus(id){
@@ -84,11 +81,13 @@ export async function resetReportStatus(id){
 }
 
 export async function purgeOrphans(){
-  const token = getToken();
-  return request('/reports/_orphans/purge', { method:'DELETE', token });
+  return request('/reports/_orphans/purge', { method:'DELETE' });
 }
 
 export async function countOrphans(){
-  const token = getToken();
-  return request('/reports/_orphans/count', { token });
+  return request('/reports/_orphans/count');
+}
+
+export async function getReportDetail(id){
+  return request(`/reports/${id}`);
 }

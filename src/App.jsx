@@ -8,6 +8,7 @@ import Profile from './pages/Profile';
 import Report from './pages/Report';
 import SearchDetail from './pages/SearchDetail';
 import SearchResults from './pages/SearchResults';
+import ReportDetail from './pages/ReportDetail';
 import ReportList from './pages/ReportList';
 import About from './pages/About';
 import ChangePassword from './pages/ChangePassword';
@@ -48,6 +49,7 @@ export default function App() {
                 <Route path="/search/detail" element={<RequireAuth><SearchDetail /></RequireAuth>} />
                 <Route path="/search/results" element={<RequireAuth><SearchResults /></RequireAuth>} />
                 <Route path="/reports" element={<RequireAuth><ReportList /></RequireAuth>} />
+                <Route path="/reports/:id" element={<RequireAuth><ReportDetail /></RequireAuth>} />
                 <Route path="/change-password" element={<RequireAuth><ChangePassword /></RequireAuth>} />
                 <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
 

@@ -1,50 +1,16 @@
 import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
-import cors from 'cors';
-import morgan from 'morgan';
-import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import app, { ORIGINS } from './app.js';
 
-import authRoutes from './routes/auth.routes.js';
-import reportRoutes from './routes/reports.routes.js';
-import adminRoutes from './routes/admin.routes.js';
-
-const app = express();
-
-const ORIGINS = [
-  'http://localhost:5173',
-];
-
-app.use(cors({ origin: ORIGINS, credentials: true }));
-app.use(helmet({
-  crossOriginResourcePolicy: false,
-  crossOriginEmbedderPolicy: false,
-}));
-app.use(morgan('dev'));
-app.use(express.json({ limit: '5mb' }));
-app.use(cookieParser());
-
-// health
-app.get('/api/health', (req, res) => {
-  res.json({ ok: true, time: new Date().toISOString() });
-});
-
-// routes
-app.use('/api/auth', authRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/admin', adminRoutes);
-
-// db + server
 const { PORT = 4000, MONGODB_URI } = process.env;
 
 (async () => {
   try {
     await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
     console.log('[MongoDB] connected');
-    // Serve frontend build (if exists)
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const distPath = path.resolve(__dirname, '../../dist');
     const uploadsPath = path.resolve(__dirname, '../uploads');

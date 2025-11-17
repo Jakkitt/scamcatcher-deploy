@@ -39,7 +39,7 @@ export default function ProfileSidebar({ showAccountActions = true }) {
     try {
       setSubmitting(true);
       await deleteAccountApi({ email: emailInput.trim() });
-      logout?.();
+      if (logout) await logout();
       navigate("/login");
     } catch (err) {
       setDeleteError(err?.message || t("profileSidebar.errors.deleteFailed"));

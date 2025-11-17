@@ -23,7 +23,7 @@ export default function ResultCard({ item }) {
 
       <div className="pt-2">
         <button
-          onClick={() => navigate(`/search/detail?id=${item.id}`, { state: { item } })}
+          onClick={() => navigate(`/reports/${item.id}`, { state: { item } })}
           className="px-4 py-2 rounded-xl border"
         >
           {copy.view}

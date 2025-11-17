@@ -1,239 +1,401 @@
 import React from 'react';
 import toast from 'react-hot-toast';
-import { adminListReports, approveReport, rejectReport, purgeOrphans, countOrphans, resetReportStatus } from '../services/reports';
+import {
+  adminListReports,
+  approveReport,
+  rejectReport,
+  purgeOrphans,
+  countOrphans,
+  resetReportStatus,
+} from '../services/reports';
 import { t } from '../i18n/strings';
 import { resolveAssetUrl } from '../utils/api';
 
 const statusMeta = {
   pending: {
-    label: t('admin.statuses.pending'),
-    badge: 'bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-200 dark:border-amber-500/40',
-    chip: 'bg-amber-500 text-white',
+    label: 'รอตรวจสอบ',
+    badge:
+      'bg-amber-100 text-amber-700 border border-amber-300 dark:bg-amber-500/20 dark:text-amber-200',
   },
   approved: {
-    label: t('admin.statuses.approved'),
-    badge: 'bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-200 dark:border-emerald-500/40',
-    chip: 'bg-emerald-500 text-white',
+    label: 'ยืนยันแล้ว',
+    badge:
+      'bg-emerald-100 text-emerald-700 border border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-200',
   },
   rejected: {
-    label: t('admin.statuses.rejected'),
-    badge: 'bg-rose-100 text-rose-700 border border-rose-200 dark:bg-red-500/15 dark:text-red-200 dark:border-red-500/30',
-    chip: 'bg-red-500 text-white',
+    label: 'ถูกปฏิเสธ',
+    badge:
+      'bg-rose-100 text-rose-700 border border-rose-300 dark:bg-red-500/20 dark:text-red-200',
   },
 };
 
-const ActionButton = ({ label, onClick, variant='primary', disabled }) => {
+const ActionButton = ({ label, onClick, variant = 'primary', disabled }) => {
   const styles = {
-    primary: 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-cyan-500/30 hover:from-cyan-400 hover:to-blue-400',
-    danger: 'bg-red-600 text-white shadow-red-600/30 hover:bg-red-500',
-    outline: 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-transparent dark:text-white dark:border-white/30 dark:hover:bg-white/10',
+    primary:
+      'bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400',
+    danger: 'bg-red-600 text-white hover:bg-red-500',
+    outline:
+      'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-transparent dark:text-gray-200 dark:border-gray-500/40 dark:hover:bg-gray-700/30',
   };
+
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${styles[variant]} disabled:opacity-50 disabled:cursor-not-allowed`}
+      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition 
+        ${styles[variant]} disabled:opacity-40`}
     >
       {label}
     </button>
   );
 };
 
-export default function AdminReports(){
+// ปุ่มดู/ซ่อนรายละเอียด (สีเทา)
+const DetailButton = ({ expanded, onClick }) => (
+  <button
+    onClick={onClick}
+    className="px-3 py-1.5 rounded-lg text-xs font-semibold
+             bg-gray-700 text-gray-200 border border-gray-600
+             hover:bg-gray-600 transition"
+  >
+    {expanded ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียด'}
+  </button>
+);
+
+// Popup ยืนยัน Yes / No
+const ConfirmDialog = ({ open, title, message, onConfirm, onCancel }) => {
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onCancel}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="max-w-md w-full rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-6 space-y-4 text-sm text-slate-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-semibold text-white">{title}</h2>
+        <p className="text-slate-200">{message}</p>
+        <div className="flex justify-end gap-3 pt-2">
+          <button
+            onClick={onCancel}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold
+                       bg-slate-800 text-slate-200 border border-slate-700
+                       hover:bg-slate-700 transition"
+          >
+            ไม่ใช่
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold
+                       bg-emerald-600 text-white border border-emerald-500
+                       hover:bg-emerald-500 transition"
+          >
+            ใช่
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function AdminReports() {
   const [rows, setRows] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
   const [purgeState, setPurgeState] = React.useState(null);
   const [expandedId, setExpandedId] = React.useState(null);
   const [acting, setActing] = React.useState('');
-  const [lightboxUrl, setLightboxUrl] = React.useState('');
+  const [lightboxState, setLightboxState] = React.useState(null);
+
+  // สำหรับ popup ยืนยันอนุมัติ/ปฏิเสธ
+  // { type: 'approve' | 'reject', row }
+  const [pendingAction, setPendingAction] = React.useState(null);
+
+  const openLightbox = React.useCallback((urls = [], index = 0) => {
+    if (!urls.length) return;
+    setLightboxState({ urls, index });
+  }, []);
+
+  const closeLightbox = React.useCallback(() => setLightboxState(null), []);
+
+  const showPrevImage = React.useCallback(() => {
+    setLightboxState((prev) => {
+      if (!prev || prev.urls.length <= 1) return prev;
+      const total = prev.urls.length;
+      const nextIndex = (prev.index - 1 + total) % total;
+      return { ...prev, index: nextIndex };
+    });
+  }, []);
+
+  const showNextImage = React.useCallback(() => {
+    setLightboxState((prev) => {
+      if (!prev || prev.urls.length <= 1) return prev;
+      const total = prev.urls.length;
+      const nextIndex = (prev.index + 1) % total;
+      return { ...prev, index: nextIndex };
+    });
+  }, []);
+
+  const hasLightboxNavigation = (lightboxState?.urls?.length || 0) > 1;
+  const currentLightboxUrl =
+    lightboxState?.urls?.[lightboxState.index] || '';
 
   const refresh = React.useCallback(async () => {
-    setError('');
-    try{
+    try {
       const list = await adminListReports();
       setRows(list);
-    }catch(err){
-      setError(err?.message || t('admin.errorLoading'));
-    }finally{
+    } catch (err) {
+      setError('โหลดข้อมูลล้มเหลว');
+    } finally {
       setLoading(false);
     }
-    try{
+
+    try {
       const orphanInfo = await countOrphans();
       setPurgeState(orphanInfo);
-    }catch(err){
-      console.warn(err);
-    }
+    } catch {}
   }, []);
 
   React.useEffect(() => {
-    let alive = true;
-    (async () => {
-      await refresh();
-      if (!alive) return;
-    })();
-    return () => { alive = false };
+    refresh();
   }, [refresh]);
 
-  const applyUpdate = (updated) => {
-    setRows(prev => prev?.map(x => x.id === updated.id ? updated : x) || []);
+  const applyUpdate = (u) => {
+    setRows((prev) => prev.map((x) => (x.id === u.id ? u : x)));
   };
 
-  const handleAction = async (id, actionFn, key) => {
-    setActing(`${id}-${key}`);
-    try{
-      const updated = await actionFn(id);
+  const performAction = async (id, fn, key) => {
+    setActing(id + key);
+
+    try {
+      const updated = await fn(id);
       applyUpdate(updated);
-    }catch(err){
-      toast.error(err?.message || t('admin.actionFailed'));
-    }finally{
+    } catch (err) {
+      toast.error('เกิดข้อผิดพลาด');
+    } finally {
       setActing('');
     }
   };
 
-  const onApprove = (id) => handleAction(id, approveReport, 'approve');
-  const onReject = (id) => handleAction(id, rejectReport, 'reject');
-  const onReset = (id) => handleAction(id, resetReportStatus, 'reset');
+  const onApprove = (id) => performAction(id, approveReport, 'approve');
+  const onReject = (id) => performAction(id, rejectReport, 'reject');
+  const onReset = (id) => performAction(id, resetReportStatus, 'reset');
 
-  const onPurge = async ()=>{
-    try{
+  const onPurge = async () => {
+    try {
       await purgeOrphans();
-      await refresh();
-      toast.success(t('admin.purgeSuccess'));
-    }catch(err){
-      toast.error(err?.message || t('admin.purgeError'));
-    }
+      toast.success('ลบข้อมูลขยะแล้ว');
+      refresh();
+    } catch {}
   };
 
-  const currencyLabel = t('common.currencyBaht');
-  const unknownLabel = t('common.unknown');
-  const formatAmount = (value) => `${Number(value || 0).toLocaleString('th-TH')} ${currencyLabel}`;
-  const formatDate = (value) => value ? new Date(value).toLocaleDateString('th-TH') : unknownLabel;
+  const unknown = '-';
+  const fmt = (v) => (v ? new Date(v).toLocaleDateString('th-TH') : unknown);
+  const money = (v) => `${Number(v || 0).toLocaleString('th-TH')} บาท`;
 
-  const renderActions = (row) => {
-    const isActing = (key) => acting === `${row.id}-${key}`;
-    if (row.status === 'pending') {
-      return (
+  const renderActions = (row, expanded, toggle) => (
+    <div className="flex gap-2">
+      {row.status === 'pending' && (
         <>
-          <ActionButton label={t('admin.actions.approve')} onClick={() => onApprove(row.id)} disabled={isActing('approve')} />
-          <ActionButton label={t('admin.actions.reject')} variant="danger" onClick={() => onReject(row.id)} disabled={isActing('reject')} />
+          <ActionButton
+            label="อนุมัติ"
+            onClick={() => setPendingAction({ type: 'approve', row })}
+            disabled={acting === row.id + 'approve'}
+          />
+          <ActionButton
+            label="ปฏิเสธ"
+            variant="danger"
+            onClick={() => setPendingAction({ type: 'reject', row })}
+            disabled={acting === row.id + 'reject'}
+          />
         </>
-      );
+      )}
+
+      {(row.status === 'approved' || row.status === 'rejected') && (
+        <ActionButton
+          label="ยกเลิกผล"
+          variant="outline"
+          onClick={() => onReset(row.id)}
+          disabled={acting === row.id + 'reset'}
+        />
+      )}
+
+      <DetailButton expanded={expanded} onClick={toggle} />
+    </div>
+  );
+
+  const handleConfirm = async () => {
+    if (!pendingAction) return;
+    const { type, row } = pendingAction;
+    setPendingAction(null);
+    if (type === 'approve') {
+      await onApprove(row.id);
+    } else if (type === 'reject') {
+      await onReject(row.id);
     }
-    if (row.status === 'approved') {
-      return (
-        <ActionButton label={t('admin.actions.revokeApprove')} variant="outline" onClick={() => onReset(row.id)} disabled={isActing('reset')} />
-      );
-    }
-    return (
-      <ActionButton label={t('admin.actions.revokeReject')} variant="outline" onClick={() => onReset(row.id)} disabled={isActing('reset')} />
-    );
   };
+
+  const handleCancel = () => setPendingAction(null);
+
+  const confirmTitle =
+    pendingAction?.type === 'approve'
+      ? 'ยืนยันการอนุมัติ'
+      : pendingAction?.type === 'reject'
+      ? 'ยืนยันการปฏิเสธ'
+      : '';
+
+  const confirmMessage = pendingAction
+    ? pendingAction.type === 'approve'
+      ? `คุณต้องการอนุมัติรายการรหัส ${pendingAction.row.id} ใช่หรือไม่?`
+      : `คุณต้องการปฏิเสธรายการรหัส ${pendingAction.row.id} ใช่หรือไม่?`
+    : '';
 
   return (
     <>
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3 justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold">{t('admin.reportsTitle')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t('admin.reportsSubtitle')}</p>
-        </div>
-        <button
-          onClick={onPurge}
-          className="px-4 py-2 rounded-xl text-sm font-semibold bg-black text-white border border-black/10 shadow-lg shadow-black/20 hover:bg-gray-900 transition dark:bg-transparent dark:text-cyan-200 dark:border-cyan-400/40 dark:hover:bg-cyan-400/10"
-        >
-          {t('admin.purgeButton')} {purgeState?.count ? `(${purgeState.count})` : ''}
-        </button>
-      </div>
-
-      <div className="rounded-3xl border border-gray-100 bg-white/95 dark:border-white/10 dark:bg-[#030712]/70 backdrop-blur shadow-2xl shadow-cyan-500/10">
-        <div className="grid grid-cols-[auto,1.5fr,1.2fr,1.1fr,1fr,1fr,auto] text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 px-6 py-4 border-b border-gray-100 dark:border-white/10">
-          <span />
-          <span>{t('admin.table.code')}</span>
-          <span>{t('admin.table.suspect')}</span>
-          <span>{t('admin.table.category')}</span>
-          <span>{t('admin.table.reportedDate')}</span>
-          <span>{t('admin.table.amount')}</span>
-          <span className="text-right">{t('admin.table.status')}</span>
-        </div>
-
-        {loading ? (
-          <div className="p-6 text-sm text-gray-500">{t('common.loading')}</div>
-        ) : error ? (
-          <div className="p-6 text-sm text-red-500">{error}</div>
-        ) : (
+      <div className="space-y-6">
+        {/* HEADER */}
+        <div className="flex justify-between items-center">
           <div>
-            {(rows || []).map((row) => {
-              const meta = statusMeta[row.status] || statusMeta.pending;
+            <h1 className="text-2xl font-bold text-white">รายการแจ้งมิจฉาชีพ</h1>
+            <p className="text-gray-400 text-sm">รายการทั้งหมดจากผู้ใช้งาน</p>
+          </div>
+
+          <button
+            onClick={onPurge}
+            className="px-4 py-2 rounded-xl text-sm font-semibold
+                       bg-red-700 text-white hover:bg-red-600 
+                       border border-red-800 shadow-lg"
+          >
+            ลบข้อมูลขยะ {purgeState?.count ? `(${purgeState.count})` : ''}
+          </button>
+        </div>
+
+        {/* TABLE CARD (ใช้ grid แถวต่อแถว) */}
+        <div className="rounded-3xl border border-slate-800 bg-[#020617]/95 shadow-xl overflow-hidden">
+          {/* HEADER ROW */}
+          <div
+            className="grid grid-cols-[200px,1.3fr,1.2fr,1.1fr,1fr,auto] 
+                          px-6 py-4 border-b border-slate-800/70 
+                          text-[11px] font-semibold tracking-wide text-gray-300"
+          >
+            <span>รหัส</span>
+            <span>ชื่อมิจฉาชีพ</span>
+            <span>หมวดหมู่</span>
+            <span>วันที่รายงาน</span>
+            <span>จำนวนเงิน</span>
+            <span className="text-right">สถานะ</span>
+          </div>
+
+          {/* BODY */}
+          {loading ? (
+            <div className="p-6 text-gray-400">กำลังโหลด...</div>
+          ) : error ? (
+            <div className="p-6 text-red-400">{error}</div>
+          ) : !rows || rows.length === 0 ? (
+            <div className="p-6 text-gray-400">ยังไม่มีรายการแจ้ง</div>
+          ) : (
+            (rows || []).map((row) => {
               const expanded = expandedId === row.id;
+              const meta = statusMeta[row.status] || statusMeta.pending;
+              const resolvedPhotos =
+                expanded && Array.isArray(row.photos)
+                  ? row.photos.map((photo) => resolveAssetUrl(photo))
+                  : [];
+              const hasPhotos = resolvedPhotos.length > 0;
+
               return (
-                <div key={row.id} className="border-b border-gray-100 dark:border-white/10">
-                <div className="grid grid-cols-[auto,1.5fr,1.2fr,1.1fr,1fr,1fr,auto] items-center px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                  <button
-                    onClick={() => setExpandedId(expanded ? null : row.id)}
-                    className={`text-cyan-600 transition transform dark:text-cyan-300 ${expanded ? 'rotate-90' : ''}`}
-                    aria-label={t('admin.aria.toggleDetails')}
+                <div key={row.id} className="border-b border-slate-800/60">
+                  {/* MAIN ROW */}
+                  <div
+                    className="grid grid-cols-[200px,1.3fr,1.2fr,1.1fr,1fr,auto] 
+                                  px-6 py-4 text-sm text-slate-200 bg-slate-950/40"
                   >
-                    ▶
-                  </button>
-                  <span className="truncate">{row.id}</span>
-                    <span className="truncate">{row.name || unknownLabel}</span>
-                    <span className="truncate">{row.category || unknownLabel}</span>
-                    <span>{formatDate(row.createdAt)}</span>
-                    <span>{formatAmount(row.amount)}</span>
+                    <span className="truncate break-all min-w-[200px]">
+                      {row.id}
+                    </span>
+                    <span className="truncate">{row.name || unknown}</span>
+                    <span className="truncate">{row.category || unknown}</span>
+                    <span>{fmt(row.createdAt)}</span>
+                    <span>{money(row.amount)}</span>
+
                     <div className="flex items-center justify-end gap-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${meta.badge}`}>{meta.label}</span>
-                      <div className="flex gap-2">{renderActions(row)}</div>
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold border ${meta.badge}`}
+                      >
+                        {meta.label}
+                      </span>
+
+                      {renderActions(row, expanded, () =>
+                        setExpandedId(expanded ? null : row.id)
+                      )}
                     </div>
                   </div>
 
+                  {/* DETAILS ROW */}
                   {expanded && (
-                    <div className="px-6 pb-6">
-                      <div className="rounded-2xl border border-slate-100 bg-gradient-to-br from-sky-50/80 via-white to-white p-6 text-sm text-gray-700 space-y-4 dark:border-white/10 dark:bg-gradient-to-br dark:from-gray-900/70 dark:via-gray-900/50 dark:to-gray-900/40 dark:text-gray-200">
+                    <div className="px-6 py-5 bg-slate-950/70">
+                      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 text-sm text-gray-200 space-y-4">
+                        <h2 className="text-lg font-semibold text-white mb-2">
+                          รายละเอียดเพิ่มเติม
+                        </h2>
+
                         <div className="grid md:grid-cols-2 gap-4">
-                          <div>
-                            <h3 className="text-sm font-semibold text-gray-900 mb-2 dark:text-white">{t('admin.detailsHeading')}</h3>
-                            <dl className="space-y-1 text-gray-600 dark:text-gray-300">
-                              <div className="flex justify-between"><dt>{t('admin.fields.fullName')}</dt><dd className="font-semibold text-gray-900 dark:text-white">{row.name || unknownLabel}</dd></div>
-                              <div className="flex justify-between"><dt>{t('admin.fields.bank')}</dt><dd>{row.bank || unknownLabel}</dd></div>
-                              <div className="flex justify-between"><dt>{t('admin.fields.account')}</dt><dd>{row.account || unknownLabel}</dd></div>
-                              <div className="flex justify-between"><dt>{t('admin.fields.channel')}</dt><dd>{row.channel || unknownLabel}</dd></div>
-                              <div className="flex justify-between"><dt>{t('admin.fields.category')}</dt><dd>{row.category || unknownLabel}</dd></div>
-                            </dl>
+                          <div className="space-y-1">
+                            <p>
+                              <strong>ชื่อ:</strong> {row.name || unknown}
+                            </p>
+                            <p>
+                              <strong>ธนาคาร:</strong> {row.bank || unknown}
+                            </p>
+                            <p>
+                              <strong>เลขบัญชี:</strong> {row.account || unknown}
+                            </p>
+                            <p>
+                              <strong>ช่องทาง:</strong> {row.channel || unknown}
+                            </p>
                           </div>
-                          <div>
-                            <h3 className="text-sm font-semibold text-gray-900 mb-2 dark:text-white">{t('admin.reportHeading')}</h3>
-                            <dl className="space-y-1 text-gray-600 dark:text-gray-300">
-                              <div className="flex justify-between"><dt>{t('admin.fields.transferAmount')}</dt><dd>{formatAmount(row.amount)}</dd></div>
-                              <div className="flex justify-between"><dt>{t('admin.fields.reportedDate')}</dt><dd>{formatDate(row.createdAt)}</dd></div>
-                              <div><dt className="font-semibold text-gray-900 dark:text-white">{t('admin.fields.extraDetail')}</dt><p className="text-gray-600 dark:text-gray-300">{row.desc || unknownLabel}</p></div>
-                            </dl>
+
+                          <div className="space-y-1">
+                            <p>
+                              <strong>จำนวนเงิน:</strong> {money(row.amount)}
+                            </p>
+                            <p>
+                              <strong>วันที่รายงาน:</strong> {fmt(row.createdAt)}
+                            </p>
+                            <p>
+                              <strong>รายละเอียด:</strong>
+                              <br />
+                              {row.desc || unknown}
+                            </p>
                           </div>
                         </div>
+
+                        {/* PHOTOS */}
                         <div>
-                          <h3 className="text-sm font-semibold text-gray-900 mb-3 dark:text-white">{t('admin.evidenceHeading')}</h3>
-                          {row.photos && row.photos.length > 0 ? (
+                          <h3 className="font-semibold text-white mb-2">
+                            หลักฐาน
+                          </h3>
+
+                          {hasPhotos ? (
                             <div className="flex flex-wrap gap-3">
-                              {row.photos.map((url, idx) => {
-                                const resolvedUrl = resolveAssetUrl(url);
-                                return (
+                              {resolvedPhotos.map((resolved, idx) => (
                                 <button
-                                  key={url || idx}
-                                  type="button"
-                                  onClick={() => setLightboxUrl(resolvedUrl)}
-                                  className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-lg"
+                                  key={idx}
+                                  onClick={() => openLightbox(resolvedPhotos, idx)}
+                                  className="focus:outline-none"
                                 >
                                   <img
-                                    src={resolvedUrl}
-                                    alt={`evidence-${idx}`}
-                                    className="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-cyan-400/40"
+                                    src={resolved}
+                                    className="w-24 h-24 rounded-lg object-cover border border-slate-700"
                                   />
                                 </button>
-                              );
-                              })}
+                              ))}
                             </div>
                           ) : (
-                            <p className="text-gray-500 dark:text-gray-400">{t('admin.noEvidence')}</p>
+                            <p className="text-gray-400">ไม่มีรูปหลักฐาน</p>
                           )}
                         </div>
                       </div>
@@ -241,34 +403,88 @@ export default function AdminReports(){
                   )}
                 </div>
               );
-            })}
-          </div>
-        )}
+            })
+          )}
+        </div>
       </div>
-    </div>
-      {lightboxUrl && (
+
+      {/* LIGHTBOX รูปหลักฐาน */}
+      {lightboxState && (
         <div
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setLightboxUrl('')}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={closeLightbox}
           role="dialog"
           aria-modal="true"
         >
-          <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+          {hasLightboxNavigation && (
             <button
-              onClick={() => setLightboxUrl('')}
-              className="absolute -top-4 -right-4 w-10 h-10 rounded-full bg-black text-white text-lg"
-              aria-label="Close image preview"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                showPrevImage();
+              }}
+              className="absolute left-6 md:left-12 text-white w-14 h-14 rounded-full border border-white/30 bg-black/50 hover:bg-black/70 flex items-center justify-center shadow-lg transition disabled:opacity-40"
+              aria-label="Previous image"
             >
-              ×
+              <svg
+                viewBox="0 0 24 24"
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
             </button>
+          )}
+
+          <div
+            className="relative max-w-3xl w-full flex justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
             <img
-              src={lightboxUrl}
+              src={currentLightboxUrl}
               alt="evidence-full"
-              className="w-full max-h-[80vh] object-contain rounded-2xl border border-white/20 bg-black"
+              className="w-full max-h-[80vh] object-contain rounded-3xl border border-white/20 bg-black"
             />
           </div>
+
+          {hasLightboxNavigation && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                showNextImage();
+              }}
+              className="absolute right-6 md:right-12 text-white w-14 h-14 rounded-full border border-white/30 bg-black/50 hover:bg-black/70 flex items-center justify-center shadow-lg transition disabled:opacity-40"
+              aria-label="Next image"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            </button>
+          )}
         </div>
       )}
+
+      {/* POPUP ยืนยัน อนุมัติ / ปฏิเสธ */}
+      <ConfirmDialog
+        open={!!pendingAction}
+        title={confirmTitle}
+        message={confirmMessage}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
     </>
   );
 }

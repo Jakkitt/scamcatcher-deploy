@@ -9,7 +9,7 @@ export async function login({ email, password }){
     await delay(400);
     if (!email || !password) throw new Error('กรอกข้อมูลไม่ครบ');
     const isAdmin = String(email).toLowerCase().startsWith('admin');
-    const mock = { user:{ email, role: isAdmin ? 'admin' : 'user' }, tokens:{ accessToken:'mock' } };
+    const mock = { user:{ email, role: isAdmin ? 'admin' : 'user' } };
     saveAuth(mock);
     return mock.user;
   }
@@ -24,7 +24,7 @@ export async function register({ username, email, password, gender, dob }){
     await delay(500);
     if (!email || !password) throw new Error('กรอกข้อมูลไม่ครบ');
     const isAdmin = String(email).toLowerCase().startsWith('admin');
-    const mock = { user:{ username, email, gender, dob, role: isAdmin ? 'admin' : 'user' }, tokens:{ accessToken:'mock' } };
+    const mock = { user:{ username, email, gender, dob, role: isAdmin ? 'admin' : 'user' } };
     saveAuth(mock);
     return mock.user;
   }
@@ -33,7 +33,7 @@ export async function register({ username, email, password, gender, dob }){
   return res.user;
 }
 
-export async function changePassword({ currentPassword, newPassword }, token) {
+export async function changePassword({ currentPassword, newPassword }) {
   if (!import.meta.env.VITE_API_BASE_URL) {
     if (!ENABLE_MOCK) throw new Error('VITE_API_BASE_URL is not set');
     await delay(600);
@@ -41,12 +41,20 @@ export async function changePassword({ currentPassword, newPassword }, token) {
     if (currentPassword === newPassword) throw new Error('รหัสผ่านใหม่ต้องต่างจากรหัสผ่านปัจจุบัน');
     return { ok:true };
   }
-  return request('/auth/change-password', { method:'POST', body:{ currentPassword, newPassword }, token });
+  return request('/auth/change-password', { method:'POST', body:{ currentPassword, newPassword } });
 }
 
-export function logout(){ localStorage.removeItem('user'); localStorage.removeItem('tokens'); }
+export async function logout(){
+  if (!import.meta?.env?.VITE_API_BASE_URL){
+    localStorage.removeItem('user');
+    localStorage.removeItem('tokens');
+    return;
+  }
+  await request('/auth/logout', { method:'POST' });
+  localStorage.removeItem('user');
+  localStorage.removeItem('tokens');
+}
 export function getCurrentUser(){ try{ return JSON.parse(localStorage.getItem('user')); }catch{ return null } }
-export function getToken(){ try{ return JSON.parse(localStorage.getItem('tokens'))?.accessToken || '' }catch{ return '' } }
 export function updateUser(partial){
   // ถ้าไม่มี backend ให้ทำแบบ local mock เดิม
   if (!import.meta?.env?.VITE_API_BASE_URL){
@@ -56,8 +64,7 @@ export function updateUser(partial){
     return merged;
   }
   // มี backend: อัปเดตผ่าน API แล้ว sync localStorage
-  const token = getToken();
-  return request('/auth/profile', { method:'PATCH', body: partial, token })
+  return request('/auth/profile', { method:'PATCH', body: partial })
     .then(res => {
       if (res?.user){ localStorage.setItem('user', JSON.stringify(res.user)); return res.user; }
       return getCurrentUser();
@@ -65,16 +72,15 @@ export function updateUser(partial){
 }
 
 export async function deleteAccount({ email }){
-  const token = getToken();
   if (!import.meta?.env?.VITE_API_BASE_URL){
     await delay(300);
     logout();
     return { ok:true };
   }
-  return request('/auth/account', { method:'DELETE', body:{ email }, token });
+  return request('/auth/account', { method:'DELETE', body:{ email } });
 }
 
 function saveAuth(res){
   localStorage.setItem('user', JSON.stringify(res.user));
-  localStorage.setItem('tokens', JSON.stringify(res.tokens));
+  localStorage.removeItem('tokens');
 }
