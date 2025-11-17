@@ -50,9 +50,14 @@ export async function logout(){
     localStorage.removeItem('tokens');
     return;
   }
-  await request('/auth/logout', { method:'POST' });
-  localStorage.removeItem('user');
-  localStorage.removeItem('tokens');
+  try{
+    await request('/auth/logout', { method:'POST' });
+  }catch(err){
+    console.warn('logout failed, clearing session locally', err);
+  }finally{
+    localStorage.removeItem('user');
+    localStorage.removeItem('tokens');
+  }
 }
 export function getCurrentUser(){ try{ return JSON.parse(localStorage.getItem('user')); }catch{ return null } }
 export function updateUser(partial){

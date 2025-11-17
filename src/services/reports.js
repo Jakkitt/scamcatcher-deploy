@@ -75,11 +75,6 @@ export async function resetReportStatus(id){
   return request(`/reports/${id}/pending`, { method:'PATCH' });
 }
 
-export async function resetReportStatus(id){
-  const token = getToken();
-  return request(`/reports/${id}/pending`, { method:'PATCH', token });
-}
-
 export async function purgeOrphans(){
   return request('/reports/_orphans/purge', { method:'DELETE' });
 }

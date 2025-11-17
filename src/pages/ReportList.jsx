@@ -99,9 +99,40 @@ export default function ReportList() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 rounded-lg text-sm font-medium bg-gray-200 dark:bg-gray-700">
+                      <span
+                        className={`px-3 py-1 rounded-lg text-sm font-semibold border ${
+                          r.status === 'approved'
+                            ? 'text-emerald-600 border-emerald-200 bg-emerald-50 dark:text-emerald-200 dark:border-emerald-500/40 dark:bg-emerald-500/10'
+                            : r.status === 'pending'
+                            ? 'text-amber-600 border-amber-200 bg-amber-50 dark:text-amber-200 dark:border-amber-500/40 dark:bg-amber-500/10'
+                            : 'text-rose-600 border-rose-200 bg-rose-50 dark:text-rose-200 dark:border-rose-500/40 dark:bg-rose-500/10'
+                        }`}
+                      >
                         {t(`admin.statuses.${r.status}`) || r.status}
                       </span>
+                      <a
+                        href={`/reports/${r.id}`}
+                        className="inline-flex items-center justify-center px-3 py-1 h-10 rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-100 transition dark:border-white/40 dark:bg-white/10 dark:text-cyan-200 dark:hover:bg-white/20"
+                        title={t('reportListPage.viewDetail') || 'ดูรายละเอียด'}
+                        aria-label={t('reportListPage.viewDetail') || 'ดูรายละเอียด'}
+                      >
+                        <svg
+                          viewBox="0 0 64 64"
+                          className="w-5 h-5 text-gray-800 dark:hidden"
+                          fill="currentColor"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M32 14C16 14 4 32 4 32s12 18 28 18 28-18 28-18-12-18-28-18zm0 30a12 12 0 1112-12 12 12 0 01-12 12zm0-18a6 6 0 106 6 6 6 0 00-6-6z" />
+                        </svg>
+                        <svg
+                          viewBox="0 0 64 64"
+                          className="w-5 h-5 hidden dark:block text-cyan-300"
+                          fill="currentColor"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M32 14C16 14 4 32 4 32s12 18 28 18 28-18 28-18-12-18-28-18zm0 30a12 12 0 1112-12 12 12 0 01-12 12zm0-18a6 6 0 106 6 6 6 0 00-6-6z" />
+                        </svg>
+                      </a>
                       <button
                         onClick={() => onDelete(r.id)}
                         disabled={deleting === String(r.id)}

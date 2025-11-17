@@ -1,110 +1,46 @@
 // src/pages/SearchResults.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { searchReports } from "../services/reports";
+import { formatAccountNumber } from "../utils/format";
 import ExternalChecks from "../components/ExternalChecks";
 import ResultCard from "../components/ResultCard";
 import { t } from "../i18n/strings";
+import { fetchExternalChecks } from "../services/external";
+import { recordSearchStats } from "../services/stats";
 
 function useQuery() {
   const { search } = useLocation();
   return useMemo(() => new URLSearchParams(search), [search]);
 }
 
-const SEARCH_STATS_KEY = "sc_search_stats_v1";
-
-const readStats = () => {
-  try {
-    return (
-      JSON.parse(localStorage.getItem(SEARCH_STATS_KEY)) || {
-        queries: {},
-        names: {},
-        accounts: {},
-        banks: {},
-        channels: {},
-      }
-    );
-  } catch {
-    return { queries: {}, names: {}, accounts: {}, banks: {}, channels: {} };
-  }
+const INITIAL_METRICS = {
+  queryCount: 0,
+  nameCount: 0,
+  accountCount: 0,
+  bankCount: 0,
+  channelCount: 0,
 };
-
-const writeStats = (stats) => {
-  try {
-    localStorage.setItem(SEARCH_STATS_KEY, JSON.stringify(stats));
-  } catch {
-    /* ignore storage quota errors */
-  }
-};
-
-const normalize = (value = "") => value.trim().toLowerCase();
-
-function buildQueryKey({ name = "", account = "", bank = "", channel = "" }) {
-  return ["name", normalize(name), "account", normalize(account), "bank", normalize(bank), "channel", normalize(channel)].join("|");
-}
-
-function updateStats(query) {
-  const stats = readStats();
-  const key = buildQueryKey(query);
-  stats.queries[key] = (stats.queries[key] || 0) + 1;
-
-  let nameCount = 0;
-  if (query.name) {
-    const nKey = normalize(query.name);
-    stats.names[nKey] = (stats.names[nKey] || 0) + 1;
-    nameCount = stats.names[nKey];
-  }
-
-  let accountCount = 0;
-  if (query.account) {
-    const aKey = normalize(query.account.replace(/[^\d]/g, ""));
-    stats.accounts[aKey] = (stats.accounts[aKey] || 0) + 1;
-    accountCount = stats.accounts[aKey];
-  }
-
-  let bankCount = 0;
-  if (query.bank) {
-    const bKey = normalize(query.bank);
-    stats.banks[bKey] = (stats.banks[bKey] || 0) + 1;
-    bankCount = stats.banks[bKey];
-  }
-
-  let channelCount = 0;
-  if (query.channel) {
-    const cKey = normalize(query.channel);
-    stats.channels[cKey] = (stats.channels[cKey] || 0) + 1;
-    channelCount = stats.channels[cKey];
-  }
-
-  writeStats(stats);
-
-  return {
-    queryCount: stats.queries[key],
-    nameCount,
-    accountCount,
-    bankCount,
-    channelCount,
-  };
-}
 
 export default function SearchResults() {
   const q = useQuery();
   const copy = t("searchResultsPage") || {};
+  const externalCopy = t("externalChecks") || {};
+  const externalErrorText = externalCopy.error || "ไม่สามารถเชื่อมต่อข้อมูลภายนอก";
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [metrics, setMetrics] = useState({
-    queryCount: 0,
-    nameCount: 0,
-    accountCount: 0,
-    bankCount: 0,
-    channelCount: 0,
-  });
+  const [metrics, setMetrics] = useState(INITIAL_METRICS);
   const [errorMessage, setErrorMessage] = useState("");
+  const [externalSummary, setExternalSummary] = useState({
+    loading: false,
+    bls: { skipped: true },
+  });
+  const navigate = useNavigate();
 
   const query = {
     name: q.get("name") || "",
-    account: q.get("account") || "",
+    account: (q.get("account") || "").replace(/[^\d]/g, ""),
     bank: q.get("bank") || "",
     channel: q.get("channel") || "",
   };
@@ -117,8 +53,23 @@ export default function SearchResults() {
       try {
         const res = await searchReports(query);
         if (!alive) return;
-        setItems(res || []);
-        setMetrics(updateStats(query));
+        const approvedOnly = Array.isArray(res)
+          ? res.filter((item) => item.status === 'approved')
+          : [];
+        setItems(approvedOnly);
+        if (query.name || query.account || query.bank || query.channel) {
+          try {
+            const stats = await recordSearchStats(query);
+            if (!alive) return;
+            setMetrics({ ...INITIAL_METRICS, ...stats });
+          } catch (statsErr) {
+            console.warn('recordSearchStats failed', statsErr);
+            if (!alive) return;
+            setMetrics(INITIAL_METRICS);
+          }
+        } else if (alive) {
+          setMetrics(INITIAL_METRICS);
+        }
       } catch (err) {
         if (!alive) return;
         setItems([]);
@@ -131,9 +82,65 @@ export default function SearchResults() {
     return () => (alive = false);
   }, [query.name, query.account, query.bank, query.channel]);
 
-  // mock summary to match the design placeholders
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!query.name && !query.account && !query.bank) {
+      setExternalSummary({
+        loading: false,
+        bls: { skipped: true, found: false },
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setExternalSummary((prev) => ({ ...prev, loading: true }));
+    (async () => {
+      const attemptFetch = async (retries = 2, delay = 1000) => {
+        try {
+          const data = await fetchExternalChecks(query);
+          if (cancelled) return;
+          const source = data?.sources?.blacklistseller || {};
+          const formattedTime = data?.checkedAt
+            ? new Date(data.checkedAt).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })
+            : undefined;
+          setExternalSummary({
+            loading: false,
+            bls: {
+              found: Boolean(source.found),
+              count: source.count || 0,
+              link: source.link || source.sourceUrl,
+              error: source.error,
+              skipped: source.skipped,
+              matches: source.matches || [],
+              lastChecked: formattedTime,
+              cached: source.cached || data?.cached,
+            },
+          });
+        } catch (err) {
+          if (retries > 0) {
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            return attemptFetch(retries - 1, delay * 1.5);
+          }
+          if (cancelled) return;
+          setExternalSummary({
+            loading: false,
+            bls: { found: false, error: err?.message || externalErrorText },
+          });
+        }
+      };
+      attemptFetch();
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [query.name, query.account, query.bank]);
+
   const foundCount = items.length;
-  const externalSummary = { bls: foundCount > 0, checkgon: false };
+
+  const formattedAccount = query.account ? formatAccountNumber(query.account) : "";
 
   const summaryCards = [
     {
@@ -156,34 +163,31 @@ export default function SearchResults() {
 
   if (query.name) {
     summaryCards.push({
-      label: `การค้นหาชื่อ "${query.name}" ทั้งหมด`,
+      label: `การค้นหาชื่อ "${query.name}"`,
       value: metrics.nameCount,
       description: "นับเฉพาะคำค้นหานี้โดยไม่สนใจช่องทางหรือธนาคาร",
+    });
+  } else {
+    summaryCards.push({
+      label: "การค้นหาชื่อ",
+      value: metrics.nameCount,
+      description: "กรอกชื่อเพื่อเริ่มนับจำนวนการค้นหา",
     });
   }
 
   if (query.account) {
     summaryCards.push({
-      label: `การค้นหาเลขบัญชี ${query.account}`,
+      label: `การค้นหาเลขบัญชี ${formattedAccount}`,
       value: metrics.accountCount,
       description: "รวมทุกการค้นหาที่ใช้เลขบัญชีนี้",
     });
-  }
-
-  if (query.bank) {
-    summaryCards.push({
-      label: `การค้นหาธนาคาร ${query.bank}`,
-      value: metrics.bankCount,
-      description: "นับการค้นหาที่ระบุธนาคารนี้",
-    });
-  }
-
-  if (query.channel) {
-    summaryCards.push({
-      label: `การค้นหาช่องทาง ${query.channel}`,
-      value: metrics.channelCount,
-      description: "นับการค้นหาที่ระบุช่องทางธุรกรรมนี้",
-    });
+    if (query.channel) {
+      summaryCards.push({
+        label: `การค้นหาช่องทาง ${query.channel}`,
+        value: metrics.channelCount,
+        description: "นับการค้นหาที่ระบุช่องทางธุรกรรมนี้",
+      });
+    }
   }
 
   return (
@@ -210,7 +214,18 @@ export default function SearchResults() {
 
         <ExternalChecks
           summary={externalSummary}
-          onReportHint={() => toast(t("search.reportHint"))}
+          onReportHint={() =>
+            navigate("/report", {
+              state: {
+                prefill: {
+                  name: query.name,
+                  bank: query.bank,
+                  account: query.account,
+                  channel: query.channel,
+                },
+              },
+            })
+          }
         />
       </div>
 

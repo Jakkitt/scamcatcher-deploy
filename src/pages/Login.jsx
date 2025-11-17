@@ -10,6 +10,8 @@ export default function Login() {
   const errorCopy = loginCopy.errors || {};
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [fieldErrors, setFieldErrors] = useState({ email: "", password: "" });
+  const [touched, setTouched] = useState({ email: false, password: false });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -24,6 +26,33 @@ export default function Login() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
+  const validateField = (name, value) => {
+    const trimmed = (value || "").trim();
+    let message = "";
+    if (!trimmed) {
+      message =
+        errorCopy[name === "email" ? "emailRequired" : "passwordRequired"] ||
+        errorCopy.invalidInput;
+    } else if (name === "email") {
+      const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+      if (!emailPattern.test(trimmed)) message = errorCopy.emailInvalid;
+    }
+    setFieldErrors((prev) => ({ ...prev, [name]: message }));
+    return !message;
+  };
+
+  const handleFieldBlur = (name) => {
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    validateField(name, formData[name]);
+  };
+
+  const handleFieldChange = (name, value) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (touched[name]) validateField(name, value);
+  };
+
+  const showFieldError = (name) => touched[name] && fieldErrors[name];
+
   const normalizeError = (err) => {
     const raw = String(err?.message || "");
     if (!raw && !err?.status) return errorCopy.generic;
@@ -36,6 +65,14 @@ export default function Login() {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
+    const nextTouched = { email: true, password: true };
+    setTouched(nextTouched);
+    const emailValid = validateField("email", formData.email);
+    const passwordValid = validateField("password", formData.password);
+    if (!emailValid || !passwordValid) {
+      setIsSubmitting(false);
+      return;
+    }
     try {
       await login({ email: formData.email, password: formData.password });
       navigate(from, { replace: true });
@@ -114,12 +151,14 @@ export default function Login() {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) => handleFieldChange("email", e.target.value)}
+                  onBlur={() => handleFieldBlur("email")}
                   placeholder="your@email.com"
                   required
                   className="w-full h-12 pl-12 pr-4 rounded-xl bg-gray-900/50 border border-cyan-400/30 text-white placeholder-gray-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all"
                 />
               </div>
+              <p className="text-xs text-red-400 mt-1 min-h-[1rem]">{showFieldError("email") ? fieldErrors.email : ""}</p>
             </div>
 
             <div>
@@ -129,12 +168,14 @@ export default function Login() {
                 <input
                   type="password"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) => handleFieldChange("password", e.target.value)}
+                  onBlur={() => handleFieldBlur("password")}
                   placeholder="••••••••"
                   required
                   className="w-full h-12 pl-12 pr-4 rounded-xl bg-gray-900/50 border border-cyan-400/30 text-white placeholder-gray-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all"
                 />
               </div>
+              <p className="text-xs text-red-400 mt-1 min-h-[1rem]">{showFieldError("password") ? fieldErrors.password : ""}</p>
             </div>
 
             <div className="text-right">

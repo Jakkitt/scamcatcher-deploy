@@ -75,6 +75,16 @@ export async function listAllReports(req, res){
   }
 }
 
+export async function getReportById(req, res){
+  try{
+    const doc = await Report.findById(req.params.id);
+    if (!doc) return res.status(404).json({ error:{ message:'not found' } });
+    return res.json(serializeReport(req, doc));
+  }catch(e){
+    return res.status(500).json({ error:{ message: e.message } });
+  }
+}
+
 async function setStatus(id, status){
   const doc = await Report.findById(id);
   if (!doc) return null;

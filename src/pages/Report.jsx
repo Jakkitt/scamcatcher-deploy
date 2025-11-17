@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { BANKS, TRANSFER_CHANNELS } from '../constants/banks';
 import { createReport } from '../services/reports';
@@ -26,12 +26,20 @@ const schema = z.object({
 
 export default function Report() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const prefill = location.state?.prefill || {};
   const fileRef = React.useRef(null);
   const [files, setFiles] = React.useState([]);
   const [previews, setPreviews] = React.useState([]);
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = useForm({
     resolver: zodResolver(schema),
+    defaultValues: {
+      name: prefill.name || '',
+      bank: prefill.bank || '',
+      account: prefill.account || '',
+      channel: prefill.channel || '',
+    },
   });
 
   const channelValue = watch('channel');

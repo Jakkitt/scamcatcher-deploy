@@ -3,7 +3,10 @@ export function resolveBase(){
   if (envBase && String(envBase).trim()) return envBase;
   try{
     const origin = window.location.origin;
-    if (origin.includes(':5173')) return 'http://localhost:4000/api';
+    if (/:(5173|5174|5175)/.test(origin)) {
+      const devPort = import.meta?.env?.VITE_API_DEV_PORT || '4010';
+      return `http://localhost:${devPort}/api`;
+    }
     return origin + '/api';
   }catch{ return ''; }
 }

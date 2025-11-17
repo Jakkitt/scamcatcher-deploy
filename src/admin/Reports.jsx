@@ -54,9 +54,9 @@ const ActionButton = ({ label, onClick, variant = 'primary', disabled }) => {
 const DetailButton = ({ expanded, onClick }) => (
   <button
     onClick={onClick}
-    className="px-3 py-1.5 rounded-lg text-xs font-semibold
-             bg-gray-700 text-gray-200 border border-gray-600
-             hover:bg-gray-600 transition"
+    className="px-3 py-1.5 rounded-lg text-xs font-semibold transition
+             bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200
+             dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
   >
     {expanded ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียด'}
   </button>
@@ -73,17 +73,18 @@ const ConfirmDialog = ({ open, title, message, onConfirm, onCancel }) => {
       aria-modal="true"
     >
       <div
-        className="max-w-md w-full rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-6 space-y-4 text-sm text-slate-100"
+        className="max-w-md w-full rounded-2xl bg-white border border-gray-200 shadow-2xl p-6 space-y-4 text-sm text-gray-800
+                   dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-white">{title}</h2>
-        <p className="text-slate-200">{message}</p>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
+        <p className="text-gray-600 dark:text-slate-200">{message}</p>
         <div className="flex justify-end gap-3 pt-2">
           <button
             onClick={onCancel}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold
-                       bg-slate-800 text-slate-200 border border-slate-700
-                       hover:bg-slate-700 transition"
+                       bg-gray-100 text-gray-800 border border-gray-300 hover:bg-gray-200
+                       dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700 transition"
           >
             ไม่ใช่
           </button>
@@ -259,8 +260,8 @@ export default function AdminReports() {
         {/* HEADER */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-white">รายการแจ้งมิจฉาชีพ</h1>
-            <p className="text-gray-400 text-sm">รายการทั้งหมดจากผู้ใช้งาน</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">รายการแจ้งมิจฉาชีพ</h1>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">รายการทั้งหมดจากผู้ใช้งาน</p>
           </div>
 
           <button
@@ -274,12 +275,13 @@ export default function AdminReports() {
         </div>
 
         {/* TABLE CARD (ใช้ grid แถวต่อแถว) */}
-        <div className="rounded-3xl border border-slate-800 bg-[#020617]/95 shadow-xl overflow-hidden">
+        <div className="rounded-3xl border border-gray-200 bg-white shadow-xl overflow-hidden dark:border-slate-800 dark:bg-[#020617]/95">
           {/* HEADER ROW */}
           <div
             className="grid grid-cols-[200px,1.3fr,1.2fr,1.1fr,1fr,auto] 
-                          px-6 py-4 border-b border-slate-800/70 
-                          text-[11px] font-semibold tracking-wide text-gray-300"
+                          px-6 py-4 border-b border-gray-100 bg-gray-50 
+                          text-[11px] font-semibold tracking-wide text-gray-600
+                          dark:border-slate-800/70 dark:bg-transparent dark:text-gray-300"
           >
             <span>รหัส</span>
             <span>ชื่อมิจฉาชีพ</span>
@@ -291,11 +293,11 @@ export default function AdminReports() {
 
           {/* BODY */}
           {loading ? (
-            <div className="p-6 text-gray-400">กำลังโหลด...</div>
+            <div className="p-6 text-gray-500 dark:text-gray-400">กำลังโหลด...</div>
           ) : error ? (
-            <div className="p-6 text-red-400">{error}</div>
+            <div className="p-6 text-red-500 dark:text-red-400">{error}</div>
           ) : !rows || rows.length === 0 ? (
-            <div className="p-6 text-gray-400">ยังไม่มีรายการแจ้ง</div>
+            <div className="p-6 text-gray-500 dark:text-gray-400">ยังไม่มีรายการแจ้ง</div>
           ) : (
             (rows || []).map((row) => {
               const expanded = expandedId === row.id;
@@ -307,11 +309,11 @@ export default function AdminReports() {
               const hasPhotos = resolvedPhotos.length > 0;
 
               return (
-                <div key={row.id} className="border-b border-slate-800/60">
+                <div key={row.id} className="border-b border-gray-100 dark:border-slate-800/60">
                   {/* MAIN ROW */}
                   <div
                     className="grid grid-cols-[200px,1.3fr,1.2fr,1.1fr,1fr,auto] 
-                                  px-6 py-4 text-sm text-slate-200 bg-slate-950/40"
+                                  px-6 py-4 text-sm text-gray-900 bg-white dark:text-slate-200 dark:bg-slate-950/40"
                   >
                     <span className="truncate break-all min-w-[200px]">
                       {row.id}
@@ -336,36 +338,36 @@ export default function AdminReports() {
 
                   {/* DETAILS ROW */}
                   {expanded && (
-                    <div className="px-6 py-5 bg-slate-950/70">
-                      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 text-sm text-gray-200 space-y-4">
-                        <h2 className="text-lg font-semibold text-white mb-2">
+                    <div className="px-6 py-5 bg-gray-50 dark:bg-slate-950/70">
+                      <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-700 space-y-4 dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-200">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                           รายละเอียดเพิ่มเติม
                         </h2>
 
                         <div className="grid md:grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <p>
+                            <p className="text-gray-600 dark:text-gray-300">
                               <strong>ชื่อ:</strong> {row.name || unknown}
                             </p>
-                            <p>
+                            <p className="text-gray-600 dark:text-gray-300">
                               <strong>ธนาคาร:</strong> {row.bank || unknown}
                             </p>
-                            <p>
+                            <p className="text-gray-600 dark:text-gray-300">
                               <strong>เลขบัญชี:</strong> {row.account || unknown}
                             </p>
-                            <p>
+                            <p className="text-gray-600 dark:text-gray-300">
                               <strong>ช่องทาง:</strong> {row.channel || unknown}
                             </p>
                           </div>
 
                           <div className="space-y-1">
-                            <p>
+                            <p className="text-gray-600 dark:text-gray-300">
                               <strong>จำนวนเงิน:</strong> {money(row.amount)}
                             </p>
-                            <p>
+                            <p className="text-gray-600 dark:text-gray-300">
                               <strong>วันที่รายงาน:</strong> {fmt(row.createdAt)}
                             </p>
-                            <p>
+                            <p className="text-gray-600 dark:text-gray-300">
                               <strong>รายละเอียด:</strong>
                               <br />
                               {row.desc || unknown}
@@ -375,7 +377,7 @@ export default function AdminReports() {
 
                         {/* PHOTOS */}
                         <div>
-                          <h3 className="font-semibold text-white mb-2">
+                          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                             หลักฐาน
                           </h3>
 
@@ -389,13 +391,13 @@ export default function AdminReports() {
                                 >
                                   <img
                                     src={resolved}
-                                    className="w-24 h-24 rounded-lg object-cover border border-slate-700"
+                                    className="w-24 h-24 rounded-lg object-cover border border-gray-200 dark:border-slate-700"
                                   />
                                 </button>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-gray-400">ไม่มีรูปหลักฐาน</p>
+                            <p className="text-gray-600 dark:text-gray-400">ไม่มีรูปหลักฐาน</p>
                           )}
                         </div>
                       </div>

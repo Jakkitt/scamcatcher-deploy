@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { getReportDetail } from '../services/reports';
+import { fetchExternalChecks } from '../services/external';
 import { t } from '../i18n/strings';
 
 const statusConfig = {
@@ -30,6 +31,10 @@ export default function ReportDetail() {
   const [loading, setLoading] = React.useState(!report);
   const [error, setError] = React.useState('');
   const [lightbox, setLightbox] = React.useState({ open: false, index: 0 });
+  const [externalSources, setExternalSources] = React.useState({
+    loading: false,
+    bls: { skipped: true },
+  });
 
   React.useEffect(() => {
     let alive = true;
@@ -60,6 +65,54 @@ export default function ReportDetail() {
   const money = (value) =>
     `${Number(value || 0).toLocaleString('th-TH')} ${t('common.currencyBaht')}`;
   const meta = report ? statusConfig[report.status] || statusConfig.pending : null;
+
+  React.useEffect(() => {
+    let cancelled = false;
+    if (!report) return () => {};
+    const query = {
+      name: report.name || '',
+      account: report.account || '',
+      bank: report.bank || '',
+    };
+    if (!query.name && !query.account && !query.bank) {
+      setExternalSources({ loading: false, bls: { skipped: true } });
+      return () => {};
+    }
+    setExternalSources((prev) => ({ ...prev, loading: true }));
+    (async () => {
+      try {
+        const data = await fetchExternalChecks(query);
+        if (cancelled) return;
+        const source = data?.sources?.blacklistseller || { found: false };
+        const formattedTime = data?.checkedAt
+          ? new Date(data.checkedAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })
+          : undefined;
+        setExternalSources({
+          loading: false,
+          checkedAt: formattedTime,
+          bls: {
+            ...source,
+            link: source.link || source.sourceUrl,
+          },
+        });
+      } catch (err) {
+        if (cancelled) return;
+        setExternalSources({
+          loading: false,
+          bls: { found: false, error: err?.message },
+        });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [report]);
+
+  const blsResult = {
+    ...(externalSources.bls || {}),
+    loading: externalSources.loading,
+    lastChecked: externalSources.checkedAt,
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-gray-900 dark:bg-gradient-to-br dark:from-gray-950 dark:via-slate-950 dark:to-black dark:text-gray-100">
@@ -183,9 +236,7 @@ export default function ReportDetail() {
               <div className="space-y-3">
                 <ExternalSource
                   name="Blacklistseller.com"
-                  status="พบข้อมูล"
-                  description="พบข้อมูลผู้กระทำผิดในฐานข้อมูล Blacklistseller"
-                  href="https://www.blacklistseller.com/"
+                  result={blsResult}
                 />
               </div>
             </aside>
@@ -286,26 +337,91 @@ function DetailRow({ label, value, emphasize }) {
   );
 }
 
-function ExternalSource({ name, status, description, href }) {
+const SOURCE_STYLES = {
+  loading: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-200',
+  found: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200',
+  missing: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+  error: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-100',
+};
+
+function ExternalSource({ name, result = {} }) {
+  const copy = t('externalChecks') || {};
+  const status = result.loading ? 'loading' : result.error ? 'error' : result.found ? 'found' : 'missing';
+  const badgeLabel =
+    status === 'found'
+      ? copy.badgeFound
+      : status === 'error'
+      ? copy.badgeError
+      : status === 'loading'
+      ? copy.badgeLoading
+      : copy.badgeMissing;
+  const badgeClass = SOURCE_STYLES[status] || SOURCE_STYLES.missing;
+  const description =
+    status === 'found'
+      ? copy.detailFound
+      : status === 'error'
+      ? result.error
+      : status === 'loading'
+      ? copy.loading
+      : result.skipped
+      ? copy.skipped
+      : copy.detailMissing;
+  const matches = Array.isArray(result.matches) ? result.matches : [];
+
   return (
     <div className="rounded-2xl border border-gray-100 p-4 dark:border-white/10 bg-gray-50 dark:bg-white/5">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <p className="font-semibold">{name}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+          <p className={`text-xs ${status === 'error' ? 'text-rose-500' : 'text-gray-500 dark:text-gray-400'}`}>
+            {description}
+          </p>
+          {result.lastChecked && (
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+              {copy.updated ? copy.updated(result.lastChecked) : result.lastChecked}
+            </p>
+          )}
         </div>
-        <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-600 dark:bg-red-500/20 dark:text-red-200">
-          {status}
-        </span>
+        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeClass}`}>{badgeLabel}</span>
       </div>
-      {href && (
+
+      {matches.length > 0 && (
+        <ul className="mt-3 space-y-2 text-xs text-gray-600 dark:text-gray-300">
+          {matches.map((match, idx) => (
+            <li
+              key={match.id || idx}
+              className="rounded-xl border border-gray-200 bg-white/70 px-3 py-2 dark:border-white/10 dark:bg-white/5"
+            >
+              <p className="font-semibold">{match.name || '-'}</p>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                {[match.bank, match.account].filter(Boolean).join(' • ') || 'ไม่ระบุบัญชี'}
+              </p>
+              {match.description && (
+                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 line-clamp-3">{match.description}</p>
+              )}
+              {match.url && (
+                <a
+                  href={match.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-flex text-[11px] text-cyan-600 underline hover:text-cyan-800 dark:text-cyan-300"
+                >
+                  {copy.viewSource}
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {result.link && !result.loading && (
         <a
-          href={href}
+          href={result.link}
           target="_blank"
           rel="noreferrer"
           className="mt-3 inline-flex text-sm text-cyan-600 underline hover:text-cyan-800 dark:text-cyan-300"
         >
-          เปิดเว็บไซต์
+          {copy.viewSource}
         </a>
       )}
     </div>

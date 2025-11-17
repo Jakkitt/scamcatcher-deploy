@@ -47,6 +47,20 @@ const schema = z
         path: ["channelOther"],
       });
     }
+    if (data.bank && !data.account) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "กรุณากรอกเลขบัญชีเมื่อเลือกธนาคาร",
+        path: ["account"],
+      });
+    }
+    if (data.channel && !data.account) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "กรุณากรอกเลขบัญชีเมื่อเลือกช่องทาง",
+        path: ["account"],
+      });
+    }
   });
 
 export default function SearchDetail() {
@@ -69,9 +83,10 @@ export default function SearchDetail() {
   };
 
   const onSubmit = (raw) => {
+    const accountDigits = raw.account ? raw.account.replace(/[^\d]/g, "") : "";
     const params = {
       name: sanitizeText(raw.name || ""),
-      account: sanitizeText(raw.account || ""),
+      account: accountDigits,
       bank: raw.bank || "",
       channel: raw.channel === "OTHER" ? sanitizeText(raw.channelOther || "") : raw.channel || "",
     };
