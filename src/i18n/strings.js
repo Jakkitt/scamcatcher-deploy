@@ -66,8 +66,10 @@ export const STRINGS = {
   search: {
     title: 'ค้นหามิจฉาชีพ',
     subtitle: 'กรอกข้อมูลที่ทราบอย่างน้อย 1 รายการเพื่อค้นหาในระบบ',
-    nameLabel: 'ชื่อผู้ต้องสงสัย',
-    namePlaceholder: 'เช่น นายสมชาย ใจดี',
+    firstNameLabel: 'ชื่อจริงผู้ต้องสงสัย',
+    firstNamePlaceholder: 'เช่น สมชาย',
+    lastNameLabel: 'นามสกุลผู้ต้องสงสัย',
+    lastNamePlaceholder: 'เช่น ใจดี',
     bankLabel: 'ธนาคาร',
     bankPlaceholder: 'เลือกธนาคาร',
     accountLabel: 'เลขบัญชี',
@@ -120,6 +122,16 @@ export const STRINGS = {
       revokeApprove: 'ยกเลิกอนุมัติ',
       revokeReject: 'ยกเลิกปฏิเสธ',
       review: 'ตรวจสอบ',
+    },
+    externalChecks: {
+      label: 'การเรียก API ภายนอก',
+      hint: 'ใช้โควตาตรวจสอบจาก Blacklistseller',
+      enabled: 'เปิดใช้งาน',
+      disabled: 'ปิดใช้งาน',
+      toggleOn: 'เปิดการตรวจสอบภายนอก',
+      toggleOff: 'ปิดการตรวจสอบภายนอก',
+      toastOn: 'เปิดการเชื่อมต่อภายนอกแล้ว',
+      toastOff: 'ปิดการเชื่อมต่อภายนอกแล้ว',
     },
     table: {
       code: 'รหัส',
@@ -356,7 +368,8 @@ export const STRINGS = {
     error: 'ไม่สามารถส่งรายงานได้',
     uploadRequired: 'โปรดอัปโหลดรูปอย่างน้อย 1 รูป',
     fields: {
-      name: { label: 'ชื่อ–นามสกุลผู้กระทำผิด *', placeholder: 'ระบุชื่อ–นามสกุล' },
+      firstName: { label: 'ชื่อจริงผู้กระทำผิด *', placeholder: 'ระบุชื่อจริง' },
+      lastName: { label: 'นามสกุลผู้กระทำผิด *', placeholder: 'ระบุนามสกุล' },
       category: { label: 'หมวดหมู่ *', placeholder: 'เช่น การลงทุน' },
       bank: { label: 'ธนาคาร', placeholder: '-- เลือกธนาคาร --' },
       account: { label: 'เลขบัญชี', placeholder: 'เช่น 123-4-56789-0' },
@@ -367,6 +380,8 @@ export const STRINGS = {
       photos: { label: 'รูปภาพประกอบ (สูงสุด 3 รูป)', add: '+ รูป' },
     },
     validation: {
+      firstNameRequired: 'กรุณาระบุชื่อจริงผู้กระทำผิด',
+      lastNameRequired: 'กรุณาระบุนามสกุลผู้กระทำผิด',
       nameRequired: 'กรุณาระบุชื่อผู้กระทำผิด',
       accountShort: 'เลขบัญชีสั้นเกินไป',
       amountRequired: 'กรุณาระบุจำนวนเงิน',

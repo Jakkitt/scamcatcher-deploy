@@ -8,6 +8,7 @@ import {
   countOrphans,
   resetReportStatus,
 } from '../services/reports';
+import { getExternalChecksSetting, updateExternalChecksSetting } from '../services/admin';
 import { t } from '../i18n/strings';
 import { resolveAssetUrl } from '../utils/api';
 
@@ -110,6 +111,9 @@ export default function AdminReports() {
   const [expandedId, setExpandedId] = React.useState(null);
   const [acting, setActing] = React.useState('');
   const [lightboxState, setLightboxState] = React.useState(null);
+  const [externalEnabled, setExternalEnabled] = React.useState(true);
+  const [externalSettingLoading, setExternalSettingLoading] = React.useState(true);
+  const [externalSettingSaving, setExternalSettingSaving] = React.useState(false);
 
   // สำหรับ popup ยืนยันอนุมัติ/ปฏิเสธ
   // { type: 'approve' | 'reject', row }
@@ -196,6 +200,14 @@ export default function AdminReports() {
   const unknown = '-';
   const fmt = (v) => (v ? new Date(v).toLocaleDateString('th-TH') : unknown);
   const money = (v) => `${Number(v || 0).toLocaleString('th-TH')} บาท`;
+  const resolveName = React.useCallback(
+    (row) => {
+      if (row?.name) return row.name;
+      const combined = [row?.firstName, row?.lastName].filter(Boolean).join(' ').trim();
+      return combined || unknown;
+    },
+    [unknown],
+  );
 
   const renderActions = (row, expanded, toggle) => (
     <div className="flex gap-2">
@@ -254,24 +266,105 @@ export default function AdminReports() {
       : `คุณต้องการปฏิเสธรายการรหัส ${pendingAction.row.id} ใช่หรือไม่?`
     : '';
 
+  const adminCopy = t('admin') || {};
+  const externalControlCopy = adminCopy.externalChecks || {};
+
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const setting = await getExternalChecksSetting();
+        if (!alive) return;
+        setExternalEnabled(setting?.enabled !== false);
+      } catch (err) {
+        console.warn(err);
+      } finally {
+        if (alive) setExternalSettingLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const toggleExternalChecks = async () => {
+    const next = !externalEnabled;
+    setExternalSettingSaving(true);
+    try {
+      const updated = await updateExternalChecksSetting(next);
+      setExternalEnabled(updated?.enabled !== false);
+      toast.success(next ? externalControlCopy.toastOn : externalControlCopy.toastOff);
+    } catch (err) {
+      toast.error(err?.message || adminCopy.actionFailed);
+    } finally {
+      setExternalSettingSaving(false);
+    }
+  };
+
   return (
     <>
       <div className="space-y-6">
         {/* HEADER */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap items-center gap-4 justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">รายการแจ้งมิจฉาชีพ</h1>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">รายการทั้งหมดจากผู้ใช้งาน</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">จัดการรายงานมิจฉาชีพ</h1>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">ตรวจสอบสถานะรายงาน ปรับสถานะ และดูรายละเอียดหลักฐาน</p>
           </div>
-
-          <button
-            onClick={onPurge}
-            className="px-4 py-2 rounded-xl text-sm font-semibold
+          
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <button
+              onClick={onPurge}
+              className="px-4 py-2 rounded-xl text-sm font-semibold
                        bg-red-700 text-white hover:bg-red-600 
-                       border border-red-800 shadow-lg"
-          >
-            ลบข้อมูลขยะ {purgeState?.count ? `(${purgeState.count})` : ''}
-          </button>
+                       border border-red-800 shadow-lg h-full sm:self-end"
+            >
+              ลบข้อมูลขยะ {purgeState?.count ? `(${purgeState.count})` : ''}
+            </button>
+            <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm dark:border-white/20 dark:bg-white/5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-white">{externalControlCopy.label}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{externalControlCopy.hint}</p>
+                </div>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full border ${
+                    externalEnabled
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-200 dark:border-emerald-500/40"
+                      : "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"
+                  }`}
+                >
+                  {externalEnabled ? externalControlCopy.enabled : externalControlCopy.disabled}
+                </span>
+              </div>
+              <button
+                onClick={toggleExternalChecks}
+                disabled={externalSettingLoading || externalSettingSaving}
+                role="switch"
+                aria-checked={externalEnabled}
+                className={`mt-2 flex items-center justify-center gap-3 rounded-2xl border px-3 py-2 text-sm font-semibold transition
+                  ${externalEnabled
+                    ? "border-emerald-400 text-emerald-700 dark:text-emerald-200"
+                    : "border-gray-200 text-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  }
+                  ${externalSettingSaving || externalSettingLoading ? "opacity-60 cursor-not-allowed" : "hover:border-emerald-300"}
+                `}
+              >
+                <span
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200
+                    ${externalEnabled ? "bg-emerald-500" : "bg-gray-400 dark:bg-gray-600"}
+                  `}
+                >
+                  <span
+                    className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200"
+                    style={{ transform: externalEnabled ? 'translateX(22px)' : 'translateX(0px)' }}
+                  />
+                </span>
+                <span className="text-sm font-semibold">
+                  {externalEnabled ? externalControlCopy.toggleOff : externalControlCopy.toggleOn}
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* TABLE CARD (ใช้ grid แถวต่อแถว) */}
@@ -318,7 +411,7 @@ export default function AdminReports() {
                     <span className="truncate break-all min-w-[200px]">
                       {row.id}
                     </span>
-                    <span className="truncate">{row.name || unknown}</span>
+                    <span className="truncate">{resolveName(row)}</span>
                     <span className="truncate">{row.category || unknown}</span>
                     <span>{fmt(row.createdAt)}</span>
                     <span>{money(row.amount)}</span>
@@ -347,7 +440,7 @@ export default function AdminReports() {
                         <div className="grid md:grid-cols-2 gap-4">
                           <div className="space-y-1">
                             <p className="text-gray-600 dark:text-gray-300">
-                              <strong>ชื่อ:</strong> {row.name || unknown}
+                              <strong>ชื่อ:</strong> {resolveName(row)}
                             </p>
                             <p className="text-gray-600 dark:text-gray-300">
                               <strong>ธนาคาร:</strong> {row.bank || unknown}

@@ -12,14 +12,14 @@ import {
 import { requireAuth } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import { registerSchema, loginSchema, changePasswordSchema, profileSchema } from '../validators/auth.schema.js';
-import { authRateLimiter } from '../middlewares/rateLimit.js';
+import { authRateLimiter, sessionRefreshLimiter } from '../middlewares/rateLimit.js';
 
 const router = Router();
 
 router.post('/register', authRateLimiter, validate(registerSchema), register);
 router.post('/login', authRateLimiter, validate(loginSchema), login);
 router.post('/logout', logout);
-router.post('/refresh', refreshSession);
+router.post('/refresh', sessionRefreshLimiter, refreshSession);
 router.post('/change-password', requireAuth, validate(changePasswordSchema), changePassword);
 router.get('/me', requireAuth, me);
 router.patch('/profile', requireAuth, validate(profileSchema), updateProfile);

@@ -16,7 +16,8 @@ const createOptionalText = () =>
 
 const schema = z
   .object({
-    name: createOptionalText(),
+    firstName: createOptionalText(),
+    lastName: createOptionalText(),
     account: z.preprocess(
       (val) => (typeof val === "string" ? val.replace(/[^\d-]/g, "").trim() : ""),
       z
@@ -32,8 +33,9 @@ const schema = z
   })
   .superRefine((data, ctx) => {
     const channelLabel = data.channel === "OTHER" ? data.channelOther : data.channel;
-    const hasAny = Boolean(data.name || data.account || data.bank || channelLabel);
-    if (!hasAny) {
+    const hasName = Boolean(data.firstName || data.lastName);
+    const hasOther = Boolean(data.account || data.bank || channelLabel);
+    if (!hasName && !hasOther) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: t("validation.requireOne"),
@@ -47,17 +49,10 @@ const schema = z
         path: ["channelOther"],
       });
     }
-    if (data.bank && !data.account) {
+    if ((data.bank || channelLabel) && !data.account) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "กรุณากรอกเลขบัญชีเมื่อเลือกธนาคาร",
-        path: ["account"],
-      });
-    }
-    if (data.channel && !data.account) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "กรุณากรอกเลขบัญชีเมื่อเลือกช่องทาง",
+        message: "กรุณากรอกเลขบัญชีเมื่อเลือกธนาคารหรือช่องทาง",
         path: ["account"],
       });
     }
@@ -73,7 +68,14 @@ export default function SearchDetail() {
     formState: { isSubmitting, errors },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", account: "", bank: "", channel: "", channelOther: "" },
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      account: "",
+      bank: "",
+      channel: "",
+      channelOther: "",
+    },
   });
   const channelValue = watch("channel");
   const bankValue = watch("bank");
@@ -84,15 +86,27 @@ export default function SearchDetail() {
 
   const onSubmit = (raw) => {
     const accountDigits = raw.account ? raw.account.replace(/[^\d]/g, "") : "";
+    const firstName = sanitizeText(raw.firstName || "");
+    const lastName = sanitizeText(raw.lastName || "");
+    const channelValue = raw.channel === "OTHER" ? sanitizeText(raw.channelOther || "") : raw.channel || "";
     const params = {
-      name: sanitizeText(raw.name || ""),
+      firstName,
+      lastName,
       account: accountDigits,
       bank: raw.bank || "",
-      channel: raw.channel === "OTHER" ? sanitizeText(raw.channelOther || "") : raw.channel || "",
+      channel: channelValue,
     };
+    const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+    if (fullName) {
+      params.name = fullName;
+    }
+    const filteredParams = Object.entries(params).reduce((acc, [key, value]) => {
+      if (value) acc[key] = value;
+      return acc;
+    }, {});
     navigate({
       pathname: "/search/results",
-      search: `?${createSearchParams(params)}`,
+      search: `?${createSearchParams(filteredParams)}`,
     });
   };
 
@@ -125,14 +139,29 @@ export default function SearchDetail() {
             </span>
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-sm mb-1 text-gray-600 dark:text-cyan-300">{t("search.nameLabel")}</label>
-            <input
-              {...register("name")}
-              placeholder={t("search.namePlaceholder")}
-              className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-300"
-            />
-            {fieldError("name")}
+          <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm mb-1 text-gray-600 dark:text-cyan-300">
+                {t("search.firstNameLabel")}
+              </label>
+              <input
+                {...register("firstName")}
+                placeholder={t("search.firstNamePlaceholder")}
+                className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-300"
+              />
+              {fieldError("firstName")}
+            </div>
+            <div>
+              <label className="block text-sm mb-1 text-gray-600 dark:text-cyan-300">
+                {t("search.lastNameLabel")}
+              </label>
+              <input
+                {...register("lastName")}
+                placeholder={t("search.lastNamePlaceholder")}
+                className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-300"
+              />
+              {fieldError("lastName")}
+            </div>
           </div>
 
           <div>

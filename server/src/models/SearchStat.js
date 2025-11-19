@@ -4,7 +4,7 @@ const searchStatSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ['query', 'name', 'account', 'channel'],
+      enum: ['query', 'name', 'account', 'channel', 'bank', 'firstName', 'lastName'],
       required: true,
     },
     key: {
@@ -23,5 +23,6 @@ const searchStatSchema = new mongoose.Schema(
 );
 
 searchStatSchema.index({ type: 1, key: 1 }, { unique: true });
+searchStatSchema.index({ updatedAt: -1 });
 
 export default mongoose.model('SearchStat', searchStatSchema);

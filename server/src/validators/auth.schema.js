@@ -20,9 +20,9 @@ export const registerSchema = z.object({
   username: z.string().trim().max(100).optional().default(''),
   gender: z.enum(['', 'male', 'female', 'other']).optional().default(''),
   dob: z
-    .union([z.string().trim().min(1).optional(), z.null()])
+    .union([z.string().trim().min(1), z.literal(''), z.null()])
     .optional()
-    .transform((v) => (v === '' ? undefined : v)),
+    .transform((v) => (v ? v : undefined)),
 });
 
 export const loginSchema = z.object({

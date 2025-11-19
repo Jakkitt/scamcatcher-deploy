@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 const reportSchema = new mongoose.Schema(
   {
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
+    firstName: { type: String, default: '' },
+    lastName: { type: String, default: '' },
     name: { type: String, default: '' },
     bank: { type: String, default: '' },
     account: { type: String, default: '' },
@@ -18,7 +20,10 @@ const reportSchema = new mongoose.Schema(
 );
 
 reportSchema.index({ bank: 1, account: 1 });
+reportSchema.index({ status: 1, createdAt: -1 });
+reportSchema.index({ owner: 1, createdAt: -1 });
 reportSchema.index({ name: 'text', category: 'text' });
+reportSchema.index({ firstName: 1, lastName: 1 });
 
 export default mongoose.model('Report', reportSchema);
 

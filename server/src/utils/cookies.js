@@ -1,6 +1,8 @@
-import crypto from 'crypto';
+﻿import crypto from 'crypto';
 
-const IS_PROD = process.env.NODE_ENV === 'production';
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const IS_PROD = NODE_ENV === 'production';
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || '';
 
 export const COOKIE_NAMES = {
   access: 'sc_access',
@@ -14,9 +16,13 @@ export const ACCESS_MAX_AGE = 30 * 60 * 1000;
 export const REFRESH_MAX_AGE = 14 * 24 * 60 * 60 * 1000;
 
 const baseOptions = {
-  sameSite: 'strict',
+  sameSite: IS_PROD ? 'none' : 'lax',
   secure: IS_PROD,
 };
+
+if (COOKIE_DOMAIN) {
+  baseOptions.domain = COOKIE_DOMAIN;
+}
 
 const authCookieOptions = {
   ...baseOptions,

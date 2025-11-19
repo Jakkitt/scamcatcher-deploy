@@ -21,3 +21,27 @@ export const reportSubmissionLimiter = baseLimiter({
   limit: 5,
   message: { error: { message: 'ส่งรายงานถี่เกินไป กรุณารอสักครู่แล้วลองใหม่' } },
 });
+
+export const statsLimiter = baseLimiter({
+  windowMs: 60 * 1000,
+  limit: 20,
+  message: { error: { message: 'บันทึกสถิติถี่เกินไป กรุณารอสักครู่' } },
+});
+
+export const externalChecksLimiter = baseLimiter({
+  windowMs: 60 * 1000,
+  limit: 8,
+  message: { error: { message: 'มีการตรวจสอบข้อมูลภายนอกมากเกินไป กรุณาลองใหม่ในภายหลัง' } },
+});
+
+export const reportSearchLimiter = baseLimiter({
+  windowMs: 60 * 1000,
+  limit: 25,
+  message: { error: { message: 'ค้นหารายงานบ่อยเกินไป กรุณาพักสักครู่' } },
+});
+
+export const sessionRefreshLimiter = baseLimiter({
+  windowMs: 60 * 1000,
+  limit: 15,
+  message: { error: { message: 'รีเฟรชเซสชันบ่อยเกินไป กรุณารอสักครู่' } },
+});

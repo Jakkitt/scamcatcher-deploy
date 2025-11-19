@@ -21,6 +21,23 @@ const INITIAL_METRICS = {
   accountCount: 0,
   bankCount: 0,
   channelCount: 0,
+  firstNameCount: 0,
+  lastNameCount: 0,
+};
+
+const deriveNameParts = (firstName = "", lastName = "", fallback = "") => {
+  if (firstName || lastName) {
+    const full = [firstName, lastName].filter(Boolean).join(" ").trim();
+    return { firstName, lastName, fullName: full };
+  }
+  const parts = String(fallback || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return { firstName: "", lastName: "", fullName: "" };
+  const resolvedFirst = parts.shift() || "";
+  const resolvedLast = parts.join(" ");
+  return { firstName: resolvedFirst, lastName: resolvedLast, fullName: [resolvedFirst, resolvedLast].filter(Boolean).join(" ").trim() };
 };
 
 export default function SearchResults() {
@@ -38,12 +55,22 @@ export default function SearchResults() {
   });
   const navigate = useNavigate();
 
-  const query = {
-    name: q.get("name") || "",
-    account: (q.get("account") || "").replace(/[^\d]/g, ""),
-    bank: q.get("bank") || "",
-    channel: q.get("channel") || "",
-  };
+  const query = useMemo(
+    () => ({
+      firstName: q.get("firstName") || "",
+      lastName: q.get("lastName") || "",
+      name: q.get("name") || "",
+      account: (q.get("account") || "").replace(/[^\d]/g, ""),
+      bank: q.get("bank") || "",
+      channel: q.get("channel") || "",
+    }),
+    [q]
+  );
+  const nameParts = useMemo(
+    () => deriveNameParts(query.firstName, query.lastName, query.name),
+    [query.firstName, query.lastName, query.name]
+  );
+  const displayName = nameParts.fullName;
 
   useEffect(() => {
     let alive = true;
@@ -57,7 +84,7 @@ export default function SearchResults() {
           ? res.filter((item) => item.status === 'approved')
           : [];
         setItems(approvedOnly);
-        if (query.name || query.account || query.bank || query.channel) {
+        if (displayName || query.account || query.bank || query.channel) {
           try {
             const stats = await recordSearchStats(query);
             if (!alive) return;
@@ -80,12 +107,12 @@ export default function SearchResults() {
       }
     })();
     return () => (alive = false);
-  }, [query.name, query.account, query.bank, query.channel]);
+  }, [query.name, query.account, query.bank, query.channel, query.firstName, query.lastName, displayName]);
 
   useEffect(() => {
     let cancelled = false;
 
-    if (!query.name && !query.account && !query.bank) {
+    if (!displayName && !query.account && !query.bank) {
       setExternalSummary({
         loading: false,
         bls: { skipped: true, found: false },
@@ -116,6 +143,7 @@ export default function SearchResults() {
               matches: source.matches || [],
               lastChecked: formattedTime,
               cached: source.cached || data?.cached,
+              reason: source.reason,
             },
           });
         } catch (err) {
@@ -136,7 +164,7 @@ export default function SearchResults() {
     return () => {
       cancelled = true;
     };
-  }, [query.name, query.account, query.bank]);
+  }, [query.name, query.account, query.bank, query.channel, query.firstName, query.lastName, displayName]);
 
   const foundCount = items.length;
 
@@ -152,18 +180,20 @@ export default function SearchResults() {
       label: "จำนวนการค้นหารูปแบบนี้",
       value: metrics.queryCount,
       description: (() => {
-        const fields = ["name", "account", "bank", "channel"]
-          .filter((key) => query[key])
-          .map((key) => ({ name: key, value: query[key] }));
+        const fields = [];
+        if (displayName) fields.push(displayName);
+        if (query.account) fields.push(formattedAccount || query.account);
+        if (query.bank) fields.push(query.bank);
+        if (query.channel) fields.push(query.channel);
         if (fields.length === 0) return "ยังไม่ได้ระบุรายละเอียดการค้นหา";
-        return `ฟิลด์ที่ใช้: ${fields.map((f) => f.value).join(" • ")}`;
+        return `ฟิลด์ที่ใช้: ${fields.join(" • ")}`;
       })(),
     },
   ];
 
-  if (query.name) {
+  if (displayName) {
     summaryCards.push({
-      label: `การค้นหาชื่อ "${query.name}"`,
+      label: `การค้นหาชื่อ "${displayName}"`,
       value: metrics.nameCount,
       description: "นับเฉพาะคำค้นหานี้โดยไม่สนใจช่องทางหรือธนาคาร",
     });
@@ -218,7 +248,9 @@ export default function SearchResults() {
             navigate("/report", {
               state: {
                 prefill: {
-                  name: query.name,
+                  firstName: nameParts.firstName,
+                  lastName: nameParts.lastName,
+                  name: displayName,
                   bank: query.bank,
                   account: query.account,
                   channel: query.channel,
@@ -234,7 +266,18 @@ export default function SearchResults() {
         <h3 className="text-xl font-bold mb-4">{copy.sectionTitle}</h3>
 
         {loading ? (
-          <div className="border rounded-2xl p-6 text-center text-gray-500 bg-white dark:bg-gray-900 dark:border-gray-800">{copy.loading}</div>
+          <div className="space-y-3" aria-live="polite">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="animate-pulse border rounded-2xl p-6 bg-white dark:bg-gray-900 dark:border-gray-800 space-y-2"
+              >
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
+              </div>
+            ))}
+          </div>
         ) : errorMessage ? (
           <div className="border rounded-2xl p-6 text-center text-red-500 bg-white dark:bg-gray-900 dark:border-gray-800">
             {errorMessage}

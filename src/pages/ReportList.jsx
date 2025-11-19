@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import ProfileSidebar from "../components/ProfileSidebar";
 import { listMyReports, removeReport } from "../services/reports";
 import toast from "react-hot-toast";
@@ -13,13 +13,21 @@ export default function ReportList() {
     { to: "/settings", label: t("tabs.settings") },
   ];
   const [items, setItems] = useState(null);
+  const [error, setError] = useState("");
   const [deleting, setDeleting] = useState("");
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      const data = await listMyReports();
-      if (alive) setItems(data);
+      try {
+        const data = await listMyReports();
+        if (!alive) return;
+        setItems(data);
+      } catch (err) {
+        if (!alive) return;
+        setError(err?.message || copy.errorLoading || "ไม่สามารถโหลดข้อมูลได้");
+        setItems([]);
+      }
     })();
     return () => { alive = false; };
   }, []);
@@ -39,7 +47,7 @@ export default function ReportList() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gray-50 dark:bg-gradient-to-br dark:from-gray-950 dark:via-slate-950 dark:to-black py-10">
+    <div className="relative min-h-[70vh] overflow-hidden bg-gray-50 dark:bg-gradient-to-br dark:from-gray-950 dark:via-slate-950 dark:to-black py-10">
       <div className="absolute inset-0 overflow-hidden pointer-events-none hidden dark:block">
         <div className="absolute w-96 h-96 bg-cyan-400/30 rounded-full blur-3xl animate-pulse" style={{ left: "10%", top: "20%" }} />
         <div className="absolute w-96 h-96 bg-blue-400/25 rounded-full blur-3xl animate-pulse" style={{ right: "10%", bottom: "20%", animationDelay: "1s" }} />
@@ -47,8 +55,7 @@ export default function ReportList() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-gray-950 via-transparent opacity-70" />
       </div>
-
-      <main className="container relative z-10 py-12 min-h-[calc(100vh-160px)] grid md:grid-cols-3 gap-8">
+      <main className="container relative z-10 py-8 grid md:grid-cols-3 gap-8">
         <ProfileSidebar />
 
         <section className="md:col-span-2">
@@ -76,13 +83,23 @@ export default function ReportList() {
             <h1 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{copy.heading}</h1>
 
             {!items ? (
-              <div className="text-sm text-gray-400">{copy.loading}</div>
+              <div className="space-y-4" aria-live="polite">
+                {Array.from({ length: 3 }).map((_, idx) => (
+                  <div key={idx} className="animate-pulse border rounded-xl p-4 space-y-3 dark:border-cyan-400/30">
+                    <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-1/2" />
+                    <div className="h-3 bg-gray-200 dark:bg-white/10 rounded w-1/3" />
+                    <div className="h-3 bg-gray-200 dark:bg-white/10 rounded w-1/4" />
+                  </div>
+                ))}
+              </div>
+            ) : error ? (
+              <div className="text-sm text-rose-500">{error}</div>
             ) : items.length === 0 ? (
               <div className="text-sm text-gray-500 dark:text-gray-300">
                 {copy.empty}{" "}
-                <a href="/report" className="underline text-gray-900 font-semibold ml-1 dark:text-white">
+                <Link to="/report" className="underline text-gray-900 font-semibold ml-1 dark:text-white">
                   {copy.emptyLink}
-                </a>
+                </Link>
               </div>
             ) : (
               <ul className="space-y-4">
@@ -92,7 +109,9 @@ export default function ReportList() {
                     className="border border-gray-200 rounded-xl p-4 flex items-start justify-between gap-4 bg-white dark:bg-[#0a1c32]/90 dark:border-cyan-400/30 dark:shadow-[0_15px_50px_rgba(6,182,212,0.25)]"
                   >
                     <div>
-                      <div className="font-medium text-gray-900 dark:text-white">{r.name || t('common.unknown')}</div>
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {r.name || [r.firstName, r.lastName].filter(Boolean).join(' ').trim() || t('common.unknown')}
+                      </div>
                       <div className="text-sm text-gray-400">
                         {copy.cardCategory}: {r.category || "-"} · {copy.cardDate}{" "}
                         {new Date(r.createdAt).toLocaleDateString()}
@@ -110,8 +129,8 @@ export default function ReportList() {
                       >
                         {t(`admin.statuses.${r.status}`) || r.status}
                       </span>
-                      <a
-                        href={`/reports/${r.id}`}
+                      <Link
+                        to={`/reports/${r.id}`}
                         className="inline-flex items-center justify-center px-3 py-1 h-10 rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-100 transition dark:border-white/40 dark:bg-white/10 dark:text-cyan-200 dark:hover:bg-white/20"
                         title={t('reportListPage.viewDetail') || 'ดูรายละเอียด'}
                         aria-label={t('reportListPage.viewDetail') || 'ดูรายละเอียด'}
@@ -132,7 +151,7 @@ export default function ReportList() {
                         >
                           <path d="M32 14C16 14 4 32 4 32s12 18 28 18 28-18 28-18-12-18-28-18zm0 30a12 12 0 1112-12 12 12 0 01-12 12zm0-18a6 6 0 106 6 6 6 0 00-6-6z" />
                         </svg>
-                      </a>
+                      </Link>
                       <button
                         onClick={() => onDelete(r.id)}
                         disabled={deleting === String(r.id)}

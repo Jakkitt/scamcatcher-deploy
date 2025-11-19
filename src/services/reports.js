@@ -3,6 +3,14 @@ import { getCurrentUser } from './auth';
 const delay = (ms)=>new Promise(r=>setTimeout(r, ms));
 const KEY = 'reports';
 
+const buildQueryString = (params = {}) => {
+  const searchParams = new URLSearchParams();
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value) searchParams.append(key, value);
+  });
+  return searchParams.toString();
+};
+
 function getAll(){ try{ return JSON.parse(localStorage.getItem(KEY)) || []; }catch{ return []; } }
 function saveAll(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
 
@@ -21,16 +29,18 @@ export async function createReport(payload){
   }
 }
 
-export async function searchReports(params){
-  const q = new URLSearchParams(params).toString();
+export async function searchReports(params = {}){
+  const q = buildQueryString(params);
+  const endpoint = q ? `/reports/search?${q}` : '/reports/search';
   try{
-    return await request(`/reports/search?${q}`);
+    return await request(endpoint);
   }catch{
     await delay(150);
-    const { name='', account='', bank='' } = params || {};
+    const { firstName='', lastName='', name='', account='', bank='' } = params || {};
+    const normalizedName = [firstName, lastName].filter(Boolean).join(' ').trim() || name;
     const list = getAll();
     return list.filter(x =>
-      (!name || (x.name||'').toLowerCase().includes(String(name).toLowerCase())) &&
+      (!normalizedName || (x.name||'').toLowerCase().includes(String(normalizedName).toLowerCase())) &&
       (!account || (x.account||'').includes(account)) &&
       (!bank || x.bank === bank)
     );

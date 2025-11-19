@@ -13,6 +13,8 @@ export function recordSearchStats(params = {}) {
   return api.request('/stats/search', {
     method: 'POST',
     body: {
+      firstName: params.firstName || '',
+      lastName: params.lastName || '',
       name: params.name || '',
       account: params.account || '',
       bank: params.bank || '',

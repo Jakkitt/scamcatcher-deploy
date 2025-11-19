@@ -7,10 +7,15 @@ export default function ResultCard({ item }) {
   const navigate = useNavigate();
   const copy = t("searchResultsPage.card") || {};
   const currency = t("common.currencyBaht");
+  const displayName = React.useMemo(() => {
+    if (item?.name) return item.name;
+    const combined = [item?.firstName, item?.lastName].filter(Boolean).join(" ").trim();
+    return combined || copy.unnamed || t('common.unknown');
+  }, [item, copy]);
   return (
     <div className="border rounded-2xl p-5 space-y-2 bg-white dark:bg-gray-900">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-lg">{item.name || copy.unnamed || t('common.unknown')}</h3>
+        <h3 className="font-bold text-lg">{displayName}</h3>
         <span className="text-xs px-3 py-1 rounded-full bg-red-100 text-red-600">{copy.badge}</span>
       </div>
 

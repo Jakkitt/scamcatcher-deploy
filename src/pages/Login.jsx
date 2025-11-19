@@ -97,7 +97,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-black relative overflow-hidden flex items-center justify-center">
+    <div className="min-h-[70vh] bg-gradient-to-br from-gray-950 via-slate-950 to-black relative overflow-hidden flex items-center justify-center py-16">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
           className="absolute w-96 h-96 bg-cyan-400/30 rounded-full blur-3xl"
@@ -132,7 +132,7 @@ export default function Login() {
         }
       `}</style>
 
-      <div className="relative z-10 w-full max-w-md mx-4">
+      <div className="relative z-10 w-full max-w-md mx-4 mt-4">
         <div className="rounded-3xl p-10 sm:p-12 border-4 border-cyan-400/20 bg-gradient-to-b from-gray-950/80 via-gray-950 to-black shadow-[0_20px_80px_rgba(6,182,212,0.25)]">
           <div className="text-center">
             <h1 className="text-3xl font-black text-white mb-3">{loginCopy.title || t("auth.login.title")}</h1>

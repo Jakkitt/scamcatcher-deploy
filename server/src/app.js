@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
@@ -10,8 +10,9 @@ import adminRoutes from './routes/admin.routes.js';
 import { csrfProtection } from './middlewares/csrf.js';
 import statsRoutes from './routes/stats.routes.js';
 import externalRoutes from './routes/external.routes.js';
+import { logger } from './utils/logger.js';
 
-export const ORIGINS = [
+const DEFAULT_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
@@ -20,9 +21,29 @@ export const ORIGINS = [
   'http://127.0.0.1:5175',
 ];
 
-const app = express();
+const envOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-app.use(cors({ origin: ORIGINS, credentials: true }));
+export const ORIGINS = envOrigins.length ? envOrigins : DEFAULT_ORIGINS;
+const allowAllOrigins = process.env.ALLOW_ALL_ORIGINS === 'true';
+
+const app = express();
+app.disable('x-powered-by');
+
+const corsOptions = {
+  credentials: true,
+  origin(origin, callback) {
+    if (!origin || allowAllOrigins || ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    logger.warn({ origin }, 'Blocked by CORS');
+    return callback(new Error('Not allowed by CORS'));
+  },
+};
+
+app.use(cors(corsOptions));
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
@@ -31,6 +52,7 @@ app.use(
 );
 app.use(morgan('dev'));
 app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use(cookieParser());
 app.use(
   csrfProtection({
@@ -52,5 +74,22 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/external', externalRoutes);
+
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: { message: 'NOT_FOUND' } });
+  }
+  return next();
+});
+
+app.use((err, req, res, next) => {
+  logger.error({ err, path: req.path }, 'Unhandled application error');
+  if (res.headersSent) {
+    return next(err);
+  }
+  const status = err.status || err.statusCode || 500;
+  const message = status === 500 ? 'INTERNAL_SERVER_ERROR' : err.message;
+  return res.status(status).json({ error: { message } });
+});
 
 export default app;

@@ -12,10 +12,33 @@ const copy = t('reportForm') || {};
 const fields = copy.fields || {};
 const validationCopy = copy.validation || {};
 
+const splitNameParts = (value = '') => {
+  const parts = String(value || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return { firstName: '', lastName: '' };
+  const firstName = parts.shift() || '';
+  const lastName = parts.join(' ');
+  return { firstName, lastName };
+};
+
 const schema = z.object({
-  name: z.string().min(1, validationCopy.nameRequired),
+  firstName: z
+    .string()
+    .trim()
+    .min(1, validationCopy.firstNameRequired || validationCopy.nameRequired)
+    .max(80, validationCopy.firstNameMax || t('validation.max80')),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, validationCopy.lastNameRequired || validationCopy.nameRequired)
+    .max(80, validationCopy.lastNameMax || t('validation.max80')),
   bank: z.string().optional(),
-  account: z.string().optional().refine((v) => !v || String(v).replace(/\D/g, '').length >= 6, validationCopy.accountShort),
+  account: z
+    .string()
+    .optional()
+    .refine((v) => !v || String(v).replace(/\D/g, '').length >= 6, validationCopy.accountShort),
   amount: z.coerce.number().min(1, validationCopy.amountRequired),
   date: z.string().min(1, validationCopy.dateRequired),
   category: z.string().min(1, validationCopy.categoryRequired),
@@ -27,20 +50,65 @@ const schema = z.object({
 export default function Report() {
   const navigate = useNavigate();
   const location = useLocation();
-  const prefill = location.state?.prefill || {};
+  const normalizedPrefill = React.useMemo(() => {
+    const raw = location.state?.prefill || {};
+    if ((!raw.firstName && !raw.lastName) && raw.name) {
+      return { ...raw, ...splitNameParts(raw.name) };
+    }
+    return raw;
+  }, [location.state]);
+  const hasPrefillValues = React.useMemo(
+    () => Object.values(normalizedPrefill || {}).some((val) => Boolean(val)),
+    [normalizedPrefill],
+  );
+  const prefillKey = React.useMemo(
+    () =>
+      ['firstName', 'lastName', 'bank', 'account', 'channel']
+        .map((key) => normalizedPrefill?.[key] || '')
+        .join('|'),
+    [normalizedPrefill],
+  );
   const fileRef = React.useRef(null);
   const [files, setFiles] = React.useState([]);
   const [previews, setPreviews] = React.useState([]);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch } = useForm({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    watch,
+    getValues,
+  } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: prefill.name || '',
-      bank: prefill.bank || '',
-      account: prefill.account || '',
-      channel: prefill.channel || '',
+      firstName: normalizedPrefill.firstName || '',
+      lastName: normalizedPrefill.lastName || '',
+      bank: normalizedPrefill.bank || '',
+      account: normalizedPrefill.account || '',
+      channel: normalizedPrefill.channel || '',
+      channelOther: '',
+      amount: '',
+      date: '',
+      category: '',
+      desc: '',
     },
   });
+  const prefillAppliedRef = React.useRef('');
+  React.useEffect(() => {
+    if (!hasPrefillValues) return;
+    if (prefillAppliedRef.current === prefillKey) return;
+    prefillAppliedRef.current = prefillKey;
+    const current = getValues();
+    reset({
+      ...current,
+      firstName: normalizedPrefill.firstName || '',
+      lastName: normalizedPrefill.lastName || '',
+      bank: normalizedPrefill.bank || '',
+      account: normalizedPrefill.account || '',
+      channel: normalizedPrefill.channel || '',
+    });
+  }, [hasPrefillValues, prefillKey, normalizedPrefill, reset, getValues]);
 
   const channelValue = watch('channel');
   const bankValue = watch('bank');
@@ -101,14 +169,29 @@ export default function Report() {
           onSubmit={handleSubmit(onSubmit)}
           className="max-w-3xl mx-auto grid md:grid-cols-2 gap-6 bg-white text-gray-900 rounded-2xl p-6 shadow-xl border border-gray-200 dark:bg-[#061427]/90 dark:text-white dark:border-cyan-400/40 dark:shadow-[0_25px_80px_rgba(6,182,212,0.25)]"
         >
-          <div>
-            <label className="block text-sm text-gray-600 dark:text-cyan-300 mb-1 font-medium">{fields.name?.label}</label>
-            <input
-              {...register('name')}
-              placeholder={fields.name?.placeholder}
-              className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-300"
-            />
-            {renderError('name')}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-gray-600 dark:text-cyan-300 mb-1 font-medium">
+                {fields.firstName?.label}
+              </label>
+              <input
+                {...register('firstName')}
+                placeholder={fields.firstName?.placeholder}
+                className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-300"
+              />
+              {renderError('firstName')}
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 dark:text-cyan-300 mb-1 font-medium">
+                {fields.lastName?.label}
+              </label>
+              <input
+                {...register('lastName')}
+                placeholder={fields.lastName?.placeholder}
+                className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-300"
+              />
+              {renderError('lastName')}
+            </div>
           </div>
 
           <div>

@@ -15,3 +15,14 @@ export async function unsuspendUser(id){
 export async function deleteUser(id){
   return request(`/admin/users/${id}`, { method:'DELETE' });
 }
+
+export async function getExternalChecksSetting(){
+  return request('/admin/settings/external-checks');
+}
+
+export async function updateExternalChecksSetting(enabled){
+  return request('/admin/settings/external-checks', {
+    method: 'PATCH',
+    body: { enabled },
+  });
+}

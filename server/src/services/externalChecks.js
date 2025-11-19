@@ -1,8 +1,11 @@
+﻿import { getSetting } from './settings.js';
+
 const API_ROOT =
   process.env.BLACKLISTSELLER_API_URL || 'https://api.blacklistseller.com/api/api/v1/queries';
 const DEFAULT_TIMEOUT = Number(process.env.EXTERNAL_REQUEST_TIMEOUT || 8000);
 const API_KEY = process.env.BLACKLISTSELLER_API_KEY || '';
 const CACHE_TTL = Number(process.env.EXTERNAL_CACHE_TTL || 5 * 60 * 1000);
+const EXTERNAL_SETTING_KEY = 'external_checks_enabled';
 
 const fetchFn = (...args) => {
   if (typeof fetch !== 'function') {
@@ -49,20 +52,25 @@ function normalizeMatches(entries = []) {
     });
 }
 
-function splitName(name = '') {
+function buildNamePayload({ firstName = '', lastName = '', name = '' }) {
+  const first = String(firstName || '').trim();
+  const last = String(lastName || '').trim();
+  if (first || last) {
+    return { first_name: first || '-', last_name: last || '-' };
+  }
   const parts = String(name || '')
     .trim()
     .split(/\s+/)
     .filter(Boolean);
   if (!parts.length) return null;
-  const firstName = parts.shift();
-  const lastName = parts.length ? parts.join(' ') : '-';
-  return { first_name: firstName, last_name: lastName };
+  const resolvedFirst = parts.shift();
+  const resolvedLast = parts.length ? parts.join(' ') : '-';
+  return { first_name: resolvedFirst, last_name: resolvedLast };
 }
 
-function resolveRequestPayload({ name = '', account = '' }) {
+function resolveRequestPayload({ firstName = '', lastName = '', name = '', account = '' }) {
   const normalizedAccount = String(account || '').replace(/[^\d]/g, '');
-  const namePayload = splitName(name);
+  const namePayload = buildNamePayload({ firstName, lastName, name });
   if (namePayload) {
     return {
       endpoint: 'fullname-summary',
@@ -86,7 +94,7 @@ async function safeParseJson(res) {
   }
 }
 
-export async function queryBlacklistSeller({ name = '', account = '', bank = '' }) {
+export async function queryBlacklistSeller({ firstName = '', lastName = '', name = '', account = '', bank = '' }) {
   if (!API_KEY) {
     return {
       found: false,
@@ -95,7 +103,12 @@ export async function queryBlacklistSeller({ name = '', account = '', bank = '' 
     };
   }
 
-  const requestConfig = resolveRequestPayload({ name, account });
+  const enabled = await getSetting(EXTERNAL_SETTING_KEY, true);
+  if (!enabled) {
+    return { found: false, skipped: true, reason: 'disabled' };
+  }
+
+  const requestConfig = resolveRequestPayload({ firstName, lastName, name, account });
   if (!requestConfig) {
     return {
       found: false,
@@ -114,7 +127,8 @@ export async function queryBlacklistSeller({ name = '', account = '', bank = '' 
   const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
 
   try {
-    const url = `${API_ROOT}/${requestConfig.endpoint}/`;
+    const base = API_ROOT.endsWith('/') ? API_ROOT : `${API_ROOT}/`;
+    const url = `${base}${requestConfig.endpoint}/`;
     const res = await fetchFn(url, {
       method: 'POST',
       headers: {
@@ -168,4 +182,8 @@ export async function queryBlacklistSeller({ name = '', account = '', bank = '' 
     cache.set(cacheKey, { payload: timeoutPayload, timestamp: Date.now() });
     return timeoutPayload;
   }
+}
+
+export function __clearExternalCache() {
+  cache.clear();
 }

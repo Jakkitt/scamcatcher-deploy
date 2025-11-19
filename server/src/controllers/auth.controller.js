@@ -6,6 +6,7 @@ import Report from '../models/Report.js';
 import { deleteUploadsByUrls } from '../utils/uploads.js';
 import { setAuthCookies, clearAuthCookies, COOKIE_NAMES, REFRESH_MAX_AGE } from '../utils/cookies.js';
 import RefreshToken from '../models/RefreshToken.js';
+import { recordAuthLog, resolveClientMeta } from '../services/authLog.js';
 
 const ACCOUNT_SUSPENDED_ERROR = {
   message: 'การเข้าสู่ระบบไม่สำเร็จ เนื่องจากบัญชีของคุณถูกปิดใช้งาน',
@@ -17,13 +18,13 @@ const hashToken = (token = '') =>
 
 const tokenExpiryDate = () => new Date(Date.now() + REFRESH_MAX_AGE);
 
-async function persistRefreshToken(userId, token, req) {
+async function persistRefreshToken(userId, token, meta = {}) {
   await RefreshToken.create({
     userId,
     token: hashToken(token),
     expiresAt: tokenExpiryDate(),
-    userAgent: req.get('user-agent') || '',
-    ip: req.ip || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '',
+    userAgent: meta.userAgent || '',
+    ip: meta.ip || '',
   });
 }
 
@@ -69,9 +70,15 @@ export async function register(req, res) {
     const safe = toSafeUser(user);
     const accessToken = signAccessToken({ id: safe.id, email: safe.email, role: safe.role });
     const refreshToken = signRefreshToken({ id: safe.id, email: safe.email, role: safe.role });
+    const meta = resolveClientMeta(req);
     await revokeUserTokens(user._id);
-    await persistRefreshToken(user._id, refreshToken, req);
+    await persistRefreshToken(user._id, refreshToken, meta);
     setAuthCookies(res, { accessToken, refreshToken });
+    await recordAuthLog({
+      userId: user._id,
+      event: 'register_success',
+      ...meta,
+    });
     return res.status(201).json({ user: safe });
   } catch (e) {
     return res.status(500).json({ error: { message: e.message } });
@@ -85,20 +92,32 @@ export async function login(req, res) {
       return res.status(400).json({ error: { message: 'email and password required' } });
     }
     const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ error: { message: 'invalid credentials' } });
+    const clientMeta = resolveClientMeta(req);
+    if (!user) {
+      await recordAuthLog({ event: 'login_failed', ...clientMeta, meta: { email } });
+      return res.status(401).json({ error: { message: 'invalid credentials' } });
+    }
     if (user.suspended) {
       return res.status(403).json({ error: ACCOUNT_SUSPENDED_ERROR });
     }
 
     const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.status(401).json({ error: { message: 'invalid credentials' } });
+    if (!ok) {
+      await recordAuthLog({ userId: user._id, event: 'login_failed', ...clientMeta });
+      return res.status(401).json({ error: { message: 'invalid credentials' } });
+    }
 
     const safe = toSafeUser(user);
     const accessToken = signAccessToken({ id: safe.id, email: safe.email, role: safe.role });
     const refreshToken = signRefreshToken({ id: safe.id, email: safe.email, role: safe.role });
     await revokeUserTokens(user._id);
-    await persistRefreshToken(user._id, refreshToken, req);
+    await persistRefreshToken(user._id, refreshToken, clientMeta);
     setAuthCookies(res, { accessToken, refreshToken });
+    await recordAuthLog({
+      userId: user._id,
+      event: 'login_success',
+      ...clientMeta,
+    });
     return res.json({ user: safe });
   } catch (e) {
     return res.status(500).json({ error: { message: e.message } });
@@ -161,12 +180,14 @@ export async function deleteAccount(req, res) {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error:{ message:'UNAUTHORIZED' } });
+    const meta = resolveClientMeta(req);
     const ownedReports = await Report.find({ owner: userId }, { photos: 1 }).lean();
     await Report.deleteMany({ owner: userId });
     await Promise.all(ownedReports.map((doc) => deleteUploadsByUrls(doc?.photos || [])));
     await User.findByIdAndDelete(userId);
     await revokeUserTokens(userId);
     clearAuthCookies(res);
+    await recordAuthLog({ userId, event: 'account_deleted', ...meta });
     return res.status(204).end();
   } catch (e) {
     return res.status(500).json({ error:{ message: e.message } });
@@ -174,38 +195,58 @@ export async function deleteAccount(req, res) {
 }
 
 export async function logout(req, res) {
-  await revokeToken(req.cookies?.[COOKIE_NAMES.refresh]);
+  const meta = resolveClientMeta(req);
+  const refresh = req.cookies?.[COOKIE_NAMES.refresh];
+  if (refresh) {
+    await revokeToken(refresh);
+  }
   clearAuthCookies(res);
+  await recordAuthLog({ userId: req.user?.id || null, event: 'logout', ...meta });
   return res.status(204).end();
 }
 
 export async function refreshSession(req, res) {
   try {
     const token = req.cookies?.[COOKIE_NAMES.refresh];
+    const meta = resolveClientMeta(req);
     if (!token) {
+      clearAuthCookies(res);
+      return res.status(401).json({ error: { message: 'UNAUTHORIZED' } });
+    }
+    let payload;
+    try {
+      payload = verifyToken(token);
+    } catch (err) {
+      await recordAuthLog({ event: 'refresh_invalid', ...meta, meta: { reason: err.message } });
       clearAuthCookies(res);
       return res.status(401).json({ error: { message: 'UNAUTHORIZED' } });
     }
     const stored = await RefreshToken.findOne({ token: hashToken(token) });
     if (!stored) {
-      clearAuthCookies(res);
-      return res.status(401).json({ error: { message: 'UNAUTHORIZED' } });
-    }
-    const user = await User.findById(stored.userId);
-    if (!user || user.suspended) {
+      if (payload?.id) {
+        await revokeUserTokens(payload.id);
+        await recordAuthLog({ userId: payload.id, event: 'refresh_token_reuse', ...meta });
+      }
       clearAuthCookies(res);
       return res.status(403).json({ error: { message: 'forbidden' } });
     }
-    verifyToken(token); // ensure token valid
+    const user = await User.findById(stored.userId);
+    if (!user || user.suspended) {
+      await revokeUserTokens(stored.userId);
+      clearAuthCookies(res);
+      return res.status(403).json({ error: { message: 'forbidden' } });
+    }
     const safe = toSafeUser(user);
     const accessToken = signAccessToken({ id: safe.id, email: safe.email, role: safe.role });
     const refreshToken = signRefreshToken({ id: safe.id, email: safe.email, role: safe.role });
     await revokeToken(token);
-    await persistRefreshToken(user._id, refreshToken, req);
+    await persistRefreshToken(user._id, refreshToken, meta);
     setAuthCookies(res, { accessToken, refreshToken });
+    await recordAuthLog({ userId: user._id, event: 'refresh_success', ...meta });
     return res.json({ ok: true });
-  } catch {
+  } catch (err) {
     clearAuthCookies(res);
+    await recordAuthLog({ event: 'refresh_error', meta: { reason: err.message }, ...resolveClientMeta(req) });
     return res.status(401).json({ error: { message: 'UNAUTHORIZED' } });
   }
 }
