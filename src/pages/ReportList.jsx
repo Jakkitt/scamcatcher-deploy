@@ -129,6 +129,17 @@ export default function ReportList() {
                       >
                         {t(`admin.statuses.${r.status}`) || r.status}
                       </span>
+                      <button
+                        onClick={() => onDelete(r.id)}
+                        disabled={deleting === String(r.id)}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-300 ${
+                          deleting === String(r.id)
+                            ? "bg-red-500/60 text-gray-900 dark:text-white cursor-not-allowed"
+                            : "bg-red-600 hover:bg-red-700 text-gray-900 dark:text-white shadow-md shadow-red-500/20"
+                        }`}
+                      >
+                        {deleting === String(r.id) ? copy.deleting : copy.delete}
+                      </button>
                       <Link
                         to={`/reports/${r.id}`}
                         className="inline-flex items-center justify-center px-3 py-1 h-10 rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-100 transition dark:border-white/40 dark:bg-white/10 dark:text-cyan-200 dark:hover:bg-white/20"
@@ -152,17 +163,6 @@ export default function ReportList() {
                           <path d="M32 14C16 14 4 32 4 32s12 18 28 18 28-18 28-18-12-18-28-18zm0 30a12 12 0 1112-12 12 12 0 01-12 12zm0-18a6 6 0 106 6 6 6 0 00-6-6z" />
                         </svg>
                       </Link>
-                      <button
-                        onClick={() => onDelete(r.id)}
-                        disabled={deleting === String(r.id)}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-300 ${
-                          deleting === String(r.id)
-                            ? "bg-red-500/60 text-gray-900 dark:text-white cursor-not-allowed"
-                            : "bg-red-600 hover:bg-red-700 text-gray-900 dark:text-white shadow-md shadow-red-500/20"
-                        }`}
-                      >
-                        {deleting === String(r.id) ? copy.deleting : copy.delete}
-                      </button>
                     </div>
                   </li>
                 ))}

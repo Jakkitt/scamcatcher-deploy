@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,6 +21,7 @@ export default function Register() {
   const password = watch('password');
   const [serverError, setServerError] = useState('');
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [showPwd, setShowPwd] = useState({ password: false, confirm: false });
 
   useEffect(() => {
     const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
@@ -170,28 +171,46 @@ export default function Register() {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm mb-2 font-medium text-cyan-300">{copy.passwordLabel}</label>
-                <input
-                  type="password"
-                  {...register('password', {
-                    required: validationCopy.passwordRequired,
-                    minLength: { value: 6, message: validationCopy.min6 },
-                  })}
-                  placeholder={copy.passwordPlaceholder}
-                  className="w-full h-12 px-4 rounded-xl bg-gray-900/50 border border-cyan-400/30 text-white placeholder-gray-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all"
-                />
+                <div className="relative">
+                  <input
+                    type={showPwd.password ? 'text' : 'password'}
+                    {...register('password', {
+                      required: validationCopy.passwordRequired,
+                      minLength: { value: 6, message: validationCopy.min6 },
+                    })}
+                    placeholder={copy.passwordPlaceholder}
+                    className="w-full h-12 pl-4 pr-12 rounded-xl bg-gray-900/50 border border-cyan-400/30 text-white placeholder-gray-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-300"
+                    onClick={() => setShowPwd((s) => ({ ...s, password: !s.password }))}
+                  >
+                    {showPwd.password ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
                 {renderError('password')}
               </div>
               <div>
                 <label className="block text-sm mb-2 font-medium text-cyan-300">{copy.confirmPasswordLabel}</label>
-                <input
-                  type="password"
-                  {...register('confirmPassword', {
-                    required: validationCopy.confirmPasswordRequired,
-                    validate: (v) => v === password || copy.passwordMismatch,
-                  })}
-                  placeholder={copy.confirmPasswordPlaceholder}
-                  className="w-full h-12 px-4 rounded-xl bg-gray-900/50 border border-cyan-400/30 text-white placeholder-gray-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all"
-                />
+                <div className="relative">
+                  <input
+                    type={showPwd.confirm ? 'text' : 'password'}
+                    {...register('confirmPassword', {
+                      required: validationCopy.confirmPasswordRequired,
+                      validate: (v) => v === password || copy.passwordMismatch,
+                    })}
+                    placeholder={copy.confirmPasswordPlaceholder}
+                    className="w-full h-12 pl-4 pr-12 rounded-xl bg-gray-900/50 border border-cyan-400/30 text-white placeholder-gray-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-300"
+                    onClick={() => setShowPwd((s) => ({ ...s, confirm: !s.confirm }))}
+                  >
+                    {showPwd.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
                 {renderError('confirmPassword')}
               </div>
             </div>

@@ -7,6 +7,11 @@ import { deleteUploadsByUrls } from '../utils/uploads.js';
 import { setAuthCookies, clearAuthCookies, COOKIE_NAMES, REFRESH_MAX_AGE } from '../utils/cookies.js';
 import RefreshToken from '../models/RefreshToken.js';
 import { recordAuthLog, resolveClientMeta } from '../services/authLog.js';
+import PasswordResetToken from '../models/PasswordResetToken.js';
+import { sendMail } from '../services/mailer.js';
+import { buildResetPasswordEmail, buildChangePasswordPinEmail } from '../services/emailTemplates.js';
+import { logger } from '../utils/logger.js';
+import { passwordSchema } from '../validators/auth.schema.js';
 
 const ACCOUNT_SUSPENDED_ERROR = {
   message: 'การเข้าสู่ระบบไม่สำเร็จ เนื่องจากบัญชีของคุณถูกปิดใช้งาน',
@@ -124,11 +129,188 @@ export async function login(req, res) {
   }
 }
 
+export async function forgotPassword(req, res) {
+  const { email } = req.body || {};
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const clientMeta = resolveClientMeta(req);
+
+  if (!normalizedEmail) {
+    return res.status(400).json({ error: { message: 'email is required' } });
+  }
+
+  const user = await User.findOne({ email: normalizedEmail });
+  if (!user) {
+    await recordAuthLog({ event: 'forgot_password_no_user', meta: { email: normalizedEmail }, ...clientMeta });
+    return res.json({ ok: true });
+  }
+
+  await PasswordResetToken.deleteMany({ userId: user._id });
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = hashToken(rawToken);
+  const expiresMs = 15 * 60 * 1000;
+  const expiresAt = new Date(Date.now() + expiresMs);
+
+  await PasswordResetToken.create({
+    userId: user._id,
+    purpose: 'reset_password',
+    token: hashedToken,
+    expiresAt,
+    userAgent: clientMeta.userAgent || '',
+    ip: clientMeta.ip || '',
+  });
+
+  const baseResetUrl =
+    process.env.RESET_PASSWORD_URL ||
+    process.env.FRONTEND_BASE_URL ||
+    process.env.APP_URL ||
+    'http://localhost:5173';
+  const resetUrl = `${baseResetUrl.replace(/\/$/, '')}/reset-password?token=${rawToken}`;
+
+  try {
+    const { subject, text, html } = buildResetPasswordEmail({
+      resetUrl,
+      username: user.username,
+      expiresMinutes: 15,
+    });
+    await sendMail({ to: user.email, subject, text, html });
+    await recordAuthLog({ userId: user._id, event: 'forgot_password_sent', ...clientMeta });
+    return res.json({ ok: true });
+  } catch (err) {
+    logger.error({ err }, 'Failed to send reset password email');
+    await recordAuthLog({
+      userId: user._id,
+      event: 'forgot_password_failed',
+      meta: { reason: err.message },
+      ...clientMeta,
+    });
+    return res.status(500).json({ error: { message: 'ส่งอีเมลรีเซ็ตรหัสผ่านไม่สำเร็จ' } });
+  }
+}
+
+export async function resetPassword(req, res) {
+  const { token, newPassword } = req.body || {};
+  const clientMeta = resolveClientMeta(req);
+  if (!token || !newPassword) {
+    return res.status(400).json({ error: { message: 'token and newPassword required' } });
+  }
+
+  try {
+    passwordSchema.parse(newPassword);
+  } catch (err) {
+    const message = err?.issues?.[0]?.message || 'invalid password';
+    return res.status(400).json({ error: { message } });
+  }
+
+  const hashed = hashToken(token);
+  const now = new Date();
+  const entry = await PasswordResetToken.findOne({
+    token: hashed,
+    purpose: 'reset_password',
+    used: false,
+    expiresAt: { $gt: now },
+  });
+
+  if (!entry) {
+    await recordAuthLog({
+      event: 'reset_password_invalid_token',
+      meta: { reason: 'not_found_or_used_or_expired' },
+      ...clientMeta,
+    });
+    return res.status(400).json({ error: { message: 'ลิงก์หมดอายุหรือไม่ถูกต้อง' } });
+  }
+
+  const user = await User.findById(entry.userId);
+  if (!user) {
+    return res.status(404).json({ error: { message: 'user not found' } });
+  }
+
+  user.passwordHash = await bcrypt.hash(newPassword, 10);
+  await user.save();
+
+  entry.used = true;
+  await entry.save();
+
+  await revokeUserTokens(user._id);
+
+  await recordAuthLog({
+    userId: user._id,
+    event: 'reset_password_success',
+    ...clientMeta,
+  });
+
+  return res.json({ ok: true });
+}
+
+export async function sendChangePasswordPin(req, res) {
+  const userId = req.user?.id;
+  const clientMeta = resolveClientMeta(req);
+  if (!userId) return res.status(401).json({ error: { message: 'UNAUTHORIZED' } });
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).json({ error: { message: 'user not found' } });
+
+  const pin = String(Math.floor(100000 + Math.random() * 900000)).slice(0, 6);
+  const hashed = hashToken(pin);
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 นาที
+
+  await PasswordResetToken.deleteMany({ userId, purpose: 'change_password_pin' });
+  await PasswordResetToken.create({
+    userId,
+    purpose: 'change_password_pin',
+    token: hashed,
+    expiresAt,
+    userAgent: clientMeta.userAgent || '',
+    ip: clientMeta.ip || '',
+  });
+
+  try {
+    const { subject, text, html } = buildChangePasswordPinEmail({
+      pin,
+      username: user.username,
+      expiresMinutes: 10,
+    });
+    await sendMail({ to: user.email, subject, text, html });
+    await recordAuthLog({ userId, event: 'change_password_pin_sent', ...clientMeta });
+    return res.json({ ok: true });
+  } catch (err) {
+    logger.error({ err }, 'Failed to send change password PIN email');
+    await recordAuthLog({
+      userId,
+      event: 'change_password_pin_failed',
+      meta: { reason: err.message },
+      ...clientMeta,
+    });
+    return res.status(500).json({ error: { message: 'ไม่สามารถส่งรหัส PIN ได้' } });
+  }
+}
+
 export async function changePassword(req, res) {
   try {
-    const { currentPassword, newPassword } = req.body || {};
+    const { currentPassword, newPassword, pin } = req.body || {};
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ error: { message: 'currentPassword and newPassword required' } });
+    }
+    const requiredPin = process.env.CHANGE_PASSWORD_PIN || '';
+    if (requiredPin) {
+      if (!pin || pin !== requiredPin) {
+        return res.status(401).json({ error: { message: 'รหัส PIN ไม่ถูกต้อง' } });
+      }
+    } else {
+      // ใช้ PIN แบบ OTP จากอีเมล
+      if (!pin) return res.status(401).json({ error: { message: 'รหัส PIN ไม่ถูกต้อง' } });
+      const hashedPin = hashToken(pin);
+      const otp = await PasswordResetToken.findOne({
+        userId: req.user.id,
+        purpose: 'change_password_pin',
+        token: hashedPin,
+        used: false,
+        expiresAt: { $gt: new Date() },
+      });
+      if (!otp) {
+        return res.status(401).json({ error: { message: 'รหัส PIN ไม่ถูกต้องหรือหมดอายุ' } });
+      }
+      otp.used = true;
+      await otp.save();
     }
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: { message: 'user not found' } });

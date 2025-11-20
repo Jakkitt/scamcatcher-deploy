@@ -6,7 +6,7 @@ const emailSchema = z
   .toLowerCase()
   .email({ message: 'รูปแบบอีเมลไม่ถูกต้อง' });
 
-const passwordSchema = z
+export const passwordSchema = z
   .string()
   .min(8, 'รหัสผ่านอย่างน้อย 8 ตัวอักษร')
   .max(72, 'รหัสผ่านไม่เกิน 72 ตัวอักษร')
@@ -30,10 +30,18 @@ export const loginSchema = z.object({
   password: passwordSchema,
 });
 
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
 export const changePasswordSchema = z
   .object({
     currentPassword: passwordSchema,
     newPassword: passwordSchema,
+    pin: z
+      .string()
+      .trim()
+      .regex(/^\d{4,8}$/, 'รหัส PIN ต้องเป็นตัวเลข 4-8 หลัก'),
   })
   .refine((v) => v.currentPassword !== v.newPassword, {
     path: ['newPassword'],
@@ -45,4 +53,9 @@ export const profileSchema = z.object({
   gender: z.enum(['', 'male', 'female', 'other']).optional().default(''),
   dob: z.union([z.string().trim().min(1), z.null(), z.literal('')]).optional(),
   avatarUrl: z.string().trim().url().optional().or(z.literal('')).optional(),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(10, 'token invalid'),
+  newPassword: passwordSchema,
 });

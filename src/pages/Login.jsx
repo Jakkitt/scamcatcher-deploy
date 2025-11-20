@@ -1,6 +1,6 @@
 // src/pages/Login.jsx
 import React, { useEffect, useState } from "react";
-import { Lock, Mail, LogIn, UserPlus } from "lucide-react";
+import { Lock, Mail, LogIn, UserPlus, Eye, EyeOff } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { t } from "../i18n/strings";
@@ -14,6 +14,7 @@ export default function Login() {
   const [touched, setTouched] = useState({ email: false, password: false });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -166,22 +167,29 @@ export default function Login() {
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={(e) => handleFieldChange("password", e.target.value)}
                   onBlur={() => handleFieldBlur("password")}
                   placeholder="••••••••"
                   required
-                  className="w-full h-12 pl-12 pr-4 rounded-xl bg-gray-900/50 border border-cyan-400/30 text-white placeholder-gray-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all"
+                  className="w-full h-12 pl-12 pr-12 rounded-xl bg-gray-900/50 border border-cyan-400/30 text-white placeholder-gray-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-300"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
               <p className="text-xs text-red-400 mt-1 min-h-[1rem]">{showFieldError("password") ? fieldErrors.password : ""}</p>
             </div>
 
             <div className="text-right">
-              <button type="button" className="text-sm text-cyan-300 hover:text-cyan-200 transition-colors">
+              <Link to="/forgot-password" className="text-sm text-cyan-300 hover:text-cyan-200 transition-colors">
                 {loginCopy.forgot}
-              </button>
+              </Link>
             </div>
 
             <button

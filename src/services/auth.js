@@ -33,7 +33,7 @@ export async function register({ username, email, password, gender, dob }){
   return res.user;
 }
 
-export async function changePassword({ currentPassword, newPassword }) {
+export async function changePassword({ currentPassword, newPassword, pin }) {
   if (!import.meta.env.VITE_API_BASE_URL) {
     if (!ENABLE_MOCK) throw new Error('VITE_API_BASE_URL is not set');
     await delay(600);
@@ -41,7 +41,36 @@ export async function changePassword({ currentPassword, newPassword }) {
     if (currentPassword === newPassword) throw new Error('รหัสผ่านใหม่ต้องต่างจากรหัสผ่านปัจจุบัน');
     return { ok:true };
   }
-  return request('/auth/change-password', { method:'POST', body:{ currentPassword, newPassword } });
+  return request('/auth/change-password', { method:'POST', body:{ currentPassword, newPassword, pin } });
+}
+
+export async function requestPasswordReset({ email }) {
+  if (!import.meta?.env?.VITE_API_BASE_URL) {
+    if (!ENABLE_MOCK) throw new Error('VITE_API_BASE_URL is not set');
+    await delay(500);
+    if (!email) throw new Error('กรุณากรอกอีเมล');
+    return { ok: true, message: 'ส่งลิงก์รีเซ็ตแล้ว' };
+  }
+  return request('/auth/forgot-password', { method: 'POST', body: { email } });
+}
+
+export async function resetPassword({ token, newPassword }) {
+  if (!import.meta?.env?.VITE_API_BASE_URL) {
+    if (!ENABLE_MOCK) throw new Error('VITE_API_BASE_URL is not set');
+    await delay(500);
+    if (!token || !newPassword) throw new Error('ข้อมูลไม่ครบ');
+    return { ok: true };
+  }
+  return request('/auth/reset-password', { method: 'POST', body: { token, newPassword } });
+}
+
+export async function requestChangePasswordPin() {
+  if (!import.meta?.env?.VITE_API_BASE_URL) {
+    if (!ENABLE_MOCK) throw new Error('VITE_API_BASE_URL is not set');
+    await delay(300);
+    return { ok: true };
+  }
+  return request('/auth/change-password/pin', { method: 'POST' });
 }
 
 export async function logout(){

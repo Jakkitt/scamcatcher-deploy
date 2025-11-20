@@ -16,7 +16,9 @@ export default function ResultCard({ item }) {
     <div className="border rounded-2xl p-5 space-y-2 bg-white dark:bg-gray-900">
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-lg">{displayName}</h3>
-        <span className="text-xs px-3 py-1 rounded-full bg-red-100 text-red-600">{copy.badge}</span>
+        <span className="text-xs px-3 py-1 rounded-full bg-red-100 text-red-600">
+          {item.category || copy.badge}
+        </span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-2 text-sm text-gray-700 dark:text-gray-300">

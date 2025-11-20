@@ -53,6 +53,9 @@ See `server/.env.example`, key variables include:
 - `MONGODB_URI`
 - `JWT_SECRET`
 - `BLACKLISTSELLER_API_KEY`
+- `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM` (สำหรับส่งอีเมลรีเซ็ตรหัสผ่าน)
+- `FRONTEND_BASE_URL` หรือ `RESET_PASSWORD_URL` (ใช้สร้างลิงก์รีเซ็ตรหัสผ่านในอีเมล)
+- `SMTP_DEV_MODE=true` หากต้องการโหมด dev ที่ไม่ส่งอีเมลจริงแต่พิมพ์ preview ใน log
 - `ALLOWED_ORIGINS`
 - `COOKIE_DOMAIN`
 - `TRUST_PROXY`

@@ -10,6 +10,8 @@ import SearchDetail from './pages/SearchDetail';
 import SearchResults from './pages/SearchResults';
 import ReportDetail from './pages/ReportDetail';
 import ReportList from './pages/ReportList';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import About from './pages/About';
 import ChangePassword from './pages/ChangePassword';
 import Settings from './pages/Settings';
@@ -41,6 +43,8 @@ export default function App() {
                 <Route path="/" element={<Home1 />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/about" element={<About />} />
 
                 {/* private */}

@@ -5,9 +5,10 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { NavLink, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { Mail, ShieldCheck, KeyRound, ArrowRightCircle, Send, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import ProfileSidebar from "../components/ProfileSidebar";
 import { useAuth } from "../contexts/AuthContext";
-import { changePassword } from "../services/auth";
+import { changePassword, requestChangePasswordPin } from "../services/auth";
 import { t } from "../i18n/strings";
 
 const schema = z
@@ -17,6 +18,11 @@ const schema = z
     currentPasswordConfirm: z.string().min(6, t("auth.changePassword.schema.currentConfirmMin6")),
     newPassword: z.string().min(6, t("auth.changePassword.schema.newMin6")),
     newPasswordConfirm: z.string().min(6, t("auth.changePassword.schema.newConfirmMin6")),
+    pin: z
+      .string()
+      .min(6, t("auth.changePassword.errors.pinInvalid"))
+      .max(6, t("auth.changePassword.errors.pinInvalid"))
+      .regex(/^\d+$/, t("auth.changePassword.errors.pinInvalid")),
   })
   .refine((v) => v.currentPassword === v.currentPasswordConfirm, {
     path: ["currentPasswordConfirm"],
@@ -33,6 +39,13 @@ const schema = z
 
 export default function ChangePassword() {
   const { user, token } = useAuth();
+  const [sendingPin, setSendingPin] = React.useState(false);
+  const [show, setShow] = React.useState({
+    current: false,
+    currentConfirm: false,
+    next: false,
+    nextConfirm: false,
+  });
   const navigate = useNavigate();
   const {
     register,
@@ -47,6 +60,7 @@ export default function ChangePassword() {
       currentPasswordConfirm: "",
       newPassword: "",
       newPasswordConfirm: "",
+      pin: "",
     },
   });
 
@@ -58,7 +72,7 @@ export default function ChangePassword() {
 
   const onSubmit = async (data) => {
     try {
-      await changePassword({ currentPassword: data.currentPassword, newPassword: data.newPassword }, token);
+      await changePassword({ currentPassword: data.currentPassword, newPassword: data.newPassword, pin: data.pin }, token);
       toast.success(t("auth.changePassword.success"));
       navigate("/settings");
     } catch (e) {
@@ -77,9 +91,24 @@ export default function ChangePassword() {
           setError("newPassword", { type: "server", message: mapMsg(fields.newPassword) });
         }
         toast.error(t("auth.changePassword.invalid"));
+      } else if (e?.status === 401 && e?.message?.includes("PIN")) {
+        setError("pin", { type: "server", message: t("auth.changePassword.errors.pinInvalid") });
+        toast.error(t("auth.changePassword.errors.pinInvalid"));
       } else {
         toast.error(e?.message || t("auth.changePassword.errors.generic"));
       }
+    }
+  };
+
+  const onSendPin = async () => {
+    try {
+      setSendingPin(true);
+      await requestChangePasswordPin();
+      toast.success(t("auth.changePassword.pinSent"));
+    } catch (err) {
+      toast.error(err?.message || t("auth.changePassword.pinSendError"));
+    } finally {
+      setSendingPin(false);
     }
   };
 
@@ -119,73 +148,162 @@ export default function ChangePassword() {
             </div>
           </div>
 
-          <div className="bg-white text-gray-900 rounded-2xl p-6 shadow-xl border border-gray-200 dark:bg-[#061427]/90 dark:text-white dark:border-cyan-400/30 dark:shadow-[0_25px_80px_rgba(6,182,212,0.25)]">
-            <h1 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">{t("auth.changePassword.title")}</h1>
+          <div className="bg-[#0d1b2f]/90 text-white rounded-2xl p-6 md:p-8 shadow-xl border border-cyan-400/25 dark:shadow-[0_25px_80px_rgba(6,182,212,0.25)]">
+            <h1 className="text-xl font-bold mb-6">{t("auth.changePassword.title")}</h1>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
-                <label className="block text-sm text-gray-600 dark:text-cyan-300 mb-1">{t("auth.changePassword.emailLabel")}</label>
-                <input
-                  {...register("email")}
-                  disabled
-                  className="w-full h-12 px-4 rounded-xl bg-gray-100 border border-gray-300 text-gray-900 dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white"
-                />
+                <label className="block text-sm text-cyan-200 mb-2">{t("auth.changePassword.emailLabel")}</label>
+                <div className="relative h-12">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300" />
+                  <ShieldCheck className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-400" />
+                  <input
+                    {...register("email")}
+                    disabled
+                    className="w-full h-full pl-12 pr-12 rounded-xl bg-[#0b1525] border border-gray-600 text-gray-300 placeholder-gray-500 outline-none cursor-not-allowed opacity-90 focus:ring-0 focus:border-gray-600"
+                  />
+                </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 dark:text-cyan-300 mb-1">{t("auth.changePassword.currentLabel")}</label>
-                  <input
-                    {...register("currentPassword")}
-                    type="password"
-                    className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white"
-                  />
+                  <label className="block text-sm text-cyan-200 mb-2">{t("auth.changePassword.currentLabel")}</label>
+                  <div className="relative h-12">
+                    <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300" />
+                    <input
+                      {...register("currentPassword")}
+                      type={show.current ? "text" : "password"}
+                      className="w-full h-full pl-12 pr-10 rounded-xl bg-[#11233c] border border-cyan-400/40 text-white placeholder-gray-400 outline-none"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-300"
+                      onClick={() => setShow((s) => ({ ...s, current: !s.current }))}
+                    >
+                      {show.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                   {renderError("currentPassword")}
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 dark:text-cyan-300 mb-1">{t("auth.changePassword.currentConfirmLabel")}</label>
-                  <input
-                    {...register("currentPasswordConfirm")}
-                    type="password"
-                    className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white"
-                  />
+                  <label className="block text-sm text-cyan-200 mb-2">{t("auth.changePassword.currentConfirmLabel")}</label>
+                  <div className="relative h-12">
+                    <CheckCircle2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300" />
+                    <input
+                      {...register("currentPasswordConfirm")}
+                      type={show.currentConfirm ? "text" : "password"}
+                      className="w-full h-full pl-12 pr-10 rounded-xl bg-[#11233c] border border-cyan-400/40 text-white placeholder-gray-400 outline-none"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-300"
+                      onClick={() => setShow((s) => ({ ...s, currentConfirm: !s.currentConfirm }))}
+                    >
+                      {show.currentConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                   {renderError("currentPasswordConfirm")}
                 </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 dark:text-cyan-300 mb-1">{t("auth.changePassword.newLabel")}</label>
-                  <input
-                    {...register("newPassword")}
-                    type="password"
-                    className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white"
-                  />
+                  <label className="block text-sm text-cyan-200 mb-2">{t("auth.changePassword.newLabel")}</label>
+                  <div className="relative h-12">
+                    <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300" />
+                    <input
+                      {...register("newPassword")}
+                      type={show.next ? "text" : "password"}
+                      className="w-full h-full pl-12 pr-10 rounded-xl bg-[#11233c] border border-cyan-400/40 text-white placeholder-gray-400 outline-none"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-300"
+                      onClick={() => setShow((s) => ({ ...s, next: !s.next }))}
+                    >
+                      {show.next ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                   {renderError("newPassword")}
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 dark:text-cyan-300 mb-1">{t("auth.changePassword.newConfirmLabel")}</label>
-                  <input
-                    {...register("newPasswordConfirm")}
-                    type="password"
-                    className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white"
-                  />
+                  <label className="block text-sm text-cyan-200 mb-2">{t("auth.changePassword.newConfirmLabel")}</label>
+                  <div className="relative h-12">
+                    <CheckCircle2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300" />
+                    <input
+                      {...register("newPasswordConfirm")}
+                      type={show.nextConfirm ? "text" : "password"}
+                      className="w-full h-full pl-12 pr-10 rounded-xl bg-[#11233c] border border-cyan-400/40 text-white placeholder-gray-400 outline-none"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-300"
+                      onClick={() => setShow((s) => ({ ...s, nextConfirm: !s.nextConfirm }))}
+                    >
+                      {show.nextConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                   {renderError("newPasswordConfirm")}
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 pt-4">
+              <div className="rounded-xl border border-cyan-400/40 bg-[#0f223a] p-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-cyan-400/15 flex items-center justify-center text-cyan-300">
+                    <ArrowRightCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{t("auth.changePassword.pinLabel")}</p>
+                    <p className="text-xs text-gray-300 mt-1">
+                      {t("auth.changePassword.pinPlaceholder")} • กรุณากรอกรหัสที่ได้รับทางอีเมลเพื่อยืนยันการเปลี่ยนรหัสผ่าน
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col md:flex-row items-center gap-3">
+                  <div className="relative flex-1 h-12">
+                    <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300" />
+                    <input
+                      {...register("pin")}
+                      inputMode="numeric"
+                      maxLength={6}
+                      type="text"
+                      onInput={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
+                        e.target.value = digits;
+                      }}
+                      className="w-full h-full pl-12 pr-4 rounded-xl bg-[#11233c] border border-cyan-400/40 text-white placeholder-gray-400 outline-none"
+                      placeholder={t("auth.changePassword.pinPlaceholder")}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onSendPin}
+                    disabled={sendingPin}
+                    className="h-12 px-4 min-w-[160px] rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    {sendingPin ? t("auth.changePassword.sendingPin") : t("auth.changePassword.sendPin")}
+                  </button>
+                </div>
+                {renderError("pin")}
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => navigate(-1)}
-                  className="h-12 flex-1 rounded-xl border border-gray-300 text-gray-700 dark:border-gray-600 dark:text-white"
+                  className="h-12 flex-1 rounded-xl border border-gray-600 text-gray-200"
                 >
                   {t("auth.changePassword.cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="h-12 flex-1 rounded-xl bg-black text-white font-semibold shadow-lg shadow-black/20 hover:bg-gray-900 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-gradient-to-r dark:from-cyan-400 dark:via-sky-500 dark:to-blue-500 dark:shadow-cyan-500/30 dark:hover:shadow-cyan-500/50 dark:hover:from-cyan-300 dark:hover:via-sky-400 dark:hover:to-blue-400"
+                  className="h-12 flex-1 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-500 text-white font-semibold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? t("auth.changePassword.submitting") : t("auth.changePassword.submit")}
                 </button>

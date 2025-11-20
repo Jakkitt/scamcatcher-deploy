@@ -49,19 +49,44 @@ function buildAccountRegex(digits = "") {
 
 export function buildSearchCondition(filters = {}) {
   const cond = {};
+  const clauses = [];
   const fullName = buildDisplayName(filters.firstName, filters.lastName, filters.name);
+  const nameMatchers = [];
+
   if (fullName) {
-    cond.name = { $regex: fullName, $options: "i" };
+    nameMatchers.push({ name: { $regex: fullName, $options: "i" } });
   }
+  if (filters.firstName) {
+    const first = sanitizeNamePart(filters.firstName);
+    if (first) nameMatchers.push({ firstName: { $regex: first, $options: "i" } });
+  }
+  if (filters.lastName) {
+    const last = sanitizeNamePart(filters.lastName);
+    if (last) nameMatchers.push({ lastName: { $regex: last, $options: "i" } });
+  }
+  if (nameMatchers.length === 1) {
+    clauses.push(nameMatchers[0]);
+  } else if (nameMatchers.length > 1) {
+    clauses.push({ $or: nameMatchers });
+  }
+
   if (filters.account) {
     const digits = normalizeAccount(filters.account);
     if (digits) {
       const regex = buildAccountRegex(digits) || new RegExp(digits, "i");
-      cond.account = { $regex: regex };
+      clauses.push({ account: { $regex: regex } });
     }
   }
-  if (filters.bank) cond.bank = filters.bank;
-  if (filters.channel) cond.channel = { $regex: filters.channel, $options: "i" };
+  if (filters.bank) clauses.push({ bank: filters.bank });
+  if (filters.channel) clauses.push({ channel: { $regex: filters.channel, $options: "i" } });
+
+  if (clauses.length === 1) {
+    return clauses[0];
+  }
+  if (clauses.length > 1) {
+    cond.$and = clauses;
+    return cond;
+  }
   return cond;
 }
 
