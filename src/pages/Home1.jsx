@@ -77,11 +77,12 @@ export default function Home1() {
                   <div className="w-full h-14 pl-12 pr-4 bg-white rounded-xl border border-slate-400 flex items-center shadow-sm">
                     <input
                       type="text"
-                      className="w-full h-full bg-transparent text-slate-900 placeholder-slate-600 caret-blue-600 outline-none text-lg font-semibold"
+                      className="w-full h-full bg-transparent text-slate-900 placeholder-slate-600 caret-blue-600 outline-none text-lg font-semibold focus:text-slate-900 focus:placeholder-slate-600"
                       placeholder="ค้นหาเลขบัญชี, เบอร์โทร, หรือชื่อ-นามสกุล..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       autoComplete="off"
+                      style={{ WebkitTextFillColor: '#0f172a', WebkitBoxShadow: '0 0 0px 1000px white inset' }}
                     />
                   </div>
                 </div>
