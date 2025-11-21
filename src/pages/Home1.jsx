@@ -74,14 +74,16 @@ export default function Home1() {
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors">
                     <Search className="w-5 h-5" />
                   </div>
-                  <input
-                    type="text"
-                    className="w-full h-14 pl-12 pr-4 bg-white rounded-xl text-slate-900 placeholder-slate-700 caret-blue-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 transition-all text-lg border border-slate-400 font-semibold"
-                    placeholder="ค้นหาเลขบัญชี, เบอร์โทร, หรือชื่อ-นามสกุล..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    autoComplete="off"
-                  />
+                  <div className="w-full h-14 pl-12 pr-4 bg-white rounded-xl border border-slate-400 flex items-center shadow-sm">
+                    <input
+                      type="text"
+                      className="w-full h-full bg-transparent text-slate-900 placeholder-slate-600 caret-blue-600 outline-none text-lg font-semibold"
+                      placeholder="ค้นหาเลขบัญชี, เบอร์โทร, หรือชื่อ-นามสกุล..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      autoComplete="off"
+                    />
+                  </div>
                 </div>
                 <Link
                   to="/search/detail"
