@@ -76,7 +76,7 @@ export default function Home1() {
                   </div>
                   <input
                     type="text"
-                    className="w-full h-14 pl-12 pr-4 bg-white rounded-xl text-slate-900 placeholder-slate-500 caret-blue-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-300 transition-all text-lg border border-slate-300 font-semibold shadow-inner"
+                    className="w-full h-14 pl-12 pr-4 bg-white rounded-xl text-slate-900 placeholder-slate-700 caret-blue-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 transition-all text-lg border border-slate-400 font-semibold"
                     placeholder="ค้นหาเลขบัญชี, เบอร์โทร, หรือชื่อ-นามสกุล..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
