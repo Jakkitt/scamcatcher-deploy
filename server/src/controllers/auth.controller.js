@@ -290,28 +290,21 @@ export async function changePassword(req, res) {
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ error: { message: 'currentPassword and newPassword required' } });
     }
-    const requiredPin = process.env.CHANGE_PASSWORD_PIN || '';
-    if (requiredPin) {
-      if (!pin || pin !== requiredPin) {
-        return res.status(401).json({ error: { message: 'รหัส PIN ไม่ถูกต้อง' } });
-      }
-    } else {
-      // ใช้ PIN แบบ OTP จากอีเมล
-      if (!pin) return res.status(401).json({ error: { message: 'รหัส PIN ไม่ถูกต้อง' } });
-      const hashedPin = hashToken(pin);
-      const otp = await PasswordResetToken.findOne({
-        userId: req.user.id,
-        purpose: 'change_password_pin',
-        token: hashedPin,
-        used: false,
-        expiresAt: { $gt: new Date() },
-      });
-      if (!otp) {
-        return res.status(401).json({ error: { message: 'รหัส PIN ไม่ถูกต้องหรือหมดอายุ' } });
-      }
-      otp.used = true;
-      await otp.save();
+    // ตรวจ OTP ที่ส่งทางอีเมล
+    if (!pin) return res.status(401).json({ error: { message: 'รหัส OTP ไม่ถูกต้อง' } });
+    const hashedPin = hashToken(pin);
+    const otp = await PasswordResetToken.findOne({
+      userId: req.user.id,
+      purpose: 'change_password_pin',
+      token: hashedPin,
+      used: false,
+      expiresAt: { $gt: new Date() },
+    });
+    if (!otp) {
+      return res.status(401).json({ error: { message: 'รหัส OTP ไม่ถูกต้องหรือหมดอายุ' } });
     }
+    otp.used = true;
+    await otp.save();
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: { message: 'user not found' } });
 

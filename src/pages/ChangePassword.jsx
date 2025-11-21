@@ -259,7 +259,7 @@ export default function ChangePassword() {
                   <div>
                     <p className="text-sm font-semibold text-white">{t("auth.changePassword.pinLabel")}</p>
                     <p className="text-xs text-gray-300 mt-1">
-                      {t("auth.changePassword.pinPlaceholder")} • กรุณากรอกรหัสที่ได้รับทางอีเมลเพื่อยืนยันการเปลี่ยนรหัสผ่าน
+                      {t("auth.changePassword.pinPlaceholder")} • กรุณากรอกรหัส OTP ที่ได้รับทางอีเมลเพื่อยืนยันการเปลี่ยนรหัสผ่าน
                     </p>
                   </div>
                 </div>
