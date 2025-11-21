@@ -68,18 +68,19 @@ export default function Home1() {
               {t('layout.brand')} ช่วยให้คุณตรวจสอบประวัติการโกง เช็กเบอร์โทรและเลขบัญชีต้องสงสัย จากฐานข้อมูลที่รวบรวมโดยชุมชนผู้ใช้จริงทั่วประเทศ
             </p>
 
-            <div className="bg-white p-2 rounded-2xl shadow-2xl shadow-blue-900/20 max-w-3xl mx-auto">
+            <div className="bg-white/95 p-2 rounded-2xl shadow-2xl shadow-blue-900/20 max-w-3xl mx-auto border border-slate-200">
               <div className="flex flex-col md:flex-row gap-2">
                 <div className="relative flex-grow group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors">
                     <Search className="w-5 h-5" />
                   </div>
                   <input
                     type="text"
-                    className="w-full h-14 pl-12 pr-4 bg-white rounded-xl text-slate-900 placeholder-slate-500 caret-blue-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-200 transition-all text-lg border border-slate-200 shadow-inner font-semibold"
+                    className="w-full h-14 pl-12 pr-4 bg-white rounded-xl text-slate-900 placeholder-slate-500 caret-blue-600 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-300 transition-all text-lg border border-slate-300 font-semibold shadow-inner"
                     placeholder="ค้นหาเลขบัญชี, เบอร์โทร, หรือชื่อ-นามสกุล..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    autoComplete="off"
                   />
                 </div>
                 <Link
