@@ -96,3 +96,15 @@ export async function countOrphans(){
 export async function getReportDetail(id){
   return request(`/reports/${id}`);
 }
+
+export async function fetchReportStats(){
+  return request('/reports/stats/summary');
+}
+
+export async function fetchRecentReports(limit = 6){
+  return request(`/reports/public/recent?limit=${limit}`);
+}
+
+export async function fetchFraudCategories(days = 30){
+  return request(`/reports/stats/fraud?days=${days}`);
+}

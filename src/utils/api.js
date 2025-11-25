@@ -4,7 +4,8 @@ export function resolveBase(){
   try{
     const origin = window.location.origin;
     if (/:(5173|5174|5175)/.test(origin)) {
-      const devPort = import.meta?.env?.VITE_API_DEV_PORT || '4010';
+      // Frontend dev server runs on 5173; backend dev default is 4011
+      const devPort = import.meta?.env?.VITE_API_DEV_PORT || '4000';
       return `http://localhost:${devPort}/api`;
     }
     return origin + '/api';

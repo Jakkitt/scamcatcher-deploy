@@ -12,6 +12,8 @@ import { sendMail } from '../services/mailer.js';
 import { buildResetPasswordEmail, buildChangePasswordPinEmail } from '../services/emailTemplates.js';
 import { logger } from '../utils/logger.js';
 import { passwordSchema } from '../validators/auth.schema.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { issueCsrf } from '../middlewares/csrf.js';
 
 const ACCOUNT_SUSPENDED_ERROR = {
   message: 'การเข้าสู่ระบบไม่สำเร็จ เนื่องจากบัญชีของคุณถูกปิดใช้งาน',
@@ -51,85 +53,79 @@ function toSafeUser(u) {
     dob: u.dob || null,
     avatarUrl: u.avatarUrl || '',
     role: u.role || 'user',
+    settings: u.settings || { emailNotifications: true },
   };
 }
 
-export async function register(req, res) {
-  try {
-    const { email, password, username, gender, dob } = req.body || {};
-    if (!email || !password) {
-      return res.status(400).json({ error: { message: 'email and password required' } });
-    }
-    const exists = await User.findOne({ email });
-    if (exists) {
-      if (exists.suspended) {
-        return res.status(403).json({ error: ACCOUNT_SUSPENDED_ERROR });
-      }
-      return res.status(409).json({ error: { message: 'email already exists' } });
-    }
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const role = String(email).toLowerCase().startsWith('admin') ? 'admin' : 'user';
-    const user = await User.create({ email, passwordHash, username, gender, dob, role });
-
-    const safe = toSafeUser(user);
-    const accessToken = signAccessToken({ id: safe.id, email: safe.email, role: safe.role });
-    const refreshToken = signRefreshToken({ id: safe.id, email: safe.email, role: safe.role });
-    const meta = resolveClientMeta(req);
-    await revokeUserTokens(user._id);
-    await persistRefreshToken(user._id, refreshToken, meta);
-    setAuthCookies(res, { accessToken, refreshToken });
-    await recordAuthLog({
-      userId: user._id,
-      event: 'register_success',
-      ...meta,
-    });
-    return res.status(201).json({ user: safe });
-  } catch (e) {
-    return res.status(500).json({ error: { message: e.message } });
+export const register = asyncHandler(async (req, res) => {
+  const { email, password, username, gender, dob } = req.body || {};
+  if (!email || !password) {
+    return res.status(400).json({ error: { message: 'email and password required' } });
   }
-}
-
-export async function login(req, res) {
-  try {
-    const { email, password } = req.body || {};
-    if (!email || !password) {
-      return res.status(400).json({ error: { message: 'email and password required' } });
-    }
-    const user = await User.findOne({ email });
-    const clientMeta = resolveClientMeta(req);
-    if (!user) {
-      await recordAuthLog({ event: 'login_failed', ...clientMeta, meta: { email } });
-      return res.status(401).json({ error: { message: 'invalid credentials' } });
-    }
-    if (user.suspended) {
+  const exists = await User.findOne({ email });
+  if (exists) {
+    if (exists.suspended) {
       return res.status(403).json({ error: ACCOUNT_SUSPENDED_ERROR });
     }
-
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) {
-      await recordAuthLog({ userId: user._id, event: 'login_failed', ...clientMeta });
-      return res.status(401).json({ error: { message: 'invalid credentials' } });
-    }
-
-    const safe = toSafeUser(user);
-    const accessToken = signAccessToken({ id: safe.id, email: safe.email, role: safe.role });
-    const refreshToken = signRefreshToken({ id: safe.id, email: safe.email, role: safe.role });
-    await revokeUserTokens(user._id);
-    await persistRefreshToken(user._id, refreshToken, clientMeta);
-    setAuthCookies(res, { accessToken, refreshToken });
-    await recordAuthLog({
-      userId: user._id,
-      event: 'login_success',
-      ...clientMeta,
-    });
-    return res.json({ user: safe });
-  } catch (e) {
-    return res.status(500).json({ error: { message: e.message } });
+    return res.status(409).json({ error: { message: 'email already exists' } });
   }
-}
 
-export async function forgotPassword(req, res) {
+  const passwordHash = await bcrypt.hash(password, 10);
+  // SECURITY FIX: Always default to 'user' role. Admin role must be assigned via database seed or manual update.
+  const role = 'user';
+  const user = await User.create({ email, passwordHash, username, gender, dob, role });
+
+  const safe = toSafeUser(user);
+  const accessToken = signAccessToken({ id: safe.id, email: safe.email, role: safe.role });
+  const refreshToken = signRefreshToken({ id: safe.id, email: safe.email, role: safe.role });
+  const meta = resolveClientMeta(req);
+  await revokeUserTokens(user._id);
+  await persistRefreshToken(user._id, refreshToken, meta);
+  setAuthCookies(res, { accessToken, refreshToken });
+  await recordAuthLog({
+    userId: user._id,
+    event: 'register_success',
+    ...meta,
+  });
+  return res.status(201).json({ user: safe });
+});
+
+export const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) {
+    return res.status(400).json({ error: { message: 'email and password required' } });
+  }
+  const user = await User.findOne({ email });
+  const clientMeta = resolveClientMeta(req);
+  if (!user) {
+    await recordAuthLog({ event: 'login_failed', ...clientMeta, meta: { email } });
+    return res.status(401).json({ error: { message: 'invalid credentials' } });
+  }
+  if (user.suspended) {
+    return res.status(403).json({ error: ACCOUNT_SUSPENDED_ERROR });
+  }
+
+  const ok = await bcrypt.compare(password, user.passwordHash);
+  if (!ok) {
+    await recordAuthLog({ userId: user._id, event: 'login_failed', ...clientMeta });
+    return res.status(401).json({ error: { message: 'invalid credentials' } });
+  }
+
+  const safe = toSafeUser(user);
+  const accessToken = signAccessToken({ id: safe.id, email: safe.email, role: safe.role });
+  const refreshToken = signRefreshToken({ id: safe.id, email: safe.email, role: safe.role });
+  await revokeUserTokens(user._id);
+  await persistRefreshToken(user._id, refreshToken, clientMeta);
+  setAuthCookies(res, { accessToken, refreshToken });
+  await recordAuthLog({
+    userId: user._id,
+    event: 'login_success',
+    ...clientMeta,
+  });
+  return res.json({ user: safe });
+});
+
+export const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body || {};
   const normalizedEmail = String(email || '').trim().toLowerCase();
   const clientMeta = resolveClientMeta(req);
@@ -185,9 +181,9 @@ export async function forgotPassword(req, res) {
     });
     return res.status(500).json({ error: { message: 'ส่งอีเมลรีเซ็ตรหัสผ่านไม่สำเร็จ' } });
   }
-}
+});
 
-export async function resetPassword(req, res) {
+export const resetPassword = asyncHandler(async (req, res) => {
   const { token, newPassword } = req.body || {};
   const clientMeta = resolveClientMeta(req);
   if (!token || !newPassword) {
@@ -239,7 +235,7 @@ export async function resetPassword(req, res) {
   });
 
   return res.json({ ok: true });
-}
+});
 
 export async function sendChangePasswordPin(req, res) {
   const userId = req.user?.id;
@@ -284,90 +280,85 @@ export async function sendChangePasswordPin(req, res) {
   }
 }
 
-export async function changePassword(req, res) {
-  try {
-    const { currentPassword, newPassword, pin } = req.body || {};
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: { message: 'currentPassword and newPassword required' } });
+export const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword, pin } = req.body || {};
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: { message: 'currentPassword and newPassword required' } });
+  }
+  // ตรวจ OTP ที่ส่งทางอีเมล
+  if (!pin) return res.status(401).json({ error: { message: 'รหัส OTP ไม่ถูกต้อง' } });
+  const hashedPin = hashToken(pin);
+  const otp = await PasswordResetToken.findOne({
+    userId: req.user.id,
+    purpose: 'change_password_pin',
+    token: hashedPin,
+    used: false,
+    expiresAt: { $gt: new Date() },
+  });
+  if (!otp) {
+    return res.status(401).json({ error: { message: 'รหัส OTP ไม่ถูกต้องหรือหมดอายุ' } });
+  }
+  otp.used = true;
+  await otp.save();
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ error: { message: 'user not found' } });
+
+  const ok = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!ok) return res.status(401).json({ error: { message: 'invalid current password' } });
+
+  user.passwordHash = await bcrypt.hash(newPassword, 10);
+  await user.save();
+  
+  // SECURITY: Revoke all refresh tokens (force logout everywhere)
+  await revokeUserTokens(user._id);
+  
+  return res.status(204).end();
+});
+
+export const me = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ error: { message: 'user not found' } });
+  return res.json({ user: toSafeUser(user) });
+});
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  const { username, gender, dob, avatarUrl, settings } = req.body || {};
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ error: { message: 'user not found' } });
+
+  if (typeof username === 'string') user.username = username;
+  if (typeof gender === 'string') user.gender = ['','male','female','other'].includes(gender) ? gender : user.gender;
+  if (typeof avatarUrl === 'string') user.avatarUrl = avatarUrl;
+  if (dob === '' || dob === null) user.dob = undefined;
+  else if (typeof dob === 'string') {
+    const d = new Date(dob);
+    if (!isNaN(d.getTime())) user.dob = d;
+  }
+
+  // Update settings if provided
+  if (settings && typeof settings === 'object') {
+    if (typeof settings.emailNotifications === 'boolean') {
+      user.settings.emailNotifications = settings.emailNotifications;
     }
-    // ตรวจ OTP ที่ส่งทางอีเมล
-    if (!pin) return res.status(401).json({ error: { message: 'รหัส OTP ไม่ถูกต้อง' } });
-    const hashedPin = hashToken(pin);
-    const otp = await PasswordResetToken.findOne({
-      userId: req.user.id,
-      purpose: 'change_password_pin',
-      token: hashedPin,
-      used: false,
-      expiresAt: { $gt: new Date() },
-    });
-    if (!otp) {
-      return res.status(401).json({ error: { message: 'รหัส OTP ไม่ถูกต้องหรือหมดอายุ' } });
-    }
-    otp.used = true;
-    await otp.save();
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ error: { message: 'user not found' } });
-
-    const ok = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!ok) return res.status(401).json({ error: { message: 'invalid current password' } });
-
-    user.passwordHash = await bcrypt.hash(newPassword, 10);
-    await user.save();
-    return res.status(204).end();
-  } catch (e) {
-    return res.status(500).json({ error: { message: e.message } });
   }
-}
 
-export async function me(req, res) {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ error: { message: 'user not found' } });
-    return res.json({ user: toSafeUser(user) });
-  } catch (e) {
-    return res.status(500).json({ error: { message: e.message } });
-  }
-}
+  await user.save();
+  return res.json({ user: toSafeUser(user) });
+});
 
-export async function updateProfile(req, res) {
-  try {
-    const { username, gender, dob, avatarUrl } = req.body || {};
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ error: { message: 'user not found' } });
-
-    if (typeof username === 'string') user.username = username;
-    if (typeof gender === 'string') user.gender = ['','male','female','other'].includes(gender) ? gender : user.gender;
-    if (typeof avatarUrl === 'string') user.avatarUrl = avatarUrl;
-    if (dob === '' || dob === null) user.dob = undefined;
-    else if (typeof dob === 'string') {
-      const d = new Date(dob);
-      if (!isNaN(d.getTime())) user.dob = d;
-    }
-
-    await user.save();
-    return res.json({ user: toSafeUser(user) });
-  } catch (e) {
-    return res.status(500).json({ error: { message: e.message } });
-  }
-}
-
-export async function deleteAccount(req, res) {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error:{ message:'UNAUTHORIZED' } });
-    const meta = resolveClientMeta(req);
-    const ownedReports = await Report.find({ owner: userId }, { photos: 1 }).lean();
-    await Report.deleteMany({ owner: userId });
-    await Promise.all(ownedReports.map((doc) => deleteUploadsByUrls(doc?.photos || [])));
-    await User.findByIdAndDelete(userId);
-    await revokeUserTokens(userId);
-    clearAuthCookies(res);
-    await recordAuthLog({ userId, event: 'account_deleted', ...meta });
-    return res.status(204).end();
-  } catch (e) {
-    return res.status(500).json({ error:{ message: e.message } });
-  }
-}
+export const deleteAccount = asyncHandler(async (req, res) => {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ error:{ message:'UNAUTHORIZED' } });
+  const meta = resolveClientMeta(req);
+  const ownedReports = await Report.find({ owner: userId }, { photos: 1 }).lean();
+  await Report.deleteMany({ owner: userId });
+  await Promise.all(ownedReports.map((doc) => deleteUploadsByUrls(doc?.photos || [])));
+  await User.findByIdAndDelete(userId);
+  await revokeUserTokens(userId);
+  clearAuthCookies(res);
+  await recordAuthLog({ userId, event: 'account_deleted', ...meta });
+  return res.status(204).end();
+});
 
 export async function logout(req, res) {
   const meta = resolveClientMeta(req);
@@ -380,48 +371,48 @@ export async function logout(req, res) {
   return res.status(204).end();
 }
 
-export async function refreshSession(req, res) {
-  try {
-    const token = req.cookies?.[COOKIE_NAMES.refresh];
-    const meta = resolveClientMeta(req);
-    if (!token) {
-      clearAuthCookies(res);
-      return res.status(401).json({ error: { message: 'UNAUTHORIZED' } });
-    }
-    let payload;
-    try {
-      payload = verifyToken(token);
-    } catch (err) {
-      await recordAuthLog({ event: 'refresh_invalid', ...meta, meta: { reason: err.message } });
-      clearAuthCookies(res);
-      return res.status(401).json({ error: { message: 'UNAUTHORIZED' } });
-    }
-    const stored = await RefreshToken.findOne({ token: hashToken(token) });
-    if (!stored) {
-      if (payload?.id) {
-        await revokeUserTokens(payload.id);
-        await recordAuthLog({ userId: payload.id, event: 'refresh_token_reuse', ...meta });
-      }
-      clearAuthCookies(res);
-      return res.status(403).json({ error: { message: 'forbidden' } });
-    }
-    const user = await User.findById(stored.userId);
-    if (!user || user.suspended) {
-      await revokeUserTokens(stored.userId);
-      clearAuthCookies(res);
-      return res.status(403).json({ error: { message: 'forbidden' } });
-    }
-    const safe = toSafeUser(user);
-    const accessToken = signAccessToken({ id: safe.id, email: safe.email, role: safe.role });
-    const refreshToken = signRefreshToken({ id: safe.id, email: safe.email, role: safe.role });
-    await revokeToken(token);
-    await persistRefreshToken(user._id, refreshToken, meta);
-    setAuthCookies(res, { accessToken, refreshToken });
-    await recordAuthLog({ userId: user._id, event: 'refresh_success', ...meta });
-    return res.json({ ok: true });
-  } catch (err) {
+export const refreshSession = asyncHandler(async (req, res) => {
+  const token = req.cookies?.[COOKIE_NAMES.refresh];
+  const meta = resolveClientMeta(req);
+  if (!token) {
     clearAuthCookies(res);
-    await recordAuthLog({ event: 'refresh_error', meta: { reason: err.message }, ...resolveClientMeta(req) });
     return res.status(401).json({ error: { message: 'UNAUTHORIZED' } });
   }
-}
+  let payload;
+  try {
+    payload = verifyToken(token);
+  } catch (err) {
+    await recordAuthLog({ event: 'refresh_invalid', ...meta, meta: { reason: err.message } });
+    clearAuthCookies(res);
+    return res.status(401).json({ error: { message: 'UNAUTHORIZED' } });
+  }
+  const stored = await RefreshToken.findOne({ token: hashToken(token) });
+  if (!stored) {
+    if (payload?.id) {
+      await revokeUserTokens(payload.id);
+      await recordAuthLog({ userId: payload.id, event: 'refresh_token_reuse', ...meta });
+    }
+    clearAuthCookies(res);
+    return res.status(403).json({ error: { message: 'forbidden' } });
+  }
+  const user = await User.findById(stored.userId);
+  if (!user || user.suspended) {
+    await revokeUserTokens(stored.userId);
+    clearAuthCookies(res);
+    return res.status(403).json({ error: { message: 'forbidden' } });
+  }
+  const safe = toSafeUser(user);
+  const accessToken = signAccessToken({ id: safe.id, email: safe.email, role: safe.role });
+  const refreshToken = signRefreshToken({ id: safe.id, email: safe.email, role: safe.role });
+  await revokeToken(token);
+  await persistRefreshToken(user._id, refreshToken, meta);
+  setAuthCookies(res, { accessToken, refreshToken });
+  await recordAuthLog({ userId: user._id, event: 'refresh_success', ...meta });
+  await recordAuthLog({ userId: user._id, event: 'refresh_success', ...meta });
+  return res.json({ ok: true });
+});
+
+export const getCsrfToken = (req, res) => {
+  issueCsrf(res);
+  return res.json({ ok: true });
+};

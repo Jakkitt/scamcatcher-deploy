@@ -9,7 +9,16 @@ const userSchema = new mongoose.Schema(
     dob: { type: Date },
     avatarUrl: { type: String, default: '' },
     role: { type: String, enum: ['user','admin'], default: 'user' },
-    suspended: { type: Boolean, default: false }
+    suspended: { type: Boolean, default: false },
+    settings: {
+      type: new mongoose.Schema(
+        {
+          emailNotifications: { type: Boolean, default: true },
+        },
+        { _id: false }
+      ),
+      default: () => ({ emailNotifications: true }),
+    },
   },
   { timestamps: true }
 );

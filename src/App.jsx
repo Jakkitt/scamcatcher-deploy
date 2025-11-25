@@ -25,7 +25,6 @@ import AppToaster from './components/Toaster';
 import AdminRoutes from './admin/routes';
 
 import { ThemeProvider } from './contexts/ThemeContext';
-// Keep AuthProvider in place if it already exists
 import { AuthProvider } from './contexts/AuthContext';
 import { t } from './i18n/strings';
 
@@ -47,27 +46,74 @@ export default function App() {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/about" element={<About />} />
 
-                {/* private */}
-                <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-                <Route path="/report" element={<RequireAuth><Report /></RequireAuth>} />
-                <Route path="/search/detail" element={<RequireAuth><SearchDetail /></RequireAuth>} />
-                <Route path="/search/results" element={<RequireAuth><SearchResults /></RequireAuth>} />
-                <Route path="/reports" element={<RequireAuth><ReportList /></RequireAuth>} />
-                <Route path="/reports/:id" element={<RequireAuth><ReportDetail /></RequireAuth>} />
-                <Route path="/change-password" element={<RequireAuth><ChangePassword /></RequireAuth>} />
-                <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
+                {/* search & report detail: เข้าดูได้เลย ไม่ต้องล็อกอิน */}
+                <Route path="/search/detail" element={<SearchDetail />} />
+                <Route path="/search/results" element={<SearchResults />} />
+                <Route path="/reports/:id" element={<ReportDetail />} />
+
+                {/* private (ยังต้องล็อกอินเหมือนเดิม) */}
+                <Route
+                  path="/profile"
+                  element={
+                    <RequireAuth>
+                      <Profile />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/report"
+                  element={
+                    <RequireAuth>
+                      <Report />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/reports"
+                  element={
+                    <RequireAuth>
+                      <ReportList />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/change-password"
+                  element={
+                    <RequireAuth>
+                      <ChangePassword />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <RequireAuth>
+                      <Settings />
+                    </RequireAuth>
+                  }
+                />
 
                 {/* admin */}
-                <Route path="/admin/*" element={
-                  <RequireAuth>
-                    <RequireRole role="admin">
-                      <AdminRoutes />
-                    </RequireRole>
-                  </RequireAuth>
-                } />
+                <Route
+                  path="/admin/*"
+                  element={
+                    <RequireAuth>
+                      <RequireRole role="admin">
+                        <AdminRoutes />
+                      </RequireRole>
+                    </RequireAuth>
+                  }
+                />
 
                 {/* fallback */}
-                <Route path="*" element={<div className="container py-20 text-center">{t('error.notFound')}</div>} />
+                <Route
+                  path="*"
+                  element={
+                    <div className="container py-20 text-center">
+                      {t('error.notFound')}
+                    </div>
+                  }
+                />
               </Routes>
             </div>
           </ErrorBoundary>

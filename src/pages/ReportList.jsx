@@ -29,7 +29,9 @@ export default function ReportList() {
         setItems([]);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const onDelete = async (id) => {
@@ -47,29 +49,39 @@ export default function ReportList() {
   };
 
   return (
-    <div className="relative min-h-[70vh] overflow-hidden bg-gray-50 dark:bg-gradient-to-br dark:from-gray-950 dark:via-slate-950 dark:to-black py-10">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none hidden dark:block">
-        <div className="absolute w-96 h-96 bg-cyan-400/30 rounded-full blur-3xl animate-pulse" style={{ left: "10%", top: "20%" }} />
-        <div className="absolute w-96 h-96 bg-blue-400/25 rounded-full blur-3xl animate-pulse" style={{ right: "10%", bottom: "20%", animationDelay: "1s" }} />
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-indigo-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }} />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
-        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-gray-950 via-transparent opacity-70" />
+    <div className="min-h-screen relative overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+      {/* พื้นหลังสไตล์เดียวกับ Settings / Profile / Register / Login */}
+      <div className="absolute inset-0">
+        {/* texture เบา ๆ */}
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.07] dark:opacity-5" />
+
+        {/* แสงฟุ้งด้านบน */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-blue-400/20 blur-[110px] rounded-full pointer-events-none dark:bg-blue-600/25" />
+
+        {/* แสงฟุ้งด้านล่าง */}
+        <div className="absolute bottom-0 right-0 w-[700px] h-[520px] bg-cyan-300/15 blur-[100px] rounded-full pointer-events-none dark:bg-cyan-500/15" />
       </div>
-      <main className="container relative z-10 py-8 grid md:grid-cols-3 gap-8">
+
+      <main className="container mx-auto px-4 md:px-6 py-10 relative z-10 grid md:grid-cols-3 gap-8">
         <ProfileSidebar />
 
         <section className="md:col-span-2">
+          {/* Tabs เหมือนหน้า Settings */}
           <div className="mb-6">
-            <div className="w-full flex items-center gap-2 bg-white border border-gray-200 rounded-2xl p-2 shadow-lg dark:bg-[#08162c]/80 dark:border-cyan-400/30">
+            <div
+              className="w-full flex items-center gap-2 rounded-2xl p-2 bg-white/95 border border-slate-200/80
+                         shadow-[0_16px_40px_rgba(15,23,42,0.12)] backdrop-blur
+                         dark:bg-slate-900/80 dark:border-white/10 dark:shadow-[0_20px_60px_rgba(15,23,42,0.9)]"
+            >
               {tabs.map((tab) => (
                 <NavLink
                   key={tab.to}
                   to={tab.to}
                   className={({ isActive }) =>
-                    `flex-1 text-center h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                    `flex-1 text-center h-11 rounded-xl flex items-center justify-center text-sm font-medium transition-all duration-300 ${
                       isActive
-                        ? "bg-black text-white shadow-lg shadow-black/30 font-semibold dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-500 dark:shadow-cyan-500/30"
-                        : "text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-800/50"
+                        ? "bg-gradient-to-r from-sky-500 to-cyan-400 text-white shadow-lg shadow-sky-500/30"
+                        : "text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800/60"
                     }`
                   }
                 >
@@ -79,13 +91,24 @@ export default function ReportList() {
             </div>
           </div>
 
-          <div className="bg-white text-gray-900 rounded-2xl p-6 shadow-xl border border-gray-200 dark:bg-[#061427]/90 dark:text-white dark:border-cyan-400/30 dark:shadow-[0_25px_80px_rgba(6,182,212,0.25)]">
-            <h1 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{copy.heading}</h1>
+          {/* การ์ดรายการรายงาน – สไตล์เดียวกับ Settings card */}
+          <div
+            className="rounded-3xl p-6 sm:p-8 bg-white/95 text-slate-900 border border-slate-200/80
+                       shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur
+                       dark:bg-gradient-to-b dark:from-slate-900/90 dark:via-slate-950 dark:to-slate-950
+                       dark:text-white dark:border-white/10 dark:shadow-[0_24px_80px_rgba(15,23,42,0.9)]"
+          >
+            <h1 className="text-xl sm:text-2xl font-bold mb-6 text-slate-900 dark:text-white">
+              {copy.heading}
+            </h1>
 
             {!items ? (
               <div className="space-y-4" aria-live="polite">
                 {Array.from({ length: 3 }).map((_, idx) => (
-                  <div key={idx} className="animate-pulse border rounded-xl p-4 space-y-3 dark:border-cyan-400/30">
+                  <div
+                    key={idx}
+                    className="animate-pulse border rounded-xl p-4 space-y-3 border-slate-200/70 bg-white/90 dark:border-white/10 dark:bg-white/5"
+                  >
                     <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-1/2" />
                     <div className="h-3 bg-gray-200 dark:bg-white/10 rounded w-1/3" />
                     <div className="h-3 bg-gray-200 dark:bg-white/10 rounded w-1/4" />
@@ -95,9 +118,12 @@ export default function ReportList() {
             ) : error ? (
               <div className="text-sm text-rose-500">{error}</div>
             ) : items.length === 0 ? (
-              <div className="text-sm text-gray-500 dark:text-gray-300">
+              <div className="text-sm text-slate-500 dark:text-slate-300">
                 {copy.empty}{" "}
-                <Link to="/report" className="underline text-gray-900 font-semibold ml-1 dark:text-white">
+                <Link
+                  to="/report"
+                  className="underline text-slate-900 font-semibold ml-1 dark:text-white"
+                >
                   {copy.emptyLink}
                 </Link>
               </div>
@@ -106,25 +132,31 @@ export default function ReportList() {
                 {items.map((r) => (
                   <li
                     key={r.id}
-                    className="border border-gray-200 rounded-xl p-4 flex items-start justify-between gap-4 bg-white dark:bg-[#0a1c32]/90 dark:border-cyan-400/30 dark:shadow-[0_15px_50px_rgba(6,182,212,0.25)]"
+                    className="border border-slate-200/80 rounded-2xl p-4 flex items-start justify-between gap-4
+                               bg-white/95 shadow-sm
+                               dark:bg-slate-900/80 dark:border-white/10 dark:shadow-[0_15px_50px_rgba(15,23,42,0.9)]"
                   >
                     <div>
-                      <div className="font-medium text-gray-900 dark:text-white">
-                        {r.name || [r.firstName, r.lastName].filter(Boolean).join(' ').trim() || t('common.unknown')}
+                      <div className="font-medium text-slate-900 dark:text-white">
+                        {r.name ||
+                          [r.firstName, r.lastName].filter(Boolean).join(" ").trim() ||
+                          t("common.unknown")}
                       </div>
-                      <div className="text-sm text-gray-400">
+                      <div className="text-sm text-slate-500 dark:text-slate-300">
                         {copy.cardCategory}: {r.category || "-"} · {copy.cardDate}{" "}
-                        {new Date(r.createdAt).toLocaleDateString()}
+                        {r.createdAt
+                          ? new Date(r.createdAt).toLocaleDateString("th-TH")
+                          : "-"}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span
                         className={`px-3 py-1 rounded-lg text-sm font-semibold border ${
-                          r.status === 'approved'
-                            ? 'text-emerald-600 border-emerald-200 bg-emerald-50 dark:text-emerald-200 dark:border-emerald-500/40 dark:bg-emerald-500/10'
-                            : r.status === 'pending'
-                            ? 'text-amber-600 border-amber-200 bg-amber-50 dark:text-amber-200 dark:border-amber-500/40 dark:bg-amber-500/10'
-                            : 'text-rose-600 border-rose-200 bg-rose-50 dark:text-rose-200 dark:border-rose-500/40 dark:bg-rose-500/10'
+                          r.status === "approved"
+                            ? "text-emerald-600 border-emerald-200 bg-emerald-50 dark:text-emerald-200 dark:border-emerald-500/40 dark:bg-emerald-500/10"
+                            : r.status === "pending"
+                            ? "text-amber-600 border-amber-200 bg-amber-50 dark:text-amber-200 dark:border-amber-500/40 dark:bg-amber-500/10"
+                            : "text-rose-600 border-rose-200 bg-rose-50 dark:text-rose-200 dark:border-rose-500/40 dark:bg-rose-500/10"
                         }`}
                       >
                         {t(`admin.statuses.${r.status}`) || r.status}
@@ -134,21 +166,22 @@ export default function ReportList() {
                         disabled={deleting === String(r.id)}
                         className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-300 ${
                           deleting === String(r.id)
-                            ? "bg-red-500/60 text-gray-900 dark:text-white cursor-not-allowed"
-                            : "bg-red-600 hover:bg-red-700 text-gray-900 dark:text-white shadow-md shadow-red-500/20"
+                            ? "bg-red-500/60 text-white cursor-not-allowed"
+                            : "bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-500/20"
                         }`}
                       >
                         {deleting === String(r.id) ? copy.deleting : copy.delete}
                       </button>
                       <Link
                         to={`/reports/${r.id}`}
-                        className="inline-flex items-center justify-center px-3 py-1 h-10 rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-100 transition dark:border-white/40 dark:bg-white/10 dark:text-cyan-200 dark:hover:bg-white/20"
-                        title={t('reportListPage.viewDetail') || 'ดูรายละเอียด'}
-                        aria-label={t('reportListPage.viewDetail') || 'ดูรายละเอียด'}
+                        className="inline-flex items-center justify-center px-3 py-1 h-10 rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-100 transition
+                                   dark:border-white/40 dark:bg-white/10 dark:text-sky-200 dark:hover:bg-white/20"
+                        title={t("reportListPage.viewDetail") || "ดูรายละเอียด"}
+                        aria-label={t("reportListPage.viewDetail") || "ดูรายละเอียด"}
                       >
                         <svg
                           viewBox="0 0 64 64"
-                          className="w-5 h-5 text-gray-800 dark:hidden"
+                          className="w-5 h-5 text-slate-800 dark:hidden"
                           fill="currentColor"
                           xmlns="http://www.w3.org/2000/svg"
                         >

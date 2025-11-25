@@ -3,9 +3,15 @@ import express from 'express';
 import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import app, { ORIGINS } from './app.js';
+import app, { ORIGINS, corsOptions } from './app.js';
+import cors from 'cors';
 import { createPurgeOrphansJob } from './jobs/purgeOrphans.job.js';
+import portfinder from 'portfinder';
 import { logger } from './utils/logger.js';
+import { validateEnv } from './utils/validateEnv.js';
+
+// CRITICAL: Validate environment variables before startup
+validateEnv();
 
 const {
   PORT = 4000,
@@ -17,6 +23,7 @@ const {
 } = process.env;
 
 let memoryServer;
+let server;
 
 if (TRUST_PROXY && TRUST_PROXY !== 'false') {
   const proxyValue = TRUST_PROXY === 'true' ? 1 : Number(TRUST_PROXY);
@@ -59,6 +66,10 @@ async function connectMongo(uri) {
     if (memoryServer || MEMORY_DB_FALLBACK === 'false') {
       throw err;
     }
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('MongoDB connection failed in Production. Exiting...');
+      process.exit(1);
+    }
     logger.warn({ err }, 'Primary MongoDB connection failed. Falling back to in-memory instance.');
     const fallbackUri = await startMemoryServer('fallback');
     await mongoose.connect(fallbackUri, { serverSelectionTimeoutMS: 10000 });
@@ -66,8 +77,32 @@ async function connectMongo(uri) {
   }
 }
 
+async function resolvePort(requestedPort) {
+  const basePort = Number(requestedPort) || 4000;
+  portfinder.basePort = basePort;
+
+  try {
+    const availablePort = await portfinder.getPortPromise({ port: basePort });
+    if (availablePort !== basePort) {
+      logger.warn(
+        { requestedPort: basePort, port: availablePort },
+        'Requested port is busy. Falling back to an available port.',
+      );
+    }
+    return availablePort;
+  } catch (err) {
+    logger.error({ err, requestedPort: basePort }, 'Failed to resolve an available port');
+    throw err;
+  }
+}
+
 async function shutdown() {
   try {
+    if (server) {
+      await new Promise((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      });
+    }
     await mongoose.disconnect();
   } catch (err) {
     logger.warn({ err }, 'Error while disconnecting mongoose');
@@ -93,14 +128,10 @@ async function shutdown() {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const distPath = path.resolve(__dirname, '../../dist');
     const uploadsPath = path.resolve(__dirname, '../uploads');
-    app.use('/uploads', (req, res, next) => {
+    
+    // Use centralized CORS options for uploads
+    app.use('/uploads', cors(corsOptions), (req, res, next) => {
       res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-      const origin = req.get('Origin');
-      if (origin && ORIGINS.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-        res.setHeader('Vary', 'Origin');
-      }
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
       next();
     }, express.static(uploadsPath));
     app.use(express.static(distPath));
@@ -113,7 +144,12 @@ async function shutdown() {
     purgeJob.start();
     logger.info({ job: 'purge-orphans', schedule: process.env.PURGE_ORPHANS_CRON || '0 3 * * *' }, 'Scheduled purge job');
 
-    app.listen(PORT, () => logger.info({ port: PORT }, `[API] http://localhost:${PORT}`));
+    // Force 4000 if PORT is 4011 (legacy default)
+    const targetPort = PORT === '4011' ? 4000 : PORT;
+    const port = await resolvePort(targetPort);
+    server = app.listen(port, () => {
+      logger.info({ port, env: NODE_ENV, origins: ORIGINS }, `[API] http://localhost:${port}`);
+    });
   } catch (err) {
     logger.error({ err }, '[MongoDB] error');
     if (memoryServer) {

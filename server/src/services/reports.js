@@ -50,24 +50,35 @@ function buildAccountRegex(digits = "") {
 export function buildSearchCondition(filters = {}) {
   const cond = {};
   const clauses = [];
+  // Hybrid Search Strategy:
+  // 1. Structured Match: Matches specific firstName/lastName columns (for new data)
+  // 2. Legacy Match: Matches the single 'name' column (for old data or unstructured input)
+  
+  const nameConditions = [];
   const fullName = buildDisplayName(filters.firstName, filters.lastName, filters.name);
-  const nameMatchers = [];
 
+  // 1. Structured Match
+  const structuredCriteria = {};
+  const first = sanitizeNamePart(filters.firstName);
+  const last = sanitizeNamePart(filters.lastName);
+  
+  if (first) structuredCriteria.firstName = { $regex: first, $options: "i" };
+  if (last) structuredCriteria.lastName = { $regex: last, $options: "i" };
+  
+  if (Object.keys(structuredCriteria).length > 0) {
+    nameConditions.push(structuredCriteria);
+  }
+
+  // 2. Legacy Match
+  // If we have any name input, we also try to match it against the 'name' field
+  // This ensures old records (where name wasn't split) are still found.
   if (fullName) {
-    nameMatchers.push({ name: { $regex: fullName, $options: "i" } });
+    nameConditions.push({ name: { $regex: fullName, $options: "i" } });
   }
-  if (filters.firstName) {
-    const first = sanitizeNamePart(filters.firstName);
-    if (first) nameMatchers.push({ firstName: { $regex: first, $options: "i" } });
-  }
-  if (filters.lastName) {
-    const last = sanitizeNamePart(filters.lastName);
-    if (last) nameMatchers.push({ lastName: { $regex: last, $options: "i" } });
-  }
-  if (nameMatchers.length === 1) {
-    clauses.push(nameMatchers[0]);
-  } else if (nameMatchers.length > 1) {
-    clauses.push({ $or: nameMatchers });
+
+  // Combine strategies with $or
+  if (nameConditions.length > 0) {
+    clauses.push({ $or: nameConditions });
   }
 
   if (filters.account) {
@@ -79,6 +90,7 @@ export function buildSearchCondition(filters = {}) {
   }
   if (filters.bank) clauses.push({ bank: filters.bank });
   if (filters.channel) clauses.push({ channel: { $regex: filters.channel, $options: "i" } });
+  if (filters.status) clauses.push({ status: filters.status });
 
   if (clauses.length === 1) {
     return clauses[0];

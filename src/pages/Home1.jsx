@@ -1,200 +1,357 @@
+// src/pages/Home1.jsx
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Shield,
-  Search,
   AlertTriangle,
-  Phone,
-  CreditCard,
   CheckCircle,
   BarChart3,
   Eye,
-  Mail,
-  UserPlus,
+  Phone,
+  CreditCard,
+  Link2,
+  Shield as ShieldIcon,
+  Lock,
+  ShieldCheck,
+  TrendingUp,
+  TrendingDown,
   ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
 import { t } from '../i18n/strings';
+import {
+  fetchReportStats,
+  fetchRecentReports,
+  fetchFraudCategories,
+} from '../services/reports';
+
+const STAT_TEMPLATE = [
+  {
+    key: 'total',
+    label: 'รายงานที่เข้ามาทั้งหมด',
+    subtext: 'รวมทุกรายการที่ส่งเข้าระบบ',
+    color: 'text-blue-600 dark:text-blue-300',
+    icon: BarChart3,
+    gradient:
+      'from-white via-slate-50 to-sky-50 dark:from-slate-900/90 dark:via-slate-900 dark:to-slate-950',
+  },
+  {
+    key: 'approved',
+    label: 'รายงานที่อนุมัติ',
+    subtext: 'ผ่านการตรวจสอบและอนุมัติ',
+    color: 'text-emerald-600 dark:text-emerald-300',
+    icon: CheckCircle,
+    gradient:
+      'from-white via-emerald-50/70 to-slate-50 dark:from-slate-900/90 dark:via-emerald-900/30 dark:to-slate-950',
+  },
+  {
+    key: 'rejected',
+    label: 'รายงานที่ปฏิเสธ',
+    subtext: 'รายการที่ไม่ผ่านการอนุมัติ',
+    color: 'text-rose-600 dark:text-rose-300',
+    icon: AlertTriangle,
+    gradient:
+      'from-white via-rose-50/70 to-slate-50 dark:from-slate-900/90 dark:via-rose-900/30 dark:to-slate-950',
+  },
+];
 
 export default function Home1() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [scrolled, setScrolled] = useState(false);
+  const [stats, setStats] = useState(
+    STAT_TEMPLATE.map((item) => ({
+      ...item,
+      value: '0',
+      trend: undefined,
+      change: undefined,
+    })),
+  );
+  const [recent, setRecent] = useState([]);
+  const [fraudStats, setFraudStats] = useState({ total: 0, items: [] });
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    let alive = true;
+
+    (async () => {
+      try {
+        const summary = await fetchReportStats();
+        if (!alive) return;
+        setStats(
+          STAT_TEMPLATE.map((item) => ({
+            ...item,
+            value: Number(summary?.[item.key] || 0).toLocaleString(),
+            trend: undefined,
+            change: undefined,
+          })),
+        );
+      } catch (err) {
+        console.warn('fetchReportStats failed', err);
+      }
+    })();
+
+    (async () => {
+      try {
+        const latest = await fetchRecentReports(6);
+        if (!alive) return;
+        setRecent(latest || []);
+      } catch (err) {
+        console.warn('fetchRecentReports failed', err);
+      }
+    })();
+
+    (async () => {
+      try {
+        const fraud = await fetchFraudCategories(30);
+        if (!alive) return;
+        setFraudStats({
+          total: fraud?.total || 0,
+          items: Array.isArray(fraud?.items) ? fraud.items : [],
+        });
+      } catch (err) {
+        console.warn('fetchFraudCategories failed', err);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  const recentReports = [
-    { id: 1, type: 'account', value: '123-4-56789-0', bank: 'กสิกรไทย', name: 'นายสมชาย ใจดี (ปลอม)', status: 'fraud', time: '2 นาทีที่แล้ว' },
-    { id: 2, type: 'phone', value: '081-234-5678', provider: 'AIS', name: 'แก๊งคอลเซ็นเตอร์', status: 'warning', time: '5 นาทีที่แล้ว' },
-    { id: 3, type: 'link', value: 'bit.ly/free-money', provider: 'SMS', name: 'ลิงก์ดูดเงิน', status: 'fraud', time: '12 นาทีที่แล้ว' },
-  ];
-
-  const stats = [
-    { label: 'รายงานวันนี้', value: '1,240', color: 'text-blue-400' },
-    { label: 'เบอร์โทรมิจฉาชีพ', value: '85,000+', color: 'text-red-400' },
-    { label: 'บัญชีที่ถูกระงับ', value: '12,500', color: 'text-emerald-400' },
-  ];
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 overflow-x-hidden">
-      {/* Hero */}
-      <header className="relative pt-32 pb-28 lg:pt-44 lg:pb-36 overflow-hidden">
-        <div className="absolute inset-0 bg-slate-900">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none" />
-          <div className="absolute bottom-0 right-0 w-[800px] h-[600px] bg-cyan-500/10 blur-[100px] rounded-full pointer-events-none" />
+    <div className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+      
+      {/* SECTION 1: HERO */}
+      <section className="h-screen w-full snap-start relative flex flex-col justify-center items-center overflow-hidden">
+        {/* BG Light + Dark */}
+        <div className="absolute inset-0 -z-10">
+          {/* base gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white via-sky-50 to-slate-50 dark:bg-gradient-to-b dark:from-slate-900 dark:via-slate-950 dark:to-black" />
+
+          {/* blobs light */}
+          <div className="absolute -top-24 -left-10 w-[420px] h-[420px] bg-sky-200/70 blur-3xl rounded-full pointer-events-none dark:hidden" />
+          <div className="absolute top-[-10%] right-[-10%] w-[520px] h-[520px] bg-cyan-200/60 blur-3xl rounded-full pointer-events-none dark:hidden" />
+          <div className="absolute bottom-[-20%] left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-indigo-100/60 blur-3xl rounded-full pointer-events-none dark:hidden" />
+
+          {/* blobs dark */}
+          <div className="hidden dark:block absolute -top-24 -left-10 w-[420px] h-[420px] bg-blue-800/40 blur-[120px] rounded-full pointer-events-none" />
+          <div className="hidden dark:block absolute top-[-10%] right-[-10%] w-[520px] h-[520px] bg-cyan-700/35 blur-[130px] rounded-full pointer-events-none" />
+          <div className="hidden dark:block absolute bottom-[-20%] left-1/2 -translate-x-1/2 w-[700px] h-[420px] bg-purple-900/40 blur-[130px] rounded-full pointer-events-none" />
+
+          {/* texture */}
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.04] dark:opacity-[0.08]" />
         </div>
 
-        <div className="container mx-auto px-4 md:px-6 relative z-10">
+        <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center justify-center h-full">
           <div className="max-w-4xl mx-auto text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-sm font-medium mb-6 backdrop-blur-sm">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-              </span>
-              ฐานข้อมูลอัปเดตล่าสุด: วันนี้ 08:30 น.
-            </div>
-
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white mt-5 mb-6 leading-tight animate-fade-in-up">
               รู้ทันโจรไซเบอร์ <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400">
                 ตรวจสอบก่อนโอน มั่นใจปลอดภัย
               </span>
             </h1>
 
-            <p className="text-slate-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto">
-              {t('layout.brand')} ช่วยให้คุณตรวจสอบประวัติการโกง เช็กเบอร์โทรและเลขบัญชีต้องสงสัย จากฐานข้อมูลที่รวบรวมโดยชุมชนผู้ใช้จริงทั่วประเทศ
+            <p className="text-slate-600 dark:text-slate-300 text-lg md:text-xl mb-10 max-w-2xl mx-auto animate-fade-in-up delay-100">
+              {t('layout.brand')} ช่วยให้คุณตรวจสอบประวัติการโกง เช็กเบอร์โทรและเลขบัญชีต้องสงสัย
+              จากฐานข้อมูลที่รวบรวมโดยชุมชนผู้ใช้จริงทั่วประเทศ
             </p>
+          </div>
 
-            <div className="bg-white/95 p-2 rounded-2xl shadow-2xl shadow-blue-900/20 max-w-3xl mx-auto border border-slate-200">
-              <div className="flex flex-col md:flex-row gap-2">
-                <div className="relative flex-grow group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors">
-                    <Search className="w-5 h-5" />
-                  </div>
-                  <div className="w-full h-14 pl-12 pr-4 bg-white rounded-xl border border-slate-400 flex items-center shadow-sm">
-                    <input
-                      type="text"
-                      className="w-full h-full bg-transparent text-slate-900 placeholder-slate-600 caret-blue-600 outline-none text-lg font-semibold focus:text-slate-900 focus:placeholder-slate-600"
-                      placeholder="ค้นหาเลขบัญชี, เบอร์โทร, หรือชื่อ-นามสกุล..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      autoComplete="off"
-                      style={{ WebkitTextFillColor: '#0f172a', WebkitBoxShadow: '0 0 0px 1000px white inset' }}
-                    />
-                  </div>
-                </div>
-                <Link
-                  to="/search/detail"
-                  className="h-14 px-8 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 text-lg whitespace-nowrap"
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full mx-auto animate-fade-in-up delay-200">
+            {stats.map((stat) => {
+              const Icon = stat.icon || BarChart3;
+              const isUp = stat.trend !== 'down';
+              return (
+                <div
+                  key={stat.label}
+                  className="relative bg-gradient-to-br p-6 rounded-2xl border border-slate-200 shadow-md shadow-slate-200/80 overflow-hidden group hover:-translate-y-1 hover:shadow-xl transition-all duration-300 dark:border-slate-700 dark:shadow-slate-900/50"
                 >
-                  ตรวจสอบทันที
-                </Link>
-              </div>
-            </div>
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${stat.gradient}`}
+                    aria-hidden="true"
+                  ></div>
+                  <div className="absolute inset-0 opacity-30 group-hover:opacity-40 transition-opacity bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.7),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(59,130,246,0.18),transparent_35%)] dark:bg-[radial-gradient(circle_at_20%_20%,rgba(148,163,184,0.35),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(56,189,248,0.25),transparent_40%)]" />
 
-            <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-slate-400">
-              <span>คำค้นหายอดนิยม:</span>
-              <button className="hover:text-blue-300 underline decoration-dotted">#เบอร์โทรแก๊งคอลเซ็นเตอร์</button>
-              <button className="hover:text-blue-300 underline decoration-dotted">#บัญชีม้า</button>
-              <button className="hover:text-blue-300 underline decoration-dotted">#SMSหลอกลวง</button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12">
-            {stats.map((stat) => (
-              <div key={stat.label} className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl text-center hover:bg-white/10 transition-colors group">
-                <h3 className={`text-3xl font-bold mb-1 group-hover:scale-110 transition-transform duration-300 ${stat.color}`}>{stat.value}</h3>
-                <p className="text-slate-400">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </header>
-
-      {/* Recent Reports */}
-      <section className="py-16 bg-white relative">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex justify-between items-end mb-10">
-            <div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-2">
-                <AlertTriangle className="text-red-500" />
-                รายงานล่าสุด
-              </h2>
-              <p className="text-slate-500">ข้อมูลที่มีการแจ้งเข้ามาในระบบเมื่อเร็วๆ นี้</p>
-            </div>
-            <Link to="/reports" className="text-blue-600 font-medium hover:text-blue-700 flex items-center gap-1 hover:gap-2 transition-all">
-              ดูทั้งหมด <ChevronRight size={18} />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recentReports.map((report) => (
-              <div key={report.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden group">
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div
-                      className={`p-3 rounded-xl ${
-                        report.type === 'account'
-                          ? 'bg-purple-50 text-purple-600'
-                          : report.type === 'phone'
-                          ? 'bg-orange-50 text-orange-600'
-                          : 'bg-blue-50 text-blue-600'
-                      }`}
-                    >
-                      {report.type === 'account' ? <CreditCard size={24} /> : report.type === 'phone' ? <Phone size={24} /> : <Shield size={24} />}
+                  <div className="relative flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-900 group-hover:scale-110 transition-transform dark:bg-slate-900/70 dark:border-slate-600 dark:text-white">
+                        <Icon size={22} />
+                      </div>
+                      <div className="text-sm text-slate-700 dark:text-slate-200">
+                        {stat.label}
+                      </div>
                     </div>
-                    <span className="text-xs font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-md flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                      {report.time}
-                    </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-slate-800 mb-1 group-hover:text-blue-600 transition-colors font-mono">
-                    {report.value}
-                  </h3>
-                  <p className="text-slate-500 text-sm mb-4 flex items-center gap-2">
-                    {report.bank || report.provider} • {report.name}
-                  </p>
-
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
-                        report.status === 'fraud'
-                          ? 'bg-red-50 text-red-600 border-red-100'
-                          : 'bg-amber-50 text-amber-600 border-amber-100'
-                      }`}
-                    >
-                      {report.status === 'fraud' ? 'อันตราย (Fraud)' : 'เฝ้าระวัง (Warning)'}
-                    </span>
-                    <div className="flex-grow"></div>
-                    <button className="text-slate-400 hover:text-blue-500">
-                      <Eye size={18} />
-                    </button>
+                  <div className="relative">
+                    <div className={`text-3xl font-bold mb-1 ${stat.color}`}>{stat.value}</div>
+                    <div className="text-slate-600 text-sm dark:text-slate-300">
+                      {stat.subtext}
+                    </div>
                   </div>
+
+                  {stat.change && (
+                    <div className="relative mt-4 flex items-center gap-2 text-sm font-semibold">
+                      <span
+                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full border ${
+                          isUp
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-400/40 dark:text-emerald-200'
+                            : 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-500/10 dark:border-rose-400/40 dark:text-rose-200'
+                        }`}
+                      >
+                        {isUp ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                        {stat.change}
+                      </span>
+                      <span className="text-slate-500 dark:text-slate-400 font-normal text-xs">
+                        เทียบช่วงก่อนหน้า
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="h-1 w-full bg-gradient-to-r from-slate-100 via-slate-100 to-slate-100 group-hover:from-blue-500 group-hover:to-purple-500 transition-all duration-500"></div>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+          
+          <div className="absolute bottom-8 animate-bounce text-slate-400 dark:text-slate-500">
+            <ChevronDown size={32} />
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 bg-slate-900 text-white overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3 pointer-events-none"></div>
+      {/* SECTION 2: RECENT REPORTS */}
+      <section className="h-screen w-full snap-start flex flex-col justify-center bg-white dark:bg-slate-950 relative">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="flex justify-between items-end mb-10">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-2 dark:text-white">
+                <AlertTriangle className="text-red-500" />
+                รายงานล่าสุด
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400">
+                ข้อมูลที่มีการแจ้งเข้ามาในระบบเมื่อเร็วๆ นี้
+              </p>
+            </div>
+            <Link
+              to="/reports"
+              className="text-blue-600 font-medium hover:text-blue-700 flex items-center gap-1 hover:gap-2 transition-all dark:text-sky-300 dark:hover:text-sky-200"
+            >
+              ดูทั้งหมด <ChevronRight size={18} />
+            </Link>
+          </div>
 
-        <div className="container mx-auto px-4 md:px-6 relative z-10">
+          {/* 👉 กรองไม่ให้แสดง status === 'rejected' */}
+          {(() => {
+            const visibleReports = (recent || []).filter(
+              (report) => report.status !== 'rejected',
+            );
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {visibleReports.map((report) => {
+                  const type = report.account
+                    ? 'account'
+                    : report.channel?.toLowerCase().includes('phone')
+                    ? 'phone'
+                    : 'link';
+                  const TypeIcon =
+                    type === 'account' ? CreditCard : type === 'phone' ? Phone : Link2;
+
+                  const statusLabel =
+                    report.status === 'approved' ? 'อนุมัติแล้ว' : 'รอตรวจสอบ';
+
+                  const statusClass =
+                    report.status === 'approved'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-200 dark:border-emerald-500/40'
+                      : 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-500/10 dark:text-amber-200 dark:border-amber-500/40';
+
+                  const created = report.createdAt
+                    ? new Date(report.createdAt).toLocaleString()
+                    : '—';
+
+                  return (
+                    <div
+                      key={report.id}
+                      className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden group dark:bg-slate-900 dark:border-slate-700"
+                    >
+                      <div className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div
+                            className={`p-3 rounded-xl ${
+                              type === 'account'
+                                ? 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-300'
+                                : type === 'phone'
+                                ? 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-300'
+                                : 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300'
+                            }`}
+                          >
+                            <TypeIcon size={24} />
+                          </div>
+
+                          <span className="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded-md flex items-center gap-1 dark:bg-slate-800 dark:text-slate-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                            {created}
+                          </span>
+                        </div>
+
+                        <h3 className="text-lg font-bold text-slate-800 mb-1 group-hover:text-blue-600 transition-colors font-mono dark:text-slate-100 dark:group-hover:text-sky-300">
+                          {report.account || report.name || '—'}
+                        </h3>
+
+                        <p className="text-slate-500 text-sm mb-4 flex items-center gap-2 dark:text-slate-400">
+                          {(report.bank || report.channel || 'ไม่ระบุ')} •{' '}
+                          {report.name || 'ไม่ระบุชื่อ'}
+                        </p>
+
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-xs font-bold px-2.5 py-1 rounded-full border ${statusClass}`}
+                          >
+                            {statusLabel}
+                          </span>
+
+                          <div className="flex-grow" />
+
+                          <Link
+                            to={`/reports/${report.id}`}
+                            className="text-slate-400 hover:text-blue-500 dark:text-slate-500 dark:hover:text-sky-300"
+                            title="ดูรายละเอียด"
+                            aria-label="ดูรายละเอียด"
+                          >
+                            <Eye size={18} />
+                          </Link>
+                        </div>
+                      </div>
+
+                      <div className="h-1 w-full bg-gradient-to-r from-slate-100 via-slate-100 to-slate-100 group-hover:from-blue-500 group-hover:to-purple-500 transition-all duration-500 dark:from-slate-800 dark:via-slate-800 dark:to-slate-800"></div>
+                    </div>
+                  );
+                })}
+
+                {visibleReports.length === 0 && (
+                  <div className="col-span-full text-center text-slate-500 dark:text-slate-400">
+                    ยังไม่มีรายงานในระบบ
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      </section>
+
+      {/* SECTION 3: CTA & STATS */}
+      <section className="h-screen w-full snap-start flex flex-col justify-center bg-gradient-to-br from-blue-50 via-slate-50 to-white text-slate-900 overflow-hidden relative dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-950 dark:to-slate-950 dark:text-slate-100">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-blue-200/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none dark:bg-blue-600/25" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-200/40 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3 pointer-events-none dark:bg-purple-700/35" />
+
+        <div className="container mx-auto px-4 md:px-6 relative">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-slate-900 dark:text-white">
                 พบเบาะแสการโกง? <br />
-                <span className="text-blue-400">ช่วยกันรายงานเพื่อสังคมที่ดีกว่า</span>
+                <span className="text-blue-600 dark:text-sky-400">
+                  ช่วยกันรายงานเพื่อสังคมที่ดีกว่า
+                </span>
               </h2>
-              <p className="text-slate-400 text-lg mb-8">
+
+              <p className="text-slate-600 dark:text-slate-300 text-lg mb-8">
                 การรายงานของคุณช่วยป้องกันไม่ให้ผู้อื่นตกเป็นเหยื่อ ระบบของเราจะทำการตรวจสอบและแจ้งเตือนทันทีที่มีการค้นหาข้อมูลที่ตรงกัน
               </p>
 
@@ -205,60 +362,68 @@ export default function Home1() {
                   'แจ้งเตือนไปยังหน่วยงานที่เกี่ยวข้อง',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3">
-                    <CheckCircle className="text-emerald-400 flex-shrink-0" size={20} />
-                    <span className="text-slate-200">{item}</span>
+                    <CheckCircle className="text-emerald-500 flex-shrink-0" size={20} />
+                    <span className="text-slate-800 dark:text-slate-100">{item}</span>
                   </div>
                 ))}
               </div>
 
               <Link
                 to="/report"
-                className="px-8 py-4 bg-white text-slate-900 font-bold rounded-xl hover:bg-blue-50 transition-colors shadow-lg shadow-white/10 flex items-center gap-2 group"
+                className="px-8 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/30 flex items-center gap-2 group dark:bg-sky-500 dark:hover:bg-sky-400 dark:shadow-sky-500/40 w-fit"
               >
-                <AlertTriangle className="text-red-500 group-hover:animate-bounce" />
+                <AlertTriangle className="text-amber-300 group-hover:animate-bounce" />
                 แจ้งเบาะแสมิจฉาชีพ
               </Link>
             </div>
 
             <div className="relative">
-              <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-8 rounded-3xl shadow-2xl relative">
+              <div className="bg-white border border-slate-200 p-8 rounded-3xl shadow-xl relative dark:bg-slate-900 dark:border-slate-700">
                 <div className="absolute -top-6 -right-6 bg-blue-600 p-4 rounded-2xl shadow-xl rotate-12">
-                  <Shield size={32} className="text-white" />
+                  <ShieldIcon size={32} className="text-white" />
                 </div>
 
-                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                  <BarChart3 className="text-blue-400" />
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
+                  <BarChart3 className="text-blue-600 dark:text-sky-400" />
                   สถิติการหลอกลวงเดือนนี้
                 </h3>
 
-                <div className="space-y-6">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2 text-slate-300">
-                      <span>หลอกขายสินค้าออนไลน์</span>
-                      <span className="text-red-400">45%</span>
+                <div className="space-y-4">
+                  {(fraudStats.items || []).map((item, idx) => {
+                    const percent = Math.min(Math.max(item.percent || 0, 0), 100);
+                    const palette = [
+                      'bg-red-500',
+                      'bg-orange-500',
+                      'bg-amber-400',
+                      'bg-blue-500',
+                      'bg-emerald-500',
+                    ];
+                    const barColor = palette[idx % palette.length];
+
+                    return (
+                      <div key={item.category} className="space-y-2">
+                        <div className="flex justify-between text-sm text-slate-700 dark:text-slate-200">
+                          <span>{item.category}</span>
+                          <span className="text-amber-600 font-semibold dark:text-amber-300">
+                            {percent}%
+                          </span>
+                        </div>
+
+                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden dark:bg-slate-800">
+                          <div
+                            className={`h-full ${barColor} rounded-full`}
+                            style={{ width: `${percent}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {(!fraudStats.items || fraudStats.items.length === 0) && (
+                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                      ยังไม่มีข้อมูลสถิติ
                     </div>
-                    <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                      <div className="h-full w-[45%] bg-red-500 rounded-full"></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2 text-slate-300">
-                      <span>แก๊งคอลเซ็นเตอร์</span>
-                      <span className="text-orange-400">30%</span>
-                    </div>
-                    <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                      <div className="h-full w-[30%] bg-orange-500 rounded-full"></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2 text-slate-300">
-                      <span>หลอกกู้เงิน/ลงทุน</span>
-                      <span className="text-yellow-400">15%</span>
-                    </div>
-                    <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                      <div className="h-full w-[15%] bg-yellow-500 rounded-full"></div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -266,38 +431,6 @@ export default function Home1() {
         </div>
       </section>
 
-      {/* Footer CTA */}
-      <section className="bg-slate-900 border-t border-slate-800 py-10 text-slate-400">
-        <div className="container mx-auto px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <Shield className="text-white w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-white font-bold">ScamCatcher</p>
-              <p className="text-xs text-slate-500">ป้องกันการถูกหลอกลวงออนไลน์</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <Mail size={16} />
-            <span>support@scamcatcher.local</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/login"
-              className="px-4 py-2 rounded-lg border border-slate-700 text-white hover:bg-white/10 transition font-semibold"
-            >
-              เข้าสู่ระบบ
-            </Link>
-            <Link
-              to="/register"
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg shadow-blue-600/30 transition"
-            >
-              สมัครสมาชิก
-            </Link>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

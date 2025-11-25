@@ -53,6 +53,9 @@ export const profileSchema = z.object({
   gender: z.enum(['', 'male', 'female', 'other']).optional().default(''),
   dob: z.union([z.string().trim().min(1), z.null(), z.literal('')]).optional(),
   avatarUrl: z.string().trim().url().optional().or(z.literal('')).optional(),
+  settings: z.object({
+    emailNotifications: z.boolean().optional(),
+  }).optional(),
 });
 
 export const resetPasswordSchema = z.object({

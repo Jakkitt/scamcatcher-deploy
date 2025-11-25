@@ -3,22 +3,43 @@ import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import toast from "react-hot-toast";
 import ProfileSidebar from "../components/ProfileSidebar";
-import { useTheme } from "../contexts/ThemeContext";
+
 import { t } from "../i18n/strings";
+import { useAuth } from "../contexts/AuthContext";
+import { updateUser } from "../services/auth";
 
 export default function Settings() {
-  const { theme, setTheme } = useTheme();
-  const [prefTheme, setPrefTheme] = useState(theme || "system");
-  const [saving, setSaving] = useState(false);
+  const { user, updateProfile } = useAuth();
+  const [emailNotif, setEmailNotif] = useState(true);
 
-  useEffect(() => setPrefTheme(theme || "system"), [theme]);
+  useEffect(() => {
+    if (user?.settings?.emailNotifications !== undefined) {
+      setEmailNotif(user.settings.emailNotifications);
+    }
+  }, [user]);
 
-  const onSave = async () => {
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 300));
-    setTheme(prefTheme);
-    toast.success(t("settingsPage.saved"));
-    setSaving(false);
+  const handleToggleEmail = async (checked) => {
+    // Optimistic update
+    setEmailNotif(checked);
+    
+    try {
+      // Auto-save
+      console.log('Updating settings...', { settings: { emailNotifications: checked } });
+      const result = await updateUser({ settings: { emailNotifications: checked } });
+      console.log('Update result:', result);
+      
+      // Update local user context
+      if (result) {
+        updateProfile(result);
+        console.log('Profile updated successfully');
+      }
+      
+    } catch (err) {
+      console.error('Error updating settings:', err);
+      toast.error("บันทึกไม่สำเร็จ: " + (err.message || 'Unknown error'));
+      // Revert on error
+      setEmailNotif(!checked);
+    }
   };
 
   const tabs = [
@@ -28,29 +49,36 @@ export default function Settings() {
   ];
 
   return (
-    <div className="relative min-h-[70vh] overflow-hidden bg-gray-50 dark:bg-gradient-to-br dark:from-gray-950 dark:via-slate-950 dark:to-black py-10">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none hidden dark:block">
-        <div className="absolute w-96 h-96 bg-cyan-400/30 rounded-full blur-3xl animate-pulse" style={{ left: "10%", top: "20%" }} />
-        <div className="absolute w-96 h-96 bg-blue-400/25 rounded-full blur-3xl animate-pulse" style={{ right: "10%", bottom: "20%", animationDelay: "1s" }} />
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-indigo-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }} />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
-        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-gray-950 via-transparent opacity-70" />
+    <div className="min-h-screen relative overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+      {/* พื้นหลังสไตล์เดียวกับ Profile / Register / Login */}
+      <div className="absolute inset-0">
+        {/* texture เบา ๆ */}
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.07] dark:opacity-5" />
+
+        {/* แสงฟุ้งด้านบน */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-blue-400/20 blur-[110px] rounded-full pointer-events-none dark:bg-blue-600/25" />
+
+        {/* แสงฟุ้งด้านล่าง */}
+        <div className="absolute bottom-0 right-0 w-[700px] h-[520px] bg-cyan-300/15 blur-[100px] rounded-full pointer-events-none dark:bg-cyan-500/15" />
       </div>
-      <main className="container relative z-10 py-8 grid md:grid-cols-3 gap-8">
+
+      <main className="container mx-auto px-4 md:px-6 py-10 relative z-10 grid md:grid-cols-3 gap-8">
         <ProfileSidebar />
 
         <section className="md:col-span-2">
+          {/* Tabs เหมือนหน้า Profile */}
           <div className="mb-6">
-            <div className="w-full flex items-center gap-2 bg-white border border-gray-200 rounded-2xl p-2 shadow-lg dark:bg-[#08162c]/80 dark:border-cyan-400/30">
+            <div className="w-full flex items-center gap-2 rounded-2xl p-2 bg-white/95 border border-slate-200/80 shadow-[0_16px_40px_rgba(15,23,42,0.12)] backdrop-blur
+                            dark:bg-slate-900/80 dark:border-white/10 dark:shadow-[0_20px_60px_rgba(15,23,42,0.9)]">
               {tabs.map((tab) => (
                 <NavLink
                   key={tab.to}
                   to={tab.to}
                   className={({ isActive }) =>
-                    `flex-1 text-center h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                    `flex-1 text-center h-11 rounded-xl flex items-center justify-center text-sm font-medium transition-all duration-300 ${
                       isActive
-                        ? "bg-black text-white shadow-lg shadow-black/30 font-semibold dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-500 dark:shadow-cyan-500/30"
-                        : "text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-800/50"
+                        ? "bg-gradient-to-r from-sky-500 to-cyan-400 text-white shadow-lg shadow-sky-500/30"
+                        : "text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800/60"
                     }`
                   }
                 >
@@ -60,47 +88,37 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="bg-white text-gray-900 rounded-2xl p-6 shadow-xl border border-gray-200 dark:bg-[#061427]/90 dark:text-white dark:border-cyan-400/30 dark:shadow-[0_25px_80px_rgba(6,182,212,0.25)]">
-            <h1 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">{t("settingsPage.title")}</h1>
+          {/* การ์ด Settings */}
+          <div className="rounded-3xl p-6 sm:p-8 bg-white/95 text-slate-900 border border-slate-200/80 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur
+                          dark:bg-gradient-to-b dark:from-slate-900/90 dark:via-slate-950 dark:to-slate-950 dark:text-white dark:border-white/10 dark:shadow-[0_24px_80px_rgba(15,23,42,0.9)]">
+            <h1 className="text-xl sm:text-2xl font-bold mb-6 text-slate-900 dark:text-white">
+              {t("settingsPage.title")}
+            </h1>
 
-            <div className="space-y-4">
-              <div className="font-medium text-gray-600 dark:text-cyan-300">{t("settingsPage.themeLabel")}</div>
-              <div className="flex flex-nowrap items-center gap-6 text-gray-600 dark:text-gray-300">
-                {["light", "dark", "system"].map((mode) => (
-                  <label
-                    key={mode}
-                    className={`inline-flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-                      prefTheme === mode ? "text-gray-900 dark:text-white font-semibold" : "text-gray-600 dark:text-gray-300"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="theme"
-                      value={mode}
-                      checked={prefTheme === mode}
-                      onChange={() => setPrefTheme(mode)}
-                      className="accent-black dark:accent-white"
-                    />
-                    <span>
-                      {mode === "light"
-                        ? t("settingsPage.options.light")
-                        : mode === "dark"
-                        ? t("settingsPage.options.dark")
-                        : t("settingsPage.options.system")}
-                    </span>
-                  </label>
-                ))}
+            <div className="space-y-5">
+              <div className="font-medium text-slate-700 dark:text-sky-200">
+                การแจ้งเตือน
               </div>
 
-              <div className="pt-6">
-                <button
-                  onClick={onSave}
-                  disabled={saving}
-                  className="w-full h-12 rounded-xl bg-black text-white font-semibold shadow-lg shadow-black/20 hover:bg-gray-900 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-gradient-to-r dark:from-cyan-400 dark:via-sky-500 dark:to-blue-500 dark:shadow-cyan-500/30 dark:hover:shadow-cyan-500/50 dark:hover:from-cyan-300 dark:hover:via-sky-400 dark:hover:to-blue-400"
-                >
-                  {saving ? t("settingsPage.saving") : t("settingsPage.save")}
-                </button>
-              </div>
+              <label className="flex items-center justify-between cursor-pointer group">
+                <div className="flex flex-col gap-1">
+                  <span className="text-slate-900 dark:text-white font-medium group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                    รับการแจ้งเตือนทางอีเมล
+                  </span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    แจ้งเตือนเมื่อรายงานของคุณได้รับการอนุมัติหรือปฏิเสธ
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={emailNotif}
+                    onChange={(e) => handleToggleEmail(e.target.checked)}
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sky-300 dark:peer-focus:ring-sky-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-sky-600"></div>
+                </div>
+              </label>
             </div>
           </div>
         </section>

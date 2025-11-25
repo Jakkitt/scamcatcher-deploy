@@ -118,3 +118,11 @@ function saveAuth(res){
   localStorage.setItem('user', JSON.stringify(res.user));
   localStorage.removeItem('tokens');
 }
+
+export async function getCsrfToken() {
+  if (!import.meta?.env?.VITE_API_BASE_URL) {
+    if (!ENABLE_MOCK) throw new Error('VITE_API_BASE_URL is not set');
+    return { ok: true };
+  }
+  return request('/auth/csrf', { method: 'GET' });
+}

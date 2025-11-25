@@ -19,7 +19,8 @@ const schema = z
     firstName: createOptionalText(),
     lastName: createOptionalText(),
     account: z.preprocess(
-      (val) => (typeof val === "string" ? val.replace(/[^\d-]/g, "").trim() : ""),
+      (val) =>
+        typeof val === "string" ? val.replace(/[^\d-]/g, "").trim() : "",
       z
         .string()
         .refine(
@@ -32,9 +33,11 @@ const schema = z
     channelOther: createOptionalText(),
   })
   .superRefine((data, ctx) => {
-    const channelLabel = data.channel === "OTHER" ? data.channelOther : data.channel;
+    const channelLabel =
+      data.channel === "OTHER" ? data.channelOther : data.channel;
     const hasName = Boolean(data.firstName || data.lastName);
     const hasOther = Boolean(data.account || data.bank || channelLabel);
+
     if (!hasName && !hasOther) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -42,6 +45,7 @@ const schema = z
         path: ["__root"],
       });
     }
+
     if (data.channel === "OTHER" && !data.channelOther) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -49,6 +53,7 @@ const schema = z
         path: ["channelOther"],
       });
     }
+
     if ((data.bank || channelLabel) && !data.account) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -77,18 +82,27 @@ export default function SearchDetail() {
       channelOther: "",
     },
   });
+
   const channelValue = watch("channel");
   const bankValue = watch("bank");
 
   const onAccountChange = (e) => {
-    setValue("account", formatAccountNumber(e.target.value), { shouldDirty: true });
+    setValue("account", formatAccountNumber(e.target.value), {
+      shouldDirty: true,
+    });
   };
 
   const onSubmit = (raw) => {
-    const accountDigits = raw.account ? raw.account.replace(/[^\d]/g, "") : "";
+    const accountDigits = raw.account
+      ? raw.account.replace(/[^\d]/g, "")
+      : "";
     const firstName = sanitizeText(raw.firstName || "");
     const lastName = sanitizeText(raw.lastName || "");
-    const channelValue = raw.channel === "OTHER" ? sanitizeText(raw.channelOther || "") : raw.channel || "";
+    const channelValue =
+      raw.channel === "OTHER"
+        ? sanitizeText(raw.channelOther || "")
+        : raw.channel || "";
+
     const params = {
       firstName,
       lastName,
@@ -96,14 +110,20 @@ export default function SearchDetail() {
       bank: raw.bank || "",
       channel: channelValue,
     };
+
     const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
     if (fullName) {
       params.name = fullName;
     }
-    const filteredParams = Object.entries(params).reduce((acc, [key, value]) => {
-      if (value) acc[key] = value;
-      return acc;
-    }, {});
+
+    const filteredParams = Object.entries(params).reduce(
+      (acc, [key, value]) => {
+        if (value) acc[key] = value;
+        return acc;
+      },
+      {}
+    );
+
     navigate({
       pathname: "/search/results",
       search: `?${createSearchParams(filteredParams)}`,
@@ -111,64 +131,98 @@ export default function SearchDetail() {
   };
 
   const fieldError = (field) =>
-    errors?.[field] ? <p className="mt-1 text-sm text-red-500">{errors[field].message}</p> : null;
+    errors?.[field] ? (
+      <p className="mt-1 text-sm text-rose-500">
+        {errors[field].message}
+      </p>
+    ) : null;
 
   return (
-    <div className="relative overflow-hidden bg-gray-50 dark:bg-gradient-to-br dark:from-gray-950 dark:via-slate-950 dark:to-black">
-      {/* Animated background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none hidden dark:block">
-        <div className="absolute w-96 h-96 bg-cyan-400/30 rounded-full blur-3xl animate-pulse" style={{ left: "10%", top: "20%" }} />
-        <div className="absolute w-96 h-96 bg-blue-400/25 rounded-full blur-3xl animate-pulse" style={{ right: "10%", bottom: "20%", animationDelay: "1s" }} />
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-indigo-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }} />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
+    <div className="min-h-screen relative overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 flex items-start justify-center">
+      {/* พื้นหลังแบบเดียวกับ Login/ForgotPassword */}
+      <div className="absolute inset-0">
+        {/* texture เบา ๆ */}
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.07] dark:opacity-5" />
+
+        {/* แสงฟุ้งด้านบน */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-blue-400/20 blur-[110px] rounded-full pointer-events-none dark:bg-blue-600/25" />
+
+        {/* แสงฟุ้งด้านล่าง */}
+        <div className="absolute bottom-0 right-0 w-[700px] h-[520px] bg-cyan-300/15 blur-[100px] rounded-full pointer-events-none dark:bg-cyan-500/15" />
       </div>
 
-      <main className="container relative z-10 py-10">
-        <div className="text-center mb-6 space-y-1">
-          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">{t("search.title")}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-300">{t("search.subtitle")}</p>
+      <main className="container mx-auto px-4 md:px-6 py-10 relative z-10">
+        {/* Title + subtitle */}
+        <div className="text-center mb-8 space-y-2">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            {t("search.title")}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
+            {t("search.subtitle")}
+          </p>
         </div>
 
+        {/* Card หลักของฟอร์ม */}
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="max-w-3xl mx-auto grid md:grid-cols-2 gap-6 rounded-2xl p-6 bg-white border border-gray-200 shadow-xl text-gray-900 dark:bg-[#061427]/90 dark:border-cyan-400/40 dark:text-white dark:shadow-[0_25px_80px_rgba(6,182,212,0.25)]"
+          className="max-w-4xl mx-auto rounded-3xl p-6 sm:p-8 md:p-10 bg-white/95 border border-slate-200/80 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur
+                     dark:border-white/10 dark:bg-gradient-to-b dark:from-slate-900/90 dark:via-slate-950 dark:to-slate-950 dark:shadow-[0_24px_80px_rgba(15,23,42,0.9)]
+                     grid md:grid-cols-2 gap-6 text-slate-900 dark:text-slate-100"
         >
+          {/* root error */}
           <div className="md:col-span-2 h-5 -mt-2 text-center text-sm">
-            <span className={errors?.__root ? "text-red-500" : "opacity-0"}>
+            <span
+              className={
+                errors?.__root ? "text-rose-500" : "opacity-0"
+              }
+            >
               {errors?.__root?.message || "placeholder"}
             </span>
           </div>
 
+          {/* first / last name */}
           <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm mb-1 text-gray-600 dark:text-cyan-300">
+              <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
                 {t("search.firstNameLabel")}
               </label>
               <input
                 {...register("firstName")}
                 placeholder={t("search.firstNamePlaceholder")}
-                className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-300"
+                className="w-full h-12 px-4 rounded-xl
+                           bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
+                           focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
               />
               {fieldError("firstName")}
             </div>
             <div>
-              <label className="block text-sm mb-1 text-gray-600 dark:text-cyan-300">
+              <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
                 {t("search.lastNameLabel")}
               </label>
               <input
                 {...register("lastName")}
                 placeholder={t("search.lastNamePlaceholder")}
-                className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-300"
+                className="w-full h-12 px-4 rounded-xl
+                           bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
+                           focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
               />
               {fieldError("lastName")}
             </div>
           </div>
 
+          {/* bank */}
           <div>
-            <label className="block text-sm mb-1 text-gray-600 dark:text-cyan-300">{t("search.bankLabel")}</label>
+            <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
+              {t("search.bankLabel")}
+            </label>
             <select
               {...register("bank")}
-              className="appearance-none w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white dark:focus:border-cyan-300"
+              className="appearance-none w-full h-12 px-4 rounded-xl
+                         bg-slate-50 border border-slate-300 text-slate-900
+                         focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                         dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
             >
               <option value="">{t("search.bankPlaceholder")}</option>
               {BANKS.map((b) => (
@@ -179,25 +233,37 @@ export default function SearchDetail() {
             </select>
           </div>
 
+          {/* account (แสดงเมื่อเลือก bank แล้วเหมือนเดิม) */}
           {bankValue && (
             <div>
-              <label className="block text-sm mb-1 text-gray-600 dark:text-cyan-300">{t("search.accountLabel")}</label>
+              <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
+                {t("search.accountLabel")}
+              </label>
               <input
                 {...register("account")}
                 onChange={onAccountChange}
                 placeholder={t("search.accountPlaceholder")}
-                className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-300"
+                className="w-full h-12 px-4 rounded-xl
+                           bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
+                           focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
               />
               {fieldError("account")}
             </div>
           )}
 
+          {/* channel + other */}
           <div className="md:col-span-2">
-            <label className="block text-sm mb-1 text-gray-600 dark:text-cyan-300">{t("search.channelLabel")}</label>
+            <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
+              {t("search.channelLabel")}
+            </label>
             <div className="grid md:grid-cols-2 gap-3">
               <select
                 {...register("channel")}
-                className="appearance-none w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white dark:focus:border-cyan-300"
+                className="appearance-none w-full h-12 px-4 rounded-xl
+                           bg-slate-50 border border-slate-300 text-slate-900
+                           focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
               >
                 <option value="">{t("search.channelPlaceholder")}</option>
                 {TRANSFER_CHANNELS.map((c) => (
@@ -205,23 +271,32 @@ export default function SearchDetail() {
                     {c.label}
                   </option>
                 ))}
-                <option value="OTHER">{t("search.channelOtherOption")}</option>
+                <option value="OTHER">
+                  {t("search.channelOtherOption")}
+                </option>
               </select>
               {channelValue === "OTHER" && (
                 <input
                   {...register("channelOther")}
                   placeholder={t("search.channelOtherPlaceholder")}
-                  className="w-full h-12 px-4 rounded-xl bg-white border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 outline-none transition-all dark:bg-[#0f1f34] dark:border-cyan-400/40 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-300"
+                  className="w-full h-12 px-4 rounded-xl
+                             bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
+                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
                 />
               )}
             </div>
             {fieldError("channelOther")}
           </div>
 
+          {/* ปุ่ม submit */}
           <div className="md:col-span-2">
             <button
               disabled={isSubmitting}
-              className="w-full h-12 rounded-xl bg-black text-white font-semibold shadow-lg shadow-black/20 hover:bg-gray-900 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-gradient-to-r dark:from-cyan-400 dark:via-sky-500 dark:to-blue-500 dark:shadow-cyan-500/30 dark:hover:shadow-cyan-500/50 dark:hover:from-cyan-300 dark:hover:via-sky-400 dark:hover:to-blue-400"
+              className="w-full h-12 rounded-xl font-semibold flex items-center justify-center
+                         bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-400 hover:to-cyan-300
+                         text-white transition-all duration-300 shadow-lg shadow-sky-500/30 hover:shadow-sky-400/50
+                         disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isSubmitting ? t("search.submitting") : t("search.submit")}
             </button>

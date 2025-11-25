@@ -11,14 +11,16 @@ import { csrfProtection } from './middlewares/csrf.js';
 import statsRoutes from './routes/stats.routes.js';
 import externalRoutes from './routes/external.routes.js';
 import { logger } from './utils/logger.js';
+import { globalLimiter } from './middlewares/rateLimit.js';
 
-const DEFAULT_ORIGINS = [
+const DEV_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5174',
   'http://127.0.0.1:5175',
+  'http://localhost:4000',
 ];
 
 const envOrigins = (process.env.ALLOWED_ORIGINS || '')
@@ -26,19 +28,22 @@ const envOrigins = (process.env.ALLOWED_ORIGINS || '')
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-export const ORIGINS = envOrigins.length ? envOrigins : DEFAULT_ORIGINS;
+export const ORIGINS = [...envOrigins, ...((process.env.NODE_ENV || 'development') === 'development' ? DEV_ORIGINS : [])];
 const allowAllOrigins = process.env.ALLOW_ALL_ORIGINS === 'true';
 
 const app = express();
 app.disable('x-powered-by');
 
-const corsOptions = {
+export const corsOptions = {
   credentials: true,
   origin(origin, callback) {
-    if (!origin || allowAllOrigins || ORIGINS.includes(origin)) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowAllOrigins || ORIGINS.includes(origin)) {
       return callback(null, true);
     }
-    logger.warn({ origin }, 'Blocked by CORS');
+    logger.warn({ origin, allowed: ORIGINS }, 'Blocked by CORS');
     return callback(new Error('Not allowed by CORS'));
   },
 };
@@ -70,6 +75,8 @@ app.use(
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
+
+app.use('/api', globalLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);

@@ -85,7 +85,10 @@ export default function ReportDetail() {
         if (cancelled) return;
         const source = data?.sources?.blacklistseller || { found: false };
         const formattedTime = data?.checkedAt
-          ? new Date(data.checkedAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })
+          ? new Date(data.checkedAt).toLocaleString('th-TH', {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+            })
           : undefined;
         setExternalSources({
           loading: false,
@@ -115,8 +118,15 @@ export default function ReportDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-gray-900 dark:bg-gradient-to-br dark:from-gray-950 dark:via-slate-950 dark:to-black dark:text-gray-100">
-      <div className="container py-10">
+    <div className="min-h-screen relative overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+      {/* พื้นหลังสไตล์เดียวกับ Login */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.07] dark:opacity-5" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-blue-400/20 blur-[110px] rounded-full pointer-events-none dark:bg-blue-600/25" />
+        <div className="absolute bottom-0 right-0 w-[700px] h-[520px] bg-cyan-300/15 blur-[100px] rounded-full pointer-events-none dark:bg-cyan-500/15" />
+      </div>
+
+      <div className="container mx-auto px-4 md:px-6 py-10 relative z-10">
         <button
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
@@ -125,121 +135,131 @@ export default function ReportDetail() {
         </button>
 
         {loading ? (
-          <div className="mt-10 text-center text-gray-500">กำลังโหลดข้อมูล...</div>
+          <div className="mt-10 text-center text-gray-500">
+            กำลังโหลดข้อมูล...
+          </div>
         ) : error ? (
           <div className="mt-10 text-center text-red-500">{error}</div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[2.2fr,1fr] mt-6">
-            <section className="rounded-3xl border border-gray-200 bg-white shadow-xl text-gray-900 dark:border-white/10 dark:bg-[#060b18] dark:text-gray-100">
-              <header className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    รายละเอียดของผู้ที่มีประวัติการโกง
-                  </p>
-                  <h1 className="text-2xl font-extrabold flex items-center gap-2">
-                    ⚠️ ข้อมูลมิจฉาชีพ
-                  </h1>
-                </div>
-                {meta && (
-                  <span
-                    className={`inline-flex h-8 items-center rounded-full px-4 text-sm font-semibold shadow-sm ${meta.badge}`}
-                  >
-                    {meta.label}
-                  </span>
-                )}
-              </header>
-
-              <div className="px-6 py-6 space-y-6">
-                <div className="grid gap-6 md:grid-cols-2 text-sm">
-                  <DetailRow
-                    label="ชื่อ-นามสกุลผู้กระทำผิด"
-                    value={report?.name || t('common.unknown')}
-                    emphasize
-                  />
-                  <DetailRow label="ยอดโอน" value={money(report?.amount)} emphasize />
-                  <DetailRow
-                    label="หมายเลขบัญชีธนาคาร"
-                    value={report?.account || t('common.unknown')}
-                  />
-                  <DetailRow
-                    label="ช่องทางการขาย"
-                    value={report?.channel || t('common.unknown')}
-                    emphasize
-                  />
-                  <DetailRow
-                    label="วันที่โอนเงิน"
-                    value={fmt(report?.createdAt)}
-                    emphasize
-                  />
-                  <DetailRow
-                    label="ธนาคาร"
-                    value={report?.bank || t('common.unknown')}
-                  />
-                  <DetailRow
-                    label="หมวดหมู่"
-                    value={report?.category || t('common.unknown')}
-                  />
-                </div>
-
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
-                    รายละเอียดเพิ่มเติม
-                  </h3>
-                  <p className="rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200">
-                    {report?.desc || '-'}
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
-                    หลักฐาน
-                  </h3>
-                  {report?.photos?.length ? (
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      {report.photos.map((url, idx) => (
-                        <button
-                          type="button"
-                          key={url || idx}
-                          onClick={() => setLightbox({ open: true, index: idx })}
-                          className="rounded-2xl border border-gray-100 bg-white p-2 dark:border-white/10 dark:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-                        >
-                          <img
-                            src={url}
-                            alt={`evidence-${idx}`}
-                            className="h-40 w-full rounded-xl object-cover"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      {[0, 1, 2].map((index) => (
-                        <div
-                          key={index}
-                          className="h-40 rounded-2xl border border-dashed border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/5"
-                        />
-                      ))}
-                    </div>
+          <div
+            className="mt-6 rounded-3xl p-6 md:p-8 border border-slate-200/80 bg-white/95 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur
+                       dark:border-white/10 dark:bg-gradient-to-b dark:from-slate-900/90 dark:via-slate-950 dark:to-slate-950 dark:shadow-[0_24px_80px_rgba(15,23,42,0.9)]"
+          >
+            <div className="grid gap-6 lg:grid-cols-[2.2fr,1fr]">
+              <section className="rounded-3xl border border-gray-200 bg-white shadow-xl text-gray-900 dark:border-white/10 dark:bg-[#060b18] dark:text-gray-100">
+                <header className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10">
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      รายละเอียดของผู้ที่มีประวัติการโกง
+                    </p>
+                    <h1 className="text-2xl font-extrabold flex items-center gap-2">
+                      ⚠️ ข้อมูลมิจฉาชีพ
+                    </h1>
+                  </div>
+                  {meta && (
+                    <span
+                      className={`inline-flex h-8 items-center rounded-full px-4 text-sm font-semibold shadow-sm ${meta.badge}`}
+                    >
+                      {meta.label}
+                    </span>
                   )}
+                </header>
+
+                <div className="px-6 py-6 space-y-6">
+                  <div className="grid gap-6 md:grid-cols-2 text-sm">
+                    <DetailRow
+                      label="ชื่อ-นามสกุลผู้กระทำผิด"
+                      value={report?.name || t('common.unknown')}
+                      emphasize
+                    />
+                    <DetailRow
+                      label="ยอดโอน"
+                      value={money(report?.amount)}
+                      emphasize
+                    />
+                    <DetailRow
+                      label="หมายเลขบัญชีธนาคาร"
+                      value={report?.account || t('common.unknown')}
+                    />
+                    <DetailRow
+                      label="ช่องทางการขาย"
+                      value={report?.channel || t('common.unknown')}
+                      emphasize
+                    />
+                    <DetailRow
+                      label="วันที่โอนเงิน"
+                      value={fmt(report?.createdAt)}
+                      emphasize
+                    />
+                    <DetailRow
+                      label="ธนาคาร"
+                      value={report?.bank || t('common.unknown')}
+                    />
+                    <DetailRow
+                      label="หมวดหมู่"
+                      value={report?.category || t('common.unknown')}
+                    />
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+                      รายละเอียดเพิ่มเติม
+                    </h3>
+                    <p className="rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200">
+                      {report?.desc || '-'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                      หลักฐาน
+                    </h3>
+                    {report?.photos?.length ? (
+                      <div className="grid gap-4 sm:grid-cols-3">
+                        {report.photos.map((url, idx) => (
+                          <button
+                            type="button"
+                            key={url || idx}
+                            onClick={() =>
+                              setLightbox({ open: true, index: idx })
+                            }
+                            className="rounded-2xl border border-gray-100 bg-white p-2 dark:border-white/10 dark:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                          >
+                            <img
+                              src={url}
+                              alt={`evidence-${idx}`}
+                              className="h-40 w-full rounded-xl object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid gap-4 sm:grid-cols-3">
+                        {[0, 1, 2].map((index) => (
+                          <div
+                            key={index}
+                            className="h-40 rounded-2xl border border-dashed border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/5"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
 
-            <aside className="rounded-3xl border border-gray-200 bg-white p-6 text-gray-900 dark:border-white/10 dark:bg-[#060b18] dark:text-gray-100 shadow-lg">
-              <div className="mb-4">
-                <h2 className="text-xl font-bold">ตรวจสอบจากแหล่งภายนอก</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  ข้อมูลจากแหล่งอื่นที่เกี่ยวข้อง
-                </p>
-              </div>
+              <aside className="rounded-3xl border border-gray-200 bg-white p-6 text-gray-900 dark:border-white/10 dark:bg-[#060b18] dark:text-gray-100 shadow-lg">
+                <div className="mb-4">
+                  <h2 className="text-xl font-bold">ตรวจสอบจากแหล่งภายนอก</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    ข้อมูลจากแหล่งอื่นที่เกี่ยวข้อง
+                  </p>
+                </div>
 
-              <div className="space-y-3">
-                <ExternalSource
-                  name="Blacklistseller.com"
-                  result={blsResult}
-                />
-              </div>
-            </aside>
+                <div className="space-y-3">
+                  <ExternalSource name="Blacklistseller.com" result={blsResult} />
+                </div>
+              </aside>
+            </div>
           </div>
         )}
       </div>
@@ -258,7 +278,9 @@ export default function ReportDetail() {
                 e.stopPropagation();
                 setLightbox((prev) => ({
                   open: true,
-                  index: (prev.index - 1 + report.photos.length) % report.photos.length,
+                  index:
+                    (prev.index - 1 + report.photos.length) %
+                    report.photos.length,
                 }));
               }}
               className="absolute left-8 text-white w-14 h-14 rounded-full border border-white/30 bg-black/50 hover:bg-black/70 flex items-center justify-center shadow-lg transition"
@@ -330,9 +352,7 @@ function DetailRow({ label, value, emphasize }) {
       <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {label}
       </p>
-      <p className={textClass}>
-        {value}
-      </p>
+      <p className={textClass}>{value}</p>
     </div>
   );
 }
@@ -346,7 +366,13 @@ const SOURCE_STYLES = {
 
 function ExternalSource({ name, result = {} }) {
   const copy = t('externalChecks') || {};
-  const status = result.loading ? 'loading' : result.error ? 'error' : result.found ? 'found' : 'missing';
+  const status = result.loading
+    ? 'loading'
+    : result.error
+    ? 'error'
+    : result.found
+    ? 'found'
+    : 'missing';
   const badgeLabel =
     status === 'found'
       ? copy.badgeFound
@@ -373,16 +399,28 @@ function ExternalSource({ name, result = {} }) {
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="font-semibold">{name}</p>
-          <p className={`text-xs ${status === 'error' ? 'text-rose-500' : 'text-gray-500 dark:text-gray-400'}`}>
+          <p
+            className={`text-xs ${
+              status === 'error'
+                ? 'text-rose-500'
+                : 'text-gray-500 dark:text-gray-400'
+            }`}
+          >
             {description}
           </p>
           {result.lastChecked && (
             <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-              {copy.updated ? copy.updated(result.lastChecked) : result.lastChecked}
+              {copy.updated
+                ? copy.updated(result.lastChecked)
+                : result.lastChecked}
             </p>
           )}
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeClass}`}>{badgeLabel}</span>
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeClass}`}
+        >
+          {badgeLabel}
+        </span>
       </div>
 
       {matches.length > 0 && (
@@ -394,10 +432,14 @@ function ExternalSource({ name, result = {} }) {
             >
               <p className="font-semibold">{match.name || '-'}</p>
               <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                {[match.bank, match.account].filter(Boolean).join(' • ') || 'ไม่ระบุบัญชี'}
+                {[match.bank, match.account]
+                  .filter(Boolean)
+                  .join(' • ') || 'ไม่ระบุบัญชี'}
               </p>
               {match.description && (
-                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 line-clamp-3">{match.description}</p>
+                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 line-clamp-3">
+                  {match.description}
+                </p>
               )}
               {match.url && (
                 <a

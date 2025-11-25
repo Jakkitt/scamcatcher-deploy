@@ -11,6 +11,7 @@ import {
   forgotPassword,
   resetPassword,
   sendChangePasswordPin,
+  getCsrfToken,
 } from '../controllers/auth.controller.js';
 import { requireAuth } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
@@ -30,5 +31,6 @@ router.post('/change-password', requireAuth, validate(changePasswordSchema), cha
 router.get('/me', requireAuth, me);
 router.patch('/profile', requireAuth, validate(profileSchema), updateProfile);
 router.delete('/account', requireAuth, deleteAccount);
+router.get('/csrf', getCsrfToken);
 
 export default router;

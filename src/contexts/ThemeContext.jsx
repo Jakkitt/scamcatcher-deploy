@@ -1,24 +1,49 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-const ThemeCtx = createContext({ theme: 'light', setTheme: () => {}, toggle: () => {} });
+// ให้ default มีโครงให้ครบกัน error เวลา useTheme ก่อน Provider
+const ThemeCtx = createContext({
+  theme: 'light',
+  setTheme: () => {},
+  toggleTheme: () => {},
+});
+
 export const useTheme = () => useContext(ThemeCtx);
 
 export function ThemeProvider({ children }) {
-  // Default to the new dark theme if no preference is stored
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  // อ่านค่าจาก localStorage ถ้าไม่มีให้เริ่มที่ 'dark'
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') return 'dark';
+    const saved = window.localStorage.getItem('theme');
+    return saved || 'dark';
+  });
 
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const root = document.documentElement;
+
     const apply = () => {
-      const root = document.documentElement;
       const isDark = theme === 'dark' || (theme === 'system' && mql.matches);
       if (isDark) root.classList.add('dark');
       else root.classList.remove('dark');
     };
 
     apply();
-    localStorage.setItem('theme', theme);
-    try { document.cookie = 'theme=' + theme + '; path=/; max-age=' + (60*60*24*365) + '; SameSite=Lax'; } catch {}
+
+    // เก็บค่าลง localStorage + cookie
+    try {
+      window.localStorage.setItem('theme', theme);
+    } catch {}
+
+    try {
+      document.cookie =
+        'theme=' +
+        theme +
+        '; path=/; max-age=' +
+        60 * 60 * 24 * 365 +
+        '; SameSite=Lax';
+    } catch {}
 
     if (theme === 'system') {
       mql.addEventListener?.('change', apply);
@@ -26,10 +51,12 @@ export function ThemeProvider({ children }) {
     }
   }, [theme]);
 
-  const toggle = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+  // ใช้ชื่อนี้ให้ตรงกับ Navbar: toggleTheme
+  const toggleTheme = () =>
+    setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
   return (
-    <ThemeCtx.Provider value={{ theme, setTheme, toggle }}>
+    <ThemeCtx.Provider value={{ theme, setTheme, toggleTheme }}>
       {children}
     </ThemeCtx.Provider>
   );

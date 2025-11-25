@@ -45,3 +45,9 @@ export const sessionRefreshLimiter = baseLimiter({
   limit: 15,
   message: { error: { message: 'รีเฟรชเซสชันบ่อยเกินไป กรุณารอสักครู่' } },
 });
+
+export const globalLimiter = baseLimiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  message: { error: { message: 'Too many requests from this IP, please try again later.' } },
+});

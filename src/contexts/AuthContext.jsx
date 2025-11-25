@@ -1,6 +1,6 @@
 // src/contexts/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getCurrentUser, login, logout, register, updateUser } from '../services/auth';
+import { getCurrentUser, login, logout, register, updateUser, getCsrfToken } from '../services/auth';
 
 const AuthContext = createContext();
 
@@ -11,6 +11,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const saved = getCurrentUser();
     if (saved) setUser(saved);
+    // Initialize CSRF token
+    getCsrfToken().catch(() => console.warn('Failed to fetch CSRF token'));
   }, []);
 
   const handleLogin = async (data) => {
@@ -30,11 +32,11 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  const handleUpdate = (partial) => {
+  const handleUpdate = async (partial) => {
     // Support both API (async) mode and mock (sync) mode
-    Promise.resolve(updateUser(partial)).then((updated)=>{
-      setUser(updated);
-    });
+    const updated = await Promise.resolve(updateUser(partial));
+    setUser(updated);
+    return updated;
   };
 
   return (
@@ -45,6 +47,7 @@ export function AuthProvider({ children }) {
         register: handleRegister,
         logout: handleLogout,
         updateUser: handleUpdate,
+        updateProfile: handleUpdate, // Alias for updateUser
       }}
     >
       {children}

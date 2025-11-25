@@ -4,6 +4,7 @@ export const STRINGS = {
     unknown: '-',
     currencyBaht: 'บาท',
     notReady: 'ระบบยังไม่พร้อมใช้งาน',
+    and: 'และ',
   },
   layout: {
     brand: 'ScamCatcher',

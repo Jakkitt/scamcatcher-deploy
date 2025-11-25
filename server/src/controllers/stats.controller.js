@@ -1,4 +1,5 @@
 import { normalizePayload, readStats, recordStats, shouldSkip } from '../services/stats.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const buildResponse = ({
   queryCount = 0,
@@ -18,32 +19,24 @@ const buildResponse = ({
   lastNameCount,
 });
 
-export async function recordSearchStats(req, res) {
-  try {
-    const payload = normalizePayload(req.body || {});
-    if (shouldSkip(payload)) {
-      return res.json(buildResponse({}));
-    }
-
-    const stats = await recordStats(payload);
-
-    return res.json(buildResponse(stats));
-  } catch (err) {
-    return res.status(500).json({ error: { message: err.message } });
+export const recordSearchStats = asyncHandler(async (req, res) => {
+  const payload = normalizePayload(req.body || {});
+  if (shouldSkip(payload)) {
+    return res.json(buildResponse({}));
   }
-}
 
-export async function getSearchStats(req, res) {
-  try {
-    const payload = normalizePayload(req.query || {});
-    if (shouldSkip(payload)) {
-      return res.json(buildResponse({}));
-    }
+  const stats = await recordStats(payload);
 
-    const stats = await readStats(payload);
+  return res.json(buildResponse(stats));
+});
 
-    return res.json(buildResponse(stats));
-  } catch (err) {
-    return res.status(500).json({ error: { message: err.message } });
+export const getSearchStats = asyncHandler(async (req, res) => {
+  const payload = normalizePayload(req.query || {});
+  if (shouldSkip(payload)) {
+    return res.json(buildResponse({}));
   }
-}
+
+  const stats = await readStats(payload);
+
+  return res.json(buildResponse(stats));
+});
