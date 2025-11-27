@@ -124,6 +124,15 @@ export default function Report() {
   const onFiles = (e) => {
     const picked = Array.from(e.target.files || []);
     if (picked.length === 0) return;
+
+    // Validate file size (max 5MB)
+    const invalidFile = picked.find(f => f.size > 5 * 1024 * 1024);
+    if (invalidFile) {
+      toast.error('ขนาดไฟล์ต้องไม่เกิน 5MB');
+      e.target.value = '';
+      return;
+    }
+
     const next = [...files, ...picked].slice(0, 3);
     setFiles(next);
     setPreviews(next.map((f) => URL.createObjectURL(f)));

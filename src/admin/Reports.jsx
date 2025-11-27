@@ -248,6 +248,8 @@ export default function AdminReports() {
       await onApprove(row.id);
     } else if (type === 'reject') {
       await onReject(row.id);
+      // ลบข้อมูลที่ปฏิเสธออก และดึงข้อมูลใหม่มาแทน
+      await refresh();
     }
   };
 

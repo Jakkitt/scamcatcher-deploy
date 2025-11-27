@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth, requireRole } from '../middlewares/auth.js';
+import { optionalAuth, requireAuth, requireRole } from '../middlewares/auth.js';
 import {
   createReport,
   searchReports,
@@ -14,6 +14,7 @@ import {
   getReportById,
   getReportStats,
   listRecentPublic,
+  listPublicReports,
   getFraudCategories,
 } from '../controllers/reports.controller.js';
 import { validate, validateQuery } from '../middlewares/validate.js';
@@ -69,6 +70,7 @@ const upload = multer({
 // Public summary (no auth) — counts only
 router.get('/stats/summary', getReportStats);
 router.get('/public/recent', listRecentPublic);
+router.get('/public/all', listPublicReports);
 router.get('/stats/fraud', getFraudCategories);
 
 // ทั้งสาม endpoint ต้อง login ตาม flow ของ frontend ตอนนี้
@@ -82,7 +84,7 @@ router.get('/admin/all', requireAuth, requireRole('admin'), listAllReports);
 router.patch('/:id/approve', requireAuth, requireRole('admin'), approveReport);
 router.patch('/:id/reject', requireAuth, requireRole('admin'), rejectReport);
 router.patch('/:id/pending', requireAuth, requireRole('admin'), resetReport);
-router.get('/:id', requireAuth, getReportById);
+router.get('/:id', optionalAuth, getReportById);
 router.delete('/:id', requireAuth, deleteReport);
 
 export default router;

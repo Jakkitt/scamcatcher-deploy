@@ -149,8 +149,8 @@ export default function Home1() {
             </h1>
 
             <p className="text-slate-600 dark:text-slate-300 text-lg md:text-xl mb-10 max-w-2xl mx-auto animate-fade-in-up delay-100">
-              {t('layout.brand')} ช่วยให้คุณตรวจสอบประวัติการโกง เช็กเบอร์โทรและเลขบัญชีต้องสงสัย
-              จากฐานข้อมูลที่รวบรวมโดยชุมชนผู้ใช้จริงทั่วประเทศ
+              {t('layout.brand')} ช่วยให้คุณตรวจสอบประวัติการโกง เช็คเบอร์โทรและเลขบัญชีต้องสงสัย
+              จากฐานข้อมูลที่รวบรวมโดยชุมชนผู้ใช้งานจริงทั่วประเทศ
             </p>
           </div>
 
@@ -230,17 +230,17 @@ export default function Home1() {
               </p>
             </div>
             <Link
-              to="/reports"
+              to="/public-reports"
               className="text-blue-600 font-medium hover:text-blue-700 flex items-center gap-1 hover:gap-2 transition-all dark:text-sky-300 dark:hover:text-sky-200"
             >
               ดูทั้งหมด <ChevronRight size={18} />
             </Link>
           </div>
 
-          {/* 👉 กรองไม่ให้แสดง status === 'rejected' */}
+          {/* 👉 กรองให้แสดงแต่ status === 'approved' เท่านั้น */}
           {(() => {
             const visibleReports = (recent || []).filter(
-              (report) => report.status !== 'rejected',
+              (report) => report.status === 'approved',
             );
 
             return (
@@ -291,13 +291,13 @@ export default function Home1() {
                           </span>
                         </div>
 
-                        <h3 className="text-lg font-bold text-slate-800 mb-1 group-hover:text-blue-600 transition-colors font-mono dark:text-slate-100 dark:group-hover:text-sky-300">
-                          {report.account || report.name || '—'}
+                        <h3 className="text-lg font-bold text-slate-800 mb-1 group-hover:text-blue-600 transition-colors dark:text-slate-100 dark:group-hover:text-sky-300">
+                          {report.name || 'ไม่ระบุชื่อ'}
                         </h3>
 
                         <p className="text-slate-500 text-sm mb-4 flex items-center gap-2 dark:text-slate-400">
                           {(report.bank || report.channel || 'ไม่ระบุ')} •{' '}
-                          {report.name || 'ไม่ระบุชื่อ'}
+                          <span className="font-mono">{report.account || '—'}</span>
                         </p>
 
                         <div className="flex items-center gap-2">
@@ -385,7 +385,7 @@ export default function Home1() {
 
                 <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
                   <BarChart3 className="text-blue-600 dark:text-sky-400" />
-                  สถิติการหลอกลวงเดือนนี้
+                  สถิติรายงานการหลอกลวงในเดือนนี้
                 </h3>
 
                 <div className="space-y-4">

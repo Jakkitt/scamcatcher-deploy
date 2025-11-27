@@ -10,6 +10,7 @@ import SearchDetail from './pages/SearchDetail';
 import SearchResults from './pages/SearchResults';
 import ReportDetail from './pages/ReportDetail';
 import ReportList from './pages/ReportList';
+import PublicReports from './pages/PublicReports';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import About from './pages/About';
@@ -50,6 +51,7 @@ export default function App() {
                 <Route path="/search/detail" element={<SearchDetail />} />
                 <Route path="/search/results" element={<SearchResults />} />
                 <Route path="/reports/:id" element={<ReportDetail />} />
+                <Route path="/public-reports" element={<PublicReports />} />
 
                 {/* private (ยังต้องล็อกอินเหมือนเดิม) */}
                 <Route

@@ -408,7 +408,6 @@ export const refreshSession = asyncHandler(async (req, res) => {
   await persistRefreshToken(user._id, refreshToken, meta);
   setAuthCookies(res, { accessToken, refreshToken });
   await recordAuthLog({ userId: user._id, event: 'refresh_success', ...meta });
-  await recordAuthLog({ userId: user._id, event: 'refresh_success', ...meta });
   return res.json({ ok: true });
 });
 

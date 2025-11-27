@@ -14,7 +14,7 @@ const skeletonRows = Array.from({ length: 3 });
 
 function buildMessage(copy, result) {
   if (result.loading) return copy.loading;
-  if (result.reason === "disabled") return copy.disabled || copy.skipped;
+  if (result.reason === "disabled") return copy.disabledByAdmin || copy.disabled || copy.skipped;
   if (result.error) return copy.error || result.error;
   if (result.found) {
     const countText =

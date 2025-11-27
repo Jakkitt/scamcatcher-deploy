@@ -110,9 +110,33 @@ export async function listAllReports(req, res) {
 
 export async function listRecentPublic(_req, res) {
   try {
-    const list = await Report.find({ status: { $in: ['approved', 'pending', 'rejected'] } })
+    const list = await Report.find({ status: 'approved' }) // แสดงเฉพาะรายงานที่อนุมัติแล้ว
       .sort({ createdAt: -1 })
       .limit(6)
+      .lean();
+
+    const payload = list.map((doc) => ({
+      id: doc._id.toString(),
+      name: doc.name || `${doc.firstName || ''} ${doc.lastName || ''}`.trim(),
+      bank: doc.bank || '',
+      account: doc.account || '',
+      status: doc.status || 'pending',
+      category: doc.category || '',
+      channel: doc.channel || '',
+      createdAt: doc.createdAt,
+    }));
+    return res.json(payload);
+  } catch (e) {
+    return res.status(500).json({ error: { message: e.message } });
+  }
+}
+
+export async function listPublicReports(req, res) {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 50, 100); // max 100
+    const list = await Report.find({ status: 'approved' })
+      .sort({ createdAt: -1 })
+      .limit(limit)
       .lean();
 
     const payload = list.map((doc) => ({
@@ -155,7 +179,7 @@ export async function getReportStats(_req, res) {
 export async function getFraudCategories(req, res) {
   try {
     const days = Number(req.query.days || 30);
-    const match = {};
+    const match = { status: 'approved' }; // แสดงเฉพาะรายงานที่อนุมัติแล้ว
     if (!Number.isNaN(days) && days > 0) {
       const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
       match.createdAt = { $gte: since };
@@ -190,6 +214,14 @@ export async function getReportById(req, res) {
   try {
     const doc = await Report.findById(req.params.id);
     if (!doc) return res.status(404).json({ error: { message: 'not found' } });
+    const role = req.user?.role || 'guest';
+    const isAdmin = role === 'admin';
+    const isOwner =
+      req.user?.id && doc.owner && String(doc.owner) === String(req.user.id);
+
+    if (doc.status !== 'approved' && !isOwner && !isAdmin) {
+      return res.status(403).json({ error: { message: 'forbidden' } });
+    }
     return res.json(serializeReport(req, doc));
   } catch (e) {
     return res.status(500).json({ error: { message: e.message } });

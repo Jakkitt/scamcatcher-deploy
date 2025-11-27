@@ -145,7 +145,7 @@ export default function ReportDetail() {
             className="mt-6 rounded-3xl p-6 md:p-8 border border-slate-200/80 bg-white/95 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur
                        dark:border-white/10 dark:bg-gradient-to-b dark:from-slate-900/90 dark:via-slate-950 dark:to-slate-950 dark:shadow-[0_24px_80px_rgba(15,23,42,0.9)]"
           >
-            <div className="grid gap-6 lg:grid-cols-[2.2fr,1fr]">
+            <div className="grid gap-6">
               <section className="rounded-3xl border border-gray-200 bg-white shadow-xl text-gray-900 dark:border-white/10 dark:bg-[#060b18] dark:text-gray-100">
                 <header className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10">
                   <div>
@@ -168,7 +168,7 @@ export default function ReportDetail() {
                 <div className="px-6 py-6 space-y-6">
                   <div className="grid gap-6 md:grid-cols-2 text-sm">
                     <DetailRow
-                      label="ชื่อ-นามสกุลผู้กระทำผิด"
+                      label="ชื่อ-นามสกุลผู้ถูกรายงาน"
                       value={report?.name || t('common.unknown')}
                       emphasize
                     />
@@ -246,19 +246,6 @@ export default function ReportDetail() {
                   </div>
                 </div>
               </section>
-
-              <aside className="rounded-3xl border border-gray-200 bg-white p-6 text-gray-900 dark:border-white/10 dark:bg-[#060b18] dark:text-gray-100 shadow-lg">
-                <div className="mb-4">
-                  <h2 className="text-xl font-bold">ตรวจสอบจากแหล่งภายนอก</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    ข้อมูลจากแหล่งอื่นที่เกี่ยวข้อง
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <ExternalSource name="Blacklistseller.com" result={blsResult} />
-                </div>
-              </aside>
             </div>
           </div>
         )}
@@ -357,114 +344,101 @@ function DetailRow({ label, value, emphasize }) {
   );
 }
 
-const SOURCE_STYLES = {
-  loading: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-200',
-  found: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200',
-  missing: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
-  error: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-100',
+const STATUS_STYLES = {
+  loading: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-200",
+  found: "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200",
+  missing: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300",
+  error: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-100",
+  disabled: "bg-gray-200 text-gray-500 dark:bg-gray-900 dark:text-gray-400",
+  skipped: "bg-gray-200 text-gray-500 dark:bg-gray-900 dark:text-gray-400",
 };
 
 function ExternalSource({ name, result = {} }) {
   const copy = t('externalChecks') || {};
+  
   const status = result.loading
-    ? 'loading'
+    ? "loading"
+    : result.reason === "disabled"
+    ? "disabled"
+    : result.skipped
+    ? "skipped"
     : result.error
-    ? 'error'
+    ? "error"
     : result.found
-    ? 'found'
-    : 'missing';
-  const badgeLabel =
-    status === 'found'
-      ? copy.badgeFound
-      : status === 'error'
-      ? copy.badgeError
-      : status === 'loading'
-      ? copy.badgeLoading
-      : copy.badgeMissing;
-  const badgeClass = SOURCE_STYLES[status] || SOURCE_STYLES.missing;
-  const description =
-    status === 'found'
-      ? copy.detailFound
-      : status === 'error'
-      ? result.error
-      : status === 'loading'
-      ? copy.loading
-      : result.skipped
-      ? copy.skipped
-      : copy.detailMissing;
+    ? "found"
+    : "missing";
+
+  const labels = {
+    found: copy.badgeFound,
+    error: copy.badgeError,
+    loading: copy.badgeLoading,
+    disabled: copy.badgeDisabled || copy.badgeMissing,
+    skipped: copy.badgeSkipped || copy.badgeMissing,
+    missing: copy.badgeMissing,
+  };
+
+  const badgeLabel = labels[status] || copy.badgeMissing;
+  const badgeClass = STATUS_STYLES[status] || STATUS_STYLES.missing;
+  
+  let description;
+  if (result.loading) description = copy.loading;
+  else if (result.reason === "disabled") description = copy.disabledByAdmin || copy.disabled || copy.skipped;
+  else if (result.error) description = copy.error || result.error;
+  else if (result.found) {
+      if (result.count) {
+          description = `พบประวัติผู้กระทำผิดในฐานข้อมูล • พบ ${result.count} รายการ`;
+      } else {
+          description = copy.detailFound;
+      }
+  }
+  else if (result.skipped) description = copy.skipped || copy.detailMissing;
+  else description = copy.detailMissing;
+
   const matches = Array.isArray(result.matches) ? result.matches : [];
 
   return (
-    <div className="rounded-2xl border border-gray-100 p-4 dark:border-white/10 bg-gray-50 dark:bg-white/5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="border rounded-xl p-4 flex flex-col gap-3 dark:border-gray-800 bg-white dark:bg-transparent" aria-live="polite">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-semibold">{name}</p>
-          <p
-            className={`text-xs ${
-              status === 'error'
-                ? 'text-rose-500'
-                : 'text-gray-500 dark:text-gray-400'
-            }`}
-          >
+          <div className="font-semibold">{name}</div>
+          <div className={`text-xs ${result.error ? "text-rose-500" : "text-gray-500 dark:text-gray-400"}`}>
             {description}
-          </p>
-          {result.lastChecked && (
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-              {copy.updated
-                ? copy.updated(result.lastChecked)
-                : result.lastChecked}
-            </p>
-          )}
+          </div>
         </div>
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeClass}`}
-        >
+        <span className={`text-xs px-3 py-1 rounded-full whitespace-nowrap ${badgeClass}`}>
           {badgeLabel}
         </span>
       </div>
 
-      {matches.length > 0 && (
-        <ul className="mt-3 space-y-2 text-xs text-gray-600 dark:text-gray-300">
-          {matches.map((match, idx) => (
-            <li
-              key={match.id || idx}
-              className="rounded-xl border border-gray-200 bg-white/70 px-3 py-2 dark:border-white/10 dark:bg-white/5"
-            >
-              <p className="font-semibold">{match.name || '-'}</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                {[match.bank, match.account]
-                  .filter(Boolean)
-                  .join(' • ') || 'ไม่ระบุบัญชี'}
-              </p>
-              {match.description && (
-                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 line-clamp-3">
-                  {match.description}
-                </p>
-              )}
-              {match.url && (
-                <a
-                  href={match.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-1 inline-flex text-[11px] text-cyan-600 underline hover:text-cyan-800 dark:text-cyan-300"
-                >
-                  {copy.viewSource}
-                </a>
-              )}
+      {!result.loading && matches.length > 0 && (
+        <ul className="text-xs text-gray-600 dark:text-gray-300 space-y-1">
+          {matches.slice(0, 3).map((match) => (
+            <li key={match.id || match.account || match.name} className="flex justify-between gap-2">
+              <span className="font-medium truncate">{match.name || match.account}</span>
+              {match.bank && <span className="text-gray-400">{match.bank}</span>}
             </li>
           ))}
         </ul>
       )}
 
-      {result.link && !result.loading && (
-        <a
-          href={result.link}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-3 inline-flex text-sm text-cyan-600 underline hover:text-cyan-800 dark:text-cyan-300"
-        >
-          {copy.viewSource}
-        </a>
+      {result.lastChecked && (
+        <div className="text-[11px] text-gray-400 dark:text-gray-500">
+          {copy.updated ? copy.updated(result.lastChecked) : result.lastChecked}
+          {result.cached && <span className="ml-1 text-cyan-500">{copy.cached || '(cached)'}</span>}
+        </div>
+      )}
+
+      {status === 'found' && (
+        <div className="mt-1">
+             <a
+                href="https://www.blacklistseller.com/"
+                target="_blank"
+                rel="noreferrer" 
+                className="w-full inline-flex justify-center items-center gap-2 px-4 py-2 bg-black text-white text-xs font-semibold rounded-xl transition-colors dark:bg-gradient-to-r dark:from-cyan-500 dark:to-blue-600"
+             >
+                <span>ตรวจสอบข้อมูลเพิ่มเติม</span>
+             </a>
+        </div>
       )}
     </div>
   );
