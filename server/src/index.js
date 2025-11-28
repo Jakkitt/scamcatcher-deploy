@@ -18,7 +18,7 @@ const {
   MONGODB_URI,
   USE_MEMORY_DB = 'false',
   NODE_ENV = 'development',
-  MEMORY_DB_FALLBACK = 'true',
+  MEMORY_DB_FALLBACK = process.env.NODE_ENV === 'production' ? 'false' : 'true',
   TRUST_PROXY = '1',
 } = process.env;
 

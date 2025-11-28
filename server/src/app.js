@@ -68,6 +68,7 @@ app.use(
       '/api/auth/logout',
       '/api/auth/forgot-password',
       '/api/auth/reset-password',
+      '/api/stats/search', // Allow public stats recording
     ],
   })
 );

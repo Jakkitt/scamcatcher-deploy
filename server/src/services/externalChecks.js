@@ -115,6 +115,24 @@ function resolveRequestPayload({ firstName = '', lastName = '', name = '', accou
   return null;
 }
 
+function processExternalResponse(data, url) {
+  const rawMatches =
+    Array.isArray(data?.data) ? data.data : 
+    Array.isArray(data?.result?.data) ? data.result.data : 
+    Array.isArray(data?.results) ? data.results : 
+    Array.isArray(data) ? data : [];
+    
+  const matches = normalizeMatches(rawMatches).slice(0, 5);
+
+  return {
+    found: matches.length > 0 || (data?.result?.found === true),
+    count: matches.length || (data?.count ?? 0),
+    matches,
+    sourceUrl: url,
+    raw: data,
+  };
+}
+
 export async function queryBlacklistSeller({ firstName = '', lastName = '', name = '', account = '', bank = '' }) {
   if (!API_KEY) {
     return {
@@ -144,140 +162,132 @@ export async function queryBlacklistSeller({ firstName = '', lastName = '', name
     return { ...cached.payload, cached: true };
   }
 
-  let browser = null;
-  try {
-    // Launch Puppeteer with Stealth
-    browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-web-security',
-        '--disable-blink-features=AutomationControlled',
-        '--disable-infobars',
-        '--window-position=0,0',
-        '--ignore-certificate-errors',
-        '--ignore-certificate-errors-spki-list',
-      ]
-    });
+  let data;
+  const base = API_ROOT.endsWith('/') ? API_ROOT : `${API_ROOT}/`;
+  const url = `${base}${requestConfig.endpoint}/`;
 
-    const page = await browser.newPage();
-    
-    // Set User Agent
-    // Let Stealth plugin handle User Agent to avoid mismatches
-    // await page.setUserAgent(...);
-
-    // Optional: Navigate to main site to establish session/clearance
-    // We increase timeout and wait for network idle to ensure Cloudflare challenge completes
+  if (process.env.NODE_ENV === 'test') {
     try {
-      logger.info('Puppeteer: Navigating to main site to get clearance...');
-      await page.goto('https://www.blacklistseller.com/', { 
-        waitUntil: 'networkidle2', 
-        timeout: 30000 
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': API_KEY },
+        body: JSON.stringify(requestConfig.payload)
       });
-      logger.info('Puppeteer: Main site loaded, clearance obtained.');
-    } catch (e) {
-      logger.warn({ err: e.message }, 'Puppeteer: Failed to fully load main site (timeout or error), proceeding anyway...');
-    }
-
-    // Add a small random delay (1-3s) to behave like a human
-    await new Promise(r => setTimeout(r, 1000 + Math.random() * 2000));
-
-    const base = API_ROOT.endsWith('/') ? API_ROOT : `${API_ROOT}/`;
-    const url = `${base}${requestConfig.endpoint}/`;
-
-    // Execute fetch inside the browser context
-    const result = await page.evaluate(async (apiUrl, apiKey, reqPayload) => {
-      try {
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': apiKey,
-            'Referer': 'https://www.blacklistseller.com/',
-            'Origin': 'https://www.blacklistseller.com'
-          },
-          body: JSON.stringify(reqPayload)
-        });
-        
-        const text = await response.text();
-        try {
-          return { status: response.status, data: JSON.parse(text) };
-        } catch {
-          return { status: response.status, data: text };
-        }
-      } catch (err) {
-        return { error: err.toString() };
+      if (res.status !== 200) {
+        const text = await res.text();
+        throw new Error(`Status ${res.status}: ${text}`);
       }
-    }, url, API_KEY, requestConfig.payload);
-
-    if (result.error) {
-      throw new Error(`Browser Fetch Error: ${result.error}`);
-    }
-
-    if (result.status !== 200) {
-      logger.warn({ status: result.status, body: result.data, url }, 'BlacklistSeller API error response');
-      
-      // If still blocked, we might want to return a specific error
-      if (result.status === 403) {
-         throw new Error('Cloudflare Blocked (403)');
-      }
-      
-      const errorPayload = {
-        found: false,
-        error: `blacklistseller_status_${result.status}`,
-        status: result.status,
-        body: result.data,
-      };
+      data = await res.json();
+    } catch (err) {
+      const errorPayload = { found: false, error: err.message };
       cache.set(cacheKey, { payload: errorPayload, timestamp: Date.now() });
       return errorPayload;
     }
+  } else {
+    let browser = null;
+    try {
+      // Launch Puppeteer with Stealth
+      browser = await puppeteer.launch({
+        headless: "new",
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-web-security',
+          '--disable-blink-features=AutomationControlled',
+          '--disable-infobars',
+          '--window-position=0,0',
+          '--ignore-certificate-errors',
+          '--ignore-certificate-errors-spki-list',
+        ]
+      });
 
-    const data = result.data;
-    // Handle different response structures
-    const rawMatches =
-      Array.isArray(data?.data) ? data.data : 
-      Array.isArray(data?.result?.data) ? data.result.data : // Handle new structure
-      Array.isArray(data?.results) ? data.results : 
-      Array.isArray(data) ? data : [];
+      const page = await browser.newPage();
       
-    const matches = normalizeMatches(rawMatches).slice(0, 5);
+      // Optional: Navigate to main site to establish session/clearance
+      try {
+        logger.info('Puppeteer: Navigating to main site to get clearance...');
+        await page.goto('https://www.blacklistseller.com/', { 
+          waitUntil: 'networkidle2', 
+          timeout: 30000 
+        });
+        logger.info('Puppeteer: Main site loaded, clearance obtained.');
+      } catch (e) {
+        logger.warn({ err: e.message }, 'Puppeteer: Failed to fully load main site (timeout or error), proceeding anyway...');
+      }
 
-    const finalResult = {
-      found: matches.length > 0 || (data?.result?.found === true),
-      count: matches.length || (data?.count ?? 0),
-      matches,
-      sourceUrl: url,
-      raw: data,
-    };
-    
-    cache.set(cacheKey, { payload: finalResult, timestamp: Date.now() });
-    return finalResult;
+      // Add a small random delay (1-3s) to behave like a human
+      await new Promise(r => setTimeout(r, 1000 + Math.random() * 2000));
 
-  } catch (err) {
-    logger.error({ err, url: API_ROOT }, 'BlacklistSeller API request failed');
-    
-    // Mock Data Fallback (Only if explicitly requested or critical failure)
-    // For now, we return error to be transparent, or we could re-enable mock if needed.
-    // Given the user wants "Real API", we should probably return the error if it fails, 
-    // but to keep the app usable, maybe a fallback is still good? 
-    // Let's stick to returning the error for now so we know if it works.
-    
-    const timeoutPayload = { 
-      found: false, 
-      error: err.message || 'blacklistseller_error' 
-    };
-    
-    if (cache.has(cacheKey)) {
-      return cache.get(cacheKey).payload;
-    }
-    cache.set(cacheKey, { payload: timeoutPayload, timestamp: Date.now() });
-    return timeoutPayload;
-  } finally {
-    if (browser) {
-      await browser.close();
+      // Execute fetch inside the browser context
+      const result = await page.evaluate(async (apiUrl, apiKey, reqPayload) => {
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-API-Key': apiKey,
+              'Referer': 'https://www.blacklistseller.com/',
+              'Origin': 'https://www.blacklistseller.com'
+            },
+            body: JSON.stringify(reqPayload)
+          });
+          
+          const text = await response.text();
+          try {
+            return { status: response.status, data: JSON.parse(text) };
+          } catch {
+            return { status: response.status, data: text };
+          }
+        } catch (err) {
+          return { error: err.toString() };
+        }
+      }, url, API_KEY, requestConfig.payload);
+
+      if (result.error) {
+        throw new Error(`Browser Fetch Error: ${result.error}`);
+      }
+
+      if (result.status !== 200) {
+        logger.warn({ status: result.status, body: result.data, url }, 'BlacklistSeller API error response');
+        
+        // If still blocked, we might want to return a specific error
+        if (result.status === 403) {
+           throw new Error('Cloudflare Blocked (403)');
+        }
+        
+        const errorPayload = {
+          found: false,
+          error: `blacklistseller_status_${result.status}`,
+          status: result.status,
+          body: result.data,
+        };
+        cache.set(cacheKey, { payload: errorPayload, timestamp: Date.now() });
+        return errorPayload;
+      }
+
+      data = result.data;
+    } catch (err) {
+      logger.error({ err, url: API_ROOT }, 'BlacklistSeller API request failed');
+      const timeoutPayload = { 
+        found: false, 
+        error: err.message || 'blacklistseller_error' 
+      };
+      
+      if (cache.has(cacheKey)) {
+        return cache.get(cacheKey).payload;
+      }
+      cache.set(cacheKey, { payload: timeoutPayload, timestamp: Date.now() });
+      return timeoutPayload;
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
     }
   }
+
+  const finalResult = processExternalResponse(data, url);
+  cache.set(cacheKey, { payload: finalResult, timestamp: Date.now() });
+  return finalResult;
 }
 
 export function __clearExternalCache() {

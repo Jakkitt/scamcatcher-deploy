@@ -73,8 +73,8 @@ router.get('/public/recent', listRecentPublic);
 router.get('/public/all', listPublicReports);
 router.get('/stats/fraud', getFraudCategories);
 
-// ทั้งสาม endpoint ต้อง login ตาม flow ของ frontend ตอนนี้
-router.get('/search', requireAuth, reportSearchLimiter, validateQuery(searchReportsSchema), searchReports);
+// search endpoint: optionalAuth เพื่อให้สามารถค้นหาได้โดยไม่ต้อง login
+router.get('/search', optionalAuth, reportSearchLimiter, validateQuery(searchReportsSchema), searchReports);
 router.post('/', requireAuth, reportSubmissionLimiter, upload.array('photos', 3), ensureAtLeastOnePhoto, validate(createReportSchema), createReport);
 router.get('/mine', requireAuth, listMyReports);
 // admin utilities (specific routes before dynamic :id)

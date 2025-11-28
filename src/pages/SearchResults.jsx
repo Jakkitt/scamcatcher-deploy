@@ -124,7 +124,7 @@ export default function SearchResults() {
 
     setExternalSummary((prev) => ({ ...prev, loading: true }));
     (async () => {
-      const attemptFetch = async (retries = 2, delay = 1000) => {
+      const attemptFetch = async (retries = 1, delay = 2000) => {
         try {
           const data = await fetchExternalChecks(query);
           if (cancelled) return;
@@ -149,7 +149,7 @@ export default function SearchResults() {
         } catch (err) {
           if (retries > 0) {
             await new Promise((resolve) => setTimeout(resolve, delay));
-            return attemptFetch(retries - 1, delay * 1.5);
+            return attemptFetch(retries - 1, delay * 2);
           }
           if (cancelled) return;
           setExternalSummary({

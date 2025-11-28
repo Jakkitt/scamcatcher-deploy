@@ -30,7 +30,7 @@ export const statsLimiter = baseLimiter({
 
 export const externalChecksLimiter = baseLimiter({
   windowMs: 60 * 1000,
-  limit: 8,
+  limit: 30, // เพิ่มจาก 8 เป็น 30 เพื่อรองรับการใช้งานสาธารณะ
   message: { error: { message: 'มีการตรวจสอบข้อมูลภายนอกมากเกินไป กรุณาลองใหม่ในภายหลัง' } },
 });
 

@@ -61,9 +61,11 @@ export async function createReport(req, res) {
     if (req.body && typeof req.body.desc === 'string') {
       req.body.desc = sanitizeDescription(req.body.desc);
     }
+    // Explicitly destructure to prevent mass assignment
+    const { firstName, lastName, name, bank, account, amount, date, category, channel, desc } = req.body;
     const record = await createReportRecord({
       ownerId,
-      payload: req.body,
+      payload: { firstName, lastName, name, bank, account, amount, date, category, channel, desc },
       photos,
     });
     return res.status(201).json(serializeReport(req, record));

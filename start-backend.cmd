@@ -14,6 +14,6 @@ if not exist "node_modules\" (
 )
 
 echo Starting backend server...
-echo Backend will run on http://localhost:5000
+echo Backend will run on http://localhost:4000
 echo.
 call npm run dev

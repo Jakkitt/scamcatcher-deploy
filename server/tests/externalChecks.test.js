@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 process.env.BLACKLISTSELLER_API_URL = 'https://api.test/api/api/v1/queries';
 process.env.BLACKLISTSELLER_API_KEY = 'test-key';
+process.env.NODE_ENV = 'test';
 
 const { queryBlacklistSeller, __clearExternalCache } = await import('../src/services/externalChecks.js');
 
@@ -21,7 +22,7 @@ test('queryBlacklistSeller prefers explicit first/last names', async () => {
 
   assert.ok(result.found);
   assert.ok(calledWith);
-  assert.equal(calledWith.url, 'https://api.test/api/api/v1/queries/fullname-summary/');
+  assert.equal(calledWith.url, 'https://api.test/api/api/v1/queries/fullname-detail/');
   assert.equal(calledWith.init.method, 'POST');
   assert.equal(calledWith.init.headers['X-API-Key'], 'test-key');
   const sentBody = JSON.parse(calledWith.init.body);
