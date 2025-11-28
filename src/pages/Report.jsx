@@ -433,6 +433,7 @@ export default function Report() {
                 className="hidden"
                 onChange={onFiles}
               />
+              <p className="text-xs text-red-500 mt-2">ขนาดไฟล์ต้องไม่เกิน 5MB ต่อรูป</p>
             </div>
 
             {/* ปุ่มส่งฟอร์ม */}
