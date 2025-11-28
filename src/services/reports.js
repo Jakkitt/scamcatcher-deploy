@@ -59,12 +59,6 @@ export async function listMyReports(){
 }
 
 export async function removeReport(id){
-  if (!import.meta?.env?.VITE_API_BASE_URL) {
-    await delay(150);
-    const list = getAll().filter(x => String(x.id) !== String(id));
-    saveAll(list);
-    return { ok:true };
-  }
   return request(`/reports/${id}`, { method:'DELETE' });
 }
 
