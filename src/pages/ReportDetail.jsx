@@ -197,7 +197,17 @@ export default function ReportDetail() {
                     />
                     <DetailRow
                       label="หมวดหมู่"
-                      value={report?.category || t('common.unknown')}
+                      value={
+                        {
+                          investment: 'หลอกลงทุน',
+                          shopping: 'ซื้อของออนไลน์',
+                          job: 'หลอกทำงาน',
+                          loan: 'เงินกู้',
+                          romance: 'หลอกให้รัก',
+                          bill: 'บิล/ภาษีปลอม',
+                          other: 'อื่นๆ',
+                        }[report?.category] || report?.category || t('common.unknown')
+                      }
                     />
                   </div>
 
