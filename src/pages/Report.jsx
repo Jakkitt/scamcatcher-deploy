@@ -45,6 +45,7 @@ const schema = z.object({
   amount: z.coerce.number().min(1, validationCopy.amountRequired),
   date: z.string().min(1, validationCopy.dateRequired),
   category: z.string().min(1, validationCopy.categoryRequired),
+  categoryOther: z.string().optional(),
   channel: z.string().optional(),
   channelOther: z.string().optional(),
   desc: z.string().optional(),
@@ -98,6 +99,7 @@ export default function Report() {
       amount: '',
       date: '',
       category: '',
+      categoryOther: '',
       desc: '',
     },
   });
@@ -119,6 +121,7 @@ export default function Report() {
   }, [hasPrefillValues, prefillKey, normalizedPrefill, reset, getValues]);
 
   const channelValue = watch('channel');
+  const categoryValue = watch('category');
   const bankValue = watch('bank');
 
   const onFiles = (e) => {
@@ -154,6 +157,11 @@ export default function Report() {
         data.channel = data.channelOther;
       }
       delete data.channelOther;
+
+      if (data.category === 'OTHER' && data.categoryOther) {
+        data.category = data.categoryOther;
+      }
+      delete data.categoryOther;
 
       const fd = new FormData();
       Object.entries(data).forEach(([k, v]) => fd.append(k, String(v ?? '')));
@@ -199,36 +207,36 @@ export default function Report() {
             className="mt-4 grid md:grid-cols-2 gap-6 rounded-3xl p-6 sm:p-8 border border-slate-200/80 bg-white/95 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur
                        dark:border-white/10 dark:bg-gradient-to-b dark:from-slate-900/90 dark:via-slate-950 dark:to-slate-950 dark:shadow-[0_24px_80px_rgba(15,23,42,0.9)]"
           >
-            {/* ชื่อ - นามสกุล */}
-            <div className="grid md:grid-cols-2 gap-4 md:col-span-2">
-              <div>
-                <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
-                  {fields.firstName?.label}
-                </label>
-                <input
-                  {...register('firstName')}
-                  placeholder={fields.firstName?.placeholder}
-                  className="w-full h-12 px-4 rounded-xl
-                             bg-white border border-slate-300 text-slate-900 placeholder-slate-500
-                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
-                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
-                />
-                {renderError('firstName')}
-              </div>
-              <div>
-                <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
-                  {fields.lastName?.label}
-                </label>
-                <input
-                  {...register('lastName')}
-                  placeholder={fields.lastName?.placeholder}
-                  className="w-full h-12 px-4 rounded-xl
-                             bg-white border border-slate-300 text-slate-900 placeholder-slate-500
-                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
-                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
-                />
-                {renderError('lastName')}
-              </div>
+            {/* ชื่อจริง */}
+            <div>
+              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
+                {fields.firstName?.label}
+              </label>
+              <input
+                {...register('firstName')}
+                placeholder={fields.firstName?.placeholder}
+                className="w-full h-12 px-4 rounded-xl
+                           bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                           focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+              />
+              {renderError('firstName')}
+            </div>
+
+            {/* นามสกุล */}
+            <div>
+              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
+                {fields.lastName?.label}
+              </label>
+              <input
+                {...register('lastName')}
+                placeholder={fields.lastName?.placeholder}
+                className="w-full h-12 px-4 rounded-xl
+                           bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                           focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+              />
+              {renderError('lastName')}
             </div>
 
             {/* หมวดหมู่ */}
@@ -236,15 +244,65 @@ export default function Report() {
               <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
                 {fields.category?.label}
               </label>
-              <input
+              <select
                 {...register('category')}
-                placeholder={fields.category?.placeholder}
-                className="w-full h-12 px-4 rounded-xl
-                           bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                className="appearance-none w-full h-12 px-4 rounded-xl
+                           bg-white border border-slate-300 text-slate-900
                            focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
-                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
-              />
+                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+              >
+                <option value="">-- เลือกหมวดหมู่ --</option>
+                <option value="investment">หลอกลงทุน</option>
+                <option value="shopping">ซื้อของออนไลน์</option>
+                <option value="job">หลอกทำงาน</option>
+                <option value="loan">เงินกู้</option>
+                <option value="romance">หลอกให้รัก</option>
+                <option value="bill">บิล/ภาษีปลอม</option>
+                <option value="OTHER">อื่นๆ</option>
+              </select>
+              {categoryValue === 'OTHER' && (
+                <input
+                  {...register('categoryOther')}
+                  placeholder="ระบุหมวดหมู่อื่นๆ"
+                  className="mt-2 w-full h-12 px-4 rounded-xl
+                             bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+                />
+              )}
               {renderError('category')}
+            </div>
+
+            {/* ช่องทางการขาย */}
+            <div>
+              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
+                {fields.channel?.label}
+              </label>
+              <select
+                {...register('channel')}
+                className="appearance-none w-full h-12 px-4 rounded-xl
+                           bg-white border border-slate-300 text-slate-900
+                           focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+              >
+                <option value="">{fields.channel?.placeholder}</option>
+                {TRANSFER_CHANNELS.map((channel) => (
+                  <option key={channel.value} value={channel.value}>
+                    {channel.label}
+                  </option>
+                ))}
+                <option value="OTHER">{fields.channel?.other}</option>
+              </select>
+              {channelValue === 'OTHER' && (
+                <input
+                  {...register('channelOther')}
+                  placeholder={fields.channel?.otherPlaceholder}
+                  className="mt-2 w-full h-12 px-4 rounded-xl
+                             bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+                />
+              )}
             </div>
 
             {/* ธนาคาร */}
@@ -285,40 +343,6 @@ export default function Report() {
                 {renderError('account')}
               </div>
             )}
-
-            {/* ช่องทางการขาย */}
-            <div className="md:col-span-2">
-              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
-                {fields.channel?.label}
-              </label>
-              <div className="grid md:grid-cols-2 gap-3">
-                <select
-                  {...register('channel')}
-                  className="appearance-none w-full h-12 px-4 rounded-xl
-                             bg-white border border-slate-300 text-slate-900
-                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
-                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
-                >
-                  <option value="">{fields.channel?.placeholder}</option>
-                  {TRANSFER_CHANNELS.map((channel) => (
-                    <option key={channel.value} value={channel.value}>
-                      {channel.label}
-                    </option>
-                  ))}
-                  <option value="OTHER">{fields.channel?.other}</option>
-                </select>
-                {channelValue === 'OTHER' && (
-                  <input
-                    {...register('channelOther')}
-                    placeholder={fields.channel?.otherPlaceholder}
-                    className="w-full h-12 px-4 rounded-xl
-                               bg-white border border-slate-300 text-slate-900 placeholder-slate-500
-                               focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
-                               dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
-                  />
-                )}
-              </div>
-            </div>
 
             {/* ยอดโอน */}
             <div>
