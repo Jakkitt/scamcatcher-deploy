@@ -22,14 +22,14 @@ export const BANKS = [
 
 // ช่องทางการโอน/ชำระเงินที่พบบ่อยในไทย (เพื่อใช้เป็นตัวเลือกในฟอร์ม)
 export const TRANSFER_CHANNELS = [
-  { value: 'PromptPay', label: 'พร้อมเพย์ (PromptPay)' },
-  { value: 'ThaiQR', label: 'QR พร้อมเพย์ / Thai QR' },
-  { value: 'MobileBanking', label: 'Mobile Banking' },
-  { value: 'InternetBanking', label: 'Internet Banking' },
-  { value: 'ATM', label: 'โอนผ่านตู้ ATM' },
-  { value: 'CDM', label: 'ฝากเงินสดผ่านตู้ (CDM)' },
-  { value: 'BankCounter', label: 'เคาน์เตอร์ธนาคาร' },
-  { value: 'WalletTrueMoney', label: 'TrueMoney Wallet' },
-  { value: 'WalletShopeePay', label: 'ShopeePay' },
-  { value: 'WalletLinePay', label: 'LINE Pay' },
+  { value: 'พร้อมเพย์', label: 'พร้อมเพย์ (PromptPay)' },
+  { value: 'สแกน QR', label: 'QR พร้อมเพย์ / Thai QR' },
+  { value: 'แอพธนาคาร', label: 'Mobile Banking' },
+  { value: 'เว็บธนาคาร', label: 'Internet Banking' },
+  { value: 'ตู้ ATM', label: 'โอนผ่านตู้ ATM' },
+  { value: 'ตู้ฝากเงิน', label: 'ฝากเงินสดผ่านตู้ (CDM)' },
+  { value: 'เคาน์เตอร์ธนาคาร', label: 'เคาน์เตอร์ธนาคาร' },
+  { value: 'TrueMoney', label: 'TrueMoney Wallet' },
+  { value: 'ShopeePay', label: 'ShopeePay' },
+  { value: 'LINE Pay', label: 'LINE Pay' },
 ];
