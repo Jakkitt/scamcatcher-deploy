@@ -403,7 +403,17 @@ export default function Home1() {
                     return (
                       <div key={item.category} className="space-y-2">
                         <div className="flex justify-between text-sm text-slate-700 dark:text-slate-200">
-                          <span>{item.category}</span>
+                          <span>
+                            {{
+                              investment: 'หลอกลงทุน',
+                              shopping: 'ซื้อของออนไลน์',
+                              job: 'หลอกทำงาน',
+                              loan: 'เงินกู้',
+                              romance: 'หลอกให้รัก',
+                              bill: 'บิล/ภาษีปลอม',
+                              other: 'อื่นๆ',
+                            }[item.category] || item.category}
+                          </span>
                           <span className="text-amber-600 font-semibold dark:text-amber-300">
                             {percent}%
                           </span>

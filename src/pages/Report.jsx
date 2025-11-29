@@ -131,7 +131,7 @@ export default function Report() {
     // Validate file size (max 5MB)
     const invalidFile = picked.find(f => f.size > 5 * 1024 * 1024);
     if (invalidFile) {
-      toast.error('ขนาดไฟล์ต้องไม่เกิน 5MB');
+      toast.error('ขนาดไฟล์ต้องไม่กิน 5MB');
       e.target.value = '';
       return;
     }

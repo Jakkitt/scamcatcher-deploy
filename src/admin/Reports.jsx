@@ -414,7 +414,17 @@ export default function AdminReports() {
                       {row.id}
                     </span>
                     <span className="truncate">{resolveName(row)}</span>
-                    <span className="truncate">{row.category || unknown}</span>
+                    <span className="truncate">
+                      {{
+                        investment: 'หลอกลงทุน',
+                        shopping: 'ซื้อของออนไลน์',
+                        job: 'หลอกทำงาน',
+                        loan: 'เงินกู้',
+                        romance: 'หลอกให้รัก',
+                        bill: 'บิล/ภาษีปลอม',
+                        other: 'อื่นๆ',
+                      }[row.category] || row.category || unknown}
+                    </span>
                     <span>{fmt(row.createdAt)}</span>
                     <span>{money(row.amount)}</span>
 
