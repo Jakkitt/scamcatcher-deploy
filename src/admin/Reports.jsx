@@ -461,13 +461,10 @@ export default function AdminReports() {
                               <strong>เลขบัญชี:</strong> {row.account || unknown}
                             </p>
                             <p className="text-gray-600 dark:text-gray-300">
-                              <strong>ช่องทาง:</strong> {row.channel || unknown}
-                            </p>
-                          </div>
-
-                          <div className="space-y-1">
-                            <p className="text-gray-600 dark:text-gray-300">
-                              <strong>จำนวนเงิน:</strong> {money(row.amount)}
+                              <strong>ช่องทาง:</strong>{' '}
+                              {row.channel === 'OTHER'
+                                ? 'อื่นๆ'
+                                : row.channel || unknown}
                             </p>
                             <p className="text-gray-600 dark:text-gray-300">
                               <strong>วันที่รายงาน:</strong> {fmt(row.createdAt)}

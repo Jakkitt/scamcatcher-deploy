@@ -296,7 +296,9 @@ export default function Home1() {
                         </h3>
 
                         <p className="text-slate-500 text-sm mb-4 flex items-center gap-2 dark:text-slate-400">
-                          {(report.bank || report.channel || 'ไม่ระบุ')} •{' '}
+                          {(report.bank ||
+                            (report.channel === 'OTHER' ? 'อื่นๆ' : report.channel) ||
+                            'ไม่ระบุ')} •{' '}
                           <span className="font-mono">{report.account || '—'}</span>
                         </p>
 

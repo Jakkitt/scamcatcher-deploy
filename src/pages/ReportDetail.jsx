@@ -183,7 +183,11 @@ export default function ReportDetail() {
                     />
                     <DetailRow
                       label="ช่องทางการขาย"
-                      value={report?.channel || t('common.unknown')}
+                      value={
+                        report?.channel === 'OTHER'
+                          ? 'อื่นๆ'
+                          : report?.channel || t('common.unknown')
+                      }
                       emphasize
                     />
                     <DetailRow
