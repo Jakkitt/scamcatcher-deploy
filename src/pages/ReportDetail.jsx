@@ -168,7 +168,7 @@ export default function ReportDetail() {
                 <div className="px-6 py-6 space-y-6">
                   <div className="grid gap-6 md:grid-cols-2 text-sm">
                     <DetailRow
-                      label="ชื่อ-นามสกุลผู้ถูกรายงาน"
+                      label="ชื่อ-นามสกุล"
                       value={report?.name || t('common.unknown')}
                       emphasize
                     />

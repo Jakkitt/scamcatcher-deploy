@@ -2,8 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base{
-  input,select,textarea,button{@apply outline-none}
-  input,select,textarea{@apply border rounded-lg px-3 py-2 w-full dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100}
+@layer base {
+  input,
+  select,
+  textarea,
+  button {
+    @apply outline-none;
+  }
+  input,
+  select,
+  textarea {
+    @apply border rounded-lg px-3 py-2 w-full dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100;
+  }
 }
-.container{@apply max-w-6xl mx-auto px-4}
+.container {
+  @apply max-w-6xl mx-auto px-4;
+}
+
+/* Custom Date Picker Icon Colors */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  width: 1.25rem;
+  height: 1.25rem;
+  /* Match text-slate-500 */
+  filter: invert(48%) sepia(13%) saturate(366%) hue-rotate(174deg)
+    brightness(93%) contrast(87%);
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  /* Match text-slate-400 */
+  filter: invert(66%) sepia(13%) saturate(464%) hue-rotate(178deg)
+    brightness(93%) contrast(87%);
+}

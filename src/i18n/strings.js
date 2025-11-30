@@ -17,7 +17,7 @@ export const STRINGS = {
       register: 'สมัครสมาชิก',
       logout: 'ออกจากระบบ',
     },
-    footer: 'ScamCatcher • ป้องกันการถูกหลอกลวงออนไลน์',
+    footer: 'ScamCatcher • ตรวจสอบก่อนโอน มั่นใจปลอดภัย',
   },
   reports: {
     deleteConfirm: 'ยืนยันลบรายงานนี้?',

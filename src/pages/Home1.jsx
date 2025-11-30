@@ -141,9 +141,9 @@ export default function Home1() {
 
         <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center justify-center h-full">
           <div className="max-w-4xl mx-auto text-center mb-12">
-            <h1 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white mt-5 mb-6 leading-tight animate-fade-in-up">
-              รู้ทันโจรไซเบอร์ <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400">
+            <h1 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white mt-5 mb-6 leading-normal animate-fade-in-up">
+              รู้ทันโจรไซเบอร์
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400 py-1 block w-fit mx-auto mt-4">
                 ตรวจสอบก่อนโอน มั่นใจปลอดภัย
               </span>
             </h1>
@@ -210,7 +210,7 @@ export default function Home1() {
             })}
           </div>
           
-          <div className="absolute bottom-8 animate-bounce text-slate-400 dark:text-slate-500">
+          <div className="absolute bottom-20 animate-bounce text-slate-400 dark:text-slate-500">
             <ChevronDown size={32} />
           </div>
         </div>
@@ -346,9 +346,9 @@ export default function Home1() {
         <div className="container mx-auto px-4 md:px-6 relative">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-slate-900 dark:text-white">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-[2.0] text-slate-900 dark:text-white">
                 พบเบาะแสการโกง? <br />
-                <span className="text-blue-600 dark:text-sky-400">
+                <span className="text-blue-600 dark:text-sky-400 py-1">
                   ช่วยกันรายงานเพื่อสังคมที่ดีกว่า
                 </span>
               </h2>
@@ -360,8 +360,8 @@ export default function Home1() {
               <div className="space-y-4 mb-8">
                 {[
                   'ปกปิดตัวตนผู้แจ้ง (Anonymous Reporting)',
-                  'ตรวจสอบข้อมูลโดย AI และทีมงาน',
-                  'แจ้งเตือนไปยังหน่วยงานที่เกี่ยวข้อง',
+                  'ตรวจสอบข้อมูลโดยทีมงาน',
+                  'มั่นใจในการทำธุรกรรมออนไลน์',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3">
                     <CheckCircle className="text-emerald-500 flex-shrink-0" size={20} />

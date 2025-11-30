@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { UserPlus, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -172,29 +172,32 @@ export default function Register() {
                 <label className="block text-sm mb-2 font-medium text-slate-800 dark:text-cyan-300">
                   {copy.genderLabel}
                 </label>
-                <select
-                  {...register('gender', {
-                    required: validationCopy.genderRequired,
-                  })}
-                  className="w-full h-12 px-4 rounded-xl
-                             bg-slate-50 border border-slate-300 text-slate-900
-                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
-                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
-                  defaultValue=""
-                >
-                  <option value="" disabled>
-                    {t('profilePage.genderPlaceholder')}
-                  </option>
-                  <option value="male">
-                    {t('profilePage.genderOptions.male')}
-                  </option>
-                  <option value="female">
-                    {t('profilePage.genderOptions.female')}
-                  </option>
-                  <option value="other">
-                    {t('profilePage.genderOptions.other')}
-                  </option>
-                </select>
+                <div className="relative">
+                  <select
+                    {...register('gender', {
+                      required: validationCopy.genderRequired,
+                    })}
+                    className="w-full h-12 px-4 appearance-none rounded-xl
+                               bg-slate-50 border border-slate-300 text-slate-900
+                               focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                               dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>
+                      {t('profilePage.genderPlaceholder')}
+                    </option>
+                    <option value="male">
+                      {t('profilePage.genderOptions.male')}
+                    </option>
+                    <option value="female">
+                      {t('profilePage.genderOptions.female')}
+                    </option>
+                    <option value="other">
+                      {t('profilePage.genderOptions.other')}
+                    </option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 pointer-events-none dark:text-slate-400" />
+                </div>
                 {renderError('gender')}
               </div>
             </div>
@@ -210,7 +213,7 @@ export default function Register() {
                   {...register('dob', {
                     required: validationCopy.dobRequired,
                   })}
-                  className="w-full h-12 px-4 rounded-xl
+                  className="w-full h-12 pl-4 pr-3 rounded-xl
                              bg-slate-50 border border-slate-300 text-slate-900
                              focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                              dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
