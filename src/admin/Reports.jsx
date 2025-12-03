@@ -369,142 +369,156 @@ export default function AdminReports() {
           </div>
         </div>
 
-        {/* TABLE CARD (ใช้ grid แถวต่อแถว) */}
+        {/* TABLE CARD */}
         <div className="rounded-3xl border border-gray-200 bg-white shadow-xl overflow-hidden dark:border-slate-800 dark:bg-[#020617]/95">
-          {/* HEADER ROW */}
-          <div
-            className="grid grid-cols-[1.3fr,1.2fr,1.1fr,1fr,auto] 
-                          px-6 py-4 border-b border-gray-100 bg-gray-50 
-                          text-[11px] font-semibold tracking-wide text-gray-600
-                          dark:border-slate-800/70 dark:bg-transparent dark:text-gray-300"
-          >
-            <span>ชื่อมิจฉาชีพ</span>
-            <span>หมวดหมู่</span>
-            <span>วันที่รายงาน</span>
-            <span>จำนวนเงิน</span>
-            <span className="text-right">สถานะ</span>
-          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              {/* HEADER */}
+              <thead className="bg-gray-50 border-b border-gray-100 dark:border-slate-800/70 dark:bg-transparent">
+                <tr className="text-[11px] font-semibold tracking-wide text-gray-600 dark:text-gray-300">
+                  <th className="px-6 py-4 text-left">ชื่อมิจฉาชีพ</th>
+                  <th className="px-6 py-4 text-left">หมวดหมู่</th>
+                  <th className="px-6 py-4 text-left">วันที่รายงาน</th>
+                  <th className="px-6 py-4 text-left">จำนวนเงิน</th>
+                  <th className="px-6 py-4 text-right">สถานะ</th>
+                </tr>
+              </thead>
 
-          {/* BODY */}
-          {loading ? (
-            <div className="p-6 text-gray-500 dark:text-gray-400">กำลังโหลด...</div>
-          ) : error ? (
-            <div className="p-6 text-red-500 dark:text-red-400">{error}</div>
-          ) : !rows || rows.length === 0 ? (
-            <div className="p-6 text-gray-500 dark:text-gray-400">ยังไม่มีรายการแจ้ง</div>
-          ) : (
-            (rows || []).map((row) => {
-              const expanded = expandedId === row.id;
-              const meta = statusMeta[row.status] || statusMeta.pending;
-              const resolvedPhotos =
-                expanded && Array.isArray(row.photos)
-                  ? row.photos.map((photo) => resolveAssetUrl(photo))
-                  : [];
-              const hasPhotos = resolvedPhotos.length > 0;
+              {/* BODY */}
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" className="p-6 text-gray-500 dark:text-gray-400">กำลังโหลด...</td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan="5" className="p-6 text-red-500 dark:text-red-400">{error}</td>
+                  </tr>
+                ) : !rows || rows.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="p-6 text-gray-500 dark:text-gray-400">ยังไม่มีรายการแจ้ง</td>
+                  </tr>
+                ) : (
+                  (rows || []).map((row) => {
+                    const expanded = expandedId === row.id;
+                    const meta = statusMeta[row.status] || statusMeta.pending;
+                    const resolvedPhotos =
+                      expanded && Array.isArray(row.photos)
+                        ? row.photos.map((photo) => resolveAssetUrl(photo))
+                        : [];
+                    const hasPhotos = resolvedPhotos.length > 0;
 
-              return (
-                <div key={row.id} className="border-b border-gray-100 dark:border-slate-800/60">
-                  {/* MAIN ROW */}
-                  <div
-                    className="grid grid-cols-[1.3fr,1.2fr,1.1fr,1fr,auto] 
-                                  px-6 py-4 text-sm text-gray-900 bg-white dark:text-slate-200 dark:bg-slate-950/40"
-                  >
-                    <span className="truncate">{resolveName(row)}</span>
-                    <span className="truncate">
-                      {{
-                        investment: 'หลอกลงทุน',
-                        shopping: 'ซื้อของออนไลน์',
-                        job: 'หลอกทำงาน',
-                        loan: 'เงินกู้',
-                        romance: 'หลอกให้รัก',
-                        bill: 'บิล/ภาษีปลอม',
-                        other: 'อื่นๆ',
-                      }[row.category] || row.category || unknown}
-                    </span>
-                    <span>{fmt(row.createdAt)}</span>
-                    <span>{money(row.amount)}</span>
-
-                    <div className="flex items-center justify-end gap-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold border ${meta.badge}`}
-                      >
-                        {meta.label}
-                      </span>
-
-                      {renderActions(row, expanded, () =>
-                        setExpandedId(expanded ? null : row.id)
-                      )}
-                    </div>
-                  </div>
-
-                  {/* DETAILS ROW */}
-                  {expanded && (
-                    <div className="px-6 py-5 bg-gray-50 dark:bg-slate-950/70">
-                      <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-700 space-y-4 dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-200">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                          รายละเอียดเพิ่มเติม
-                        </h2>
-
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <p className="text-gray-600 dark:text-gray-300">
-                              <strong>ชื่อ:</strong> {resolveName(row)}
-                            </p>
-                            <p className="text-gray-600 dark:text-gray-300">
-                              <strong>ธนาคาร:</strong> {row.bank || unknown}
-                            </p>
-                            <p className="text-gray-600 dark:text-gray-300">
-                              <strong>เลขบัญชี:</strong> {row.account || unknown}
-                            </p>
-                            <p className="text-gray-600 dark:text-gray-300">
-                              <strong>ช่องทาง:</strong>{' '}
-                              {row.channel === 'OTHER'
-                                ? 'อื่นๆ'
-                                : row.channel || unknown}
-                            </p>
-                            <p className="text-gray-600 dark:text-gray-300">
-                              <strong>วันที่รายงาน:</strong> {fmt(row.createdAt)}
-                            </p>
-                            <p className="text-gray-600 dark:text-gray-300">
-                              <strong>รายละเอียด:</strong>
-                              <br />
-                              {row.desc || unknown}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* PHOTOS */}
-                        <div>
-                          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                            หลักฐาน
-                          </h3>
-
-                          {hasPhotos ? (
-                            <div className="flex flex-wrap gap-3">
-                              {resolvedPhotos.map((resolved, idx) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => openLightbox(resolvedPhotos, idx)}
-                                  className="focus:outline-none"
-                                >
-                                  <img
-                                    src={resolved}
-                                    className="w-24 h-24 rounded-lg object-cover border border-gray-200 dark:border-slate-700"
-                                  />
-                                </button>
-                              ))}
+                    return (
+                      <React.Fragment key={row.id}>
+                        {/* MAIN ROW */}
+                        <tr className="border-b border-gray-100 bg-white dark:border-slate-800/60 dark:bg-slate-950/40">
+                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-200">
+                            <div className="truncate">{resolveName(row)}</div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-200">
+                            <div className="truncate">
+                              {{
+                                investment: 'หลอกลงทุน',
+                                shopping: 'ซื้อของออนไลน์',
+                                job: 'หลอกทำงาน',
+                                loan: 'เงินกู้',
+                                romance: 'หลอกให้รัก',
+                                bill: 'บิล/ภาษีปลอม',
+                                other: 'อื่นๆ',
+                              }[row.category] || row.category || unknown}
                             </div>
-                          ) : (
-                            <p className="text-gray-600 dark:text-gray-400">ไม่มีรูปหลักฐาน</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-200">
+                            {fmt(row.createdAt)}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-200">
+                            {money(row.amount)}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-end gap-3">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${meta.badge}`}>
+                                {meta.label}
+                              </span>
+                              {renderActions(row, expanded, () =>
+                                setExpandedId(expanded ? null : row.id)
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+
+                        {/* DETAILS ROW */}
+                        {expanded && (
+                          <tr>
+                            <td colSpan="5" className="px-6 py-5 bg-gray-50 dark:bg-slate-950/70">
+                              <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-700 space-y-4 dark:border-slate-800 dark:bg-slate-900/60 dark:text-gray-200">
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                  รายละเอียดเพิ่มเติม
+                                </h2>
+
+                                <div className="grid md:grid-cols-2 gap-4">
+                                  <div className="space-y-1">
+                                    <p className="text-gray-600 dark:text-gray-300">
+                                      <strong>ชื่อ:</strong> {resolveName(row)}
+                                    </p>
+                                    <p className="text-gray-600 dark:text-gray-300">
+                                      <strong>ธนาคาร:</strong> {row.bank || unknown}
+                                    </p>
+                                    <p className="text-gray-600 dark:text-gray-300">
+                                      <strong>เลขบัญชี:</strong> {row.account || unknown}
+                                    </p>
+                                    <p className="text-gray-600 dark:text-gray-300">
+                                      <strong>ช่องทาง:</strong>{' '}
+                                      {row.channel === 'OTHER'
+                                        ? 'อื่นๆ'
+                                        : row.channel || unknown}
+                                    </p>
+                                    <p className="text-gray-600 dark:text-gray-300">
+                                      <strong>วันที่รายงาน:</strong> {fmt(row.createdAt)}
+                                    </p>
+                                    <p className="text-gray-600 dark:text-gray-300">
+                                      <strong>รายละเอียด:</strong>
+                                      <br />
+                                      {row.desc || unknown}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* PHOTOS */}
+                                <div>
+                                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                                    หลักฐาน
+                                  </h3>
+
+                                  {hasPhotos ? (
+                                    <div className="flex flex-wrap gap-3">
+                                      {resolvedPhotos.map((resolved, idx) => (
+                                        <button
+                                          key={idx}
+                                          onClick={() => openLightbox(resolvedPhotos, idx)}
+                                          className="focus:outline-none"
+                                        >
+                                          <img
+                                            src={resolved}
+                                            className="w-24 h-24 rounded-lg object-cover border border-gray-200 dark:border-slate-700"
+                                          />
+                                        </button>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-gray-600 dark:text-gray-400">ไม่มีรูปหลักฐาน</p>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
