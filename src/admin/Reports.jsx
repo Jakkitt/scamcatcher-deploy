@@ -380,7 +380,7 @@ export default function AdminReports() {
                   <th className="px-6 py-4 text-left">หมวดหมู่</th>
                   <th className="px-6 py-4 text-left">วันที่รายงาน</th>
                   <th className="px-6 py-4 text-left">จำนวนเงิน</th>
-                  <th className="px-6 py-4 text-right">สถานะ</th>
+                  <th className="px-6 py-4 text-left">สถานะ</th>
                 </tr>
               </thead>
 
