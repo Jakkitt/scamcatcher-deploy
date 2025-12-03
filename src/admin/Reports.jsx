@@ -373,12 +373,11 @@ export default function AdminReports() {
         <div className="rounded-3xl border border-gray-200 bg-white shadow-xl overflow-hidden dark:border-slate-800 dark:bg-[#020617]/95">
           {/* HEADER ROW */}
           <div
-            className="grid grid-cols-[200px,1.3fr,1.2fr,1.1fr,1fr,auto] 
+            className="grid grid-cols-[1.3fr,1.2fr,1.1fr,1fr,auto] 
                           px-6 py-4 border-b border-gray-100 bg-gray-50 
                           text-[11px] font-semibold tracking-wide text-gray-600
                           dark:border-slate-800/70 dark:bg-transparent dark:text-gray-300"
           >
-            <span>รหัส</span>
             <span>ชื่อมิจฉาชีพ</span>
             <span>หมวดหมู่</span>
             <span>วันที่รายงาน</span>
@@ -407,12 +406,9 @@ export default function AdminReports() {
                 <div key={row.id} className="border-b border-gray-100 dark:border-slate-800/60">
                   {/* MAIN ROW */}
                   <div
-                    className="grid grid-cols-[200px,1.3fr,1.2fr,1.1fr,1fr,auto] 
+                    className="grid grid-cols-[1.3fr,1.2fr,1.1fr,1fr,auto] 
                                   px-6 py-4 text-sm text-gray-900 bg-white dark:text-slate-200 dark:bg-slate-950/40"
                   >
-                    <span className="truncate break-all min-w-[200px]">
-                      {row.id}
-                    </span>
                     <span className="truncate">{resolveName(row)}</span>
                     <span className="truncate">
                       {{
