@@ -435,7 +435,7 @@ export default function AdminReports() {
                             {money(row.amount)}
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center justify-end gap-3">
+                            <div className="flex items-center justify-end gap-3 whitespace-nowrap">
                               <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${meta.badge}`}>
                                 {meta.label}
                               </span>
