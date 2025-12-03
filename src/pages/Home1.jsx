@@ -27,36 +27,11 @@ import {
 } from '../services/reports';
 
 const STAT_TEMPLATE = [
-  {
-    key: 'total',
-    label: 'รายงานที่เข้ามาทั้งหมด',
-    subtext: 'รวมทุกรายการที่ส่งเข้าระบบ',
-    color: 'text-blue-600 dark:text-blue-300',
-    icon: BarChart3,
-    gradient:
-      'from-white via-slate-50 to-sky-50 dark:from-slate-900/90 dark:via-slate-900 dark:to-slate-950',
-  },
-  {
-    key: 'approved',
-    label: 'รายงานที่อนุมัติ',
-    subtext: 'ผ่านการตรวจสอบและอนุมัติ',
-    color: 'text-emerald-600 dark:text-emerald-300',
-    icon: CheckCircle,
-    gradient:
-      'from-white via-emerald-50/70 to-slate-50 dark:from-slate-900/90 dark:via-emerald-900/30 dark:to-slate-950',
-  },
-  {
-    key: 'rejected',
-    label: 'รายงานที่ปฏิเสธ',
-    subtext: 'รายการที่ไม่ผ่านการอนุมัติ',
-    color: 'text-rose-600 dark:text-rose-300',
-    icon: AlertTriangle,
-    gradient:
-      'from-white via-rose-50/70 to-slate-50 dark:from-slate-900/90 dark:via-rose-900/30 dark:to-slate-950',
-  },
+// ... (keep existing code) ...
 ];
 
 export default function Home1() {
+  // ... (keep existing state and effects) ...
   const [stats, setStats] = useState(
     STAT_TEMPLATE.map((item) => ({
       ...item,
@@ -70,6 +45,7 @@ export default function Home1() {
   const [topScammers, setTopScammers] = useState([]);
 
   useEffect(() => {
+    // ... (keep existing effects) ...
     let alive = true;
 
     (async () => {
@@ -128,34 +104,23 @@ export default function Home1() {
   }, []);
 
   return (
-    <div className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+    <div className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-950">
       
       {/* SECTION 1: HERO */}
-      <section className="h-screen w-full snap-start relative flex flex-col justify-center items-center overflow-hidden">
-        {/* BG Light + Dark */}
-        <div className="absolute inset-0 -z-10">
-          {/* base gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white via-sky-50 to-slate-50 dark:bg-gradient-to-b dark:from-slate-900 dark:via-slate-950 dark:to-black" />
-
-          {/* blobs light */}
-          <div className="absolute -top-24 -left-10 w-[420px] h-[420px] bg-sky-200/70 blur-3xl rounded-full pointer-events-none dark:hidden" />
-          <div className="absolute top-[-10%] right-[-10%] w-[520px] h-[520px] bg-cyan-200/60 blur-3xl rounded-full pointer-events-none dark:hidden" />
-          <div className="absolute bottom-[-20%] left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-indigo-100/60 blur-3xl rounded-full pointer-events-none dark:hidden" />
-
-          {/* blobs dark */}
-          <div className="hidden dark:block absolute -top-24 -left-10 w-[420px] h-[420px] bg-blue-800/40 blur-[120px] rounded-full pointer-events-none" />
-          <div className="hidden dark:block absolute top-[-10%] right-[-10%] w-[520px] h-[520px] bg-cyan-700/35 blur-[130px] rounded-full pointer-events-none" />
-          <div className="hidden dark:block absolute bottom-[-20%] left-1/2 -translate-x-1/2 w-[700px] h-[420px] bg-purple-900/40 blur-[130px] rounded-full pointer-events-none" />
-
-          {/* texture */}
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.04] dark:opacity-[0.08]" />
+      <section className="h-screen w-full snap-start relative flex flex-col justify-center items-center overflow-hidden bg-white dark:bg-black">
+        {/* BG Gradient */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-blue-50 via-cyan-50 to-emerald-50 dark:from-slate-950 dark:via-blue-950 dark:to-slate-900">
+          {/* Animated blobs */}
+          <div className="absolute -top-24 -left-10 w-96 h-96 bg-blue-400/20 blur-3xl rounded-full animate-pulse dark:bg-blue-600/30" />
+          <div className="absolute top-1/3 right-0 w-80 h-80 bg-cyan-300/20 blur-3xl rounded-full animate-pulse delay-1000 dark:bg-cyan-600/20" />
+          <div className="absolute bottom-0 left-1/3 w-72 h-72 bg-emerald-300/15 blur-3xl rounded-full animate-pulse delay-2000 dark:bg-emerald-600/20" />
         </div>
 
         <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center justify-center h-full">
           <div className="max-w-4xl mx-auto text-center mb-12">
             <h1 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white mt-5 mb-6 leading-normal animate-fade-in-up">
               รู้ทันโจรไซเบอร์
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400 py-1 block w-fit mx-auto mt-4">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 py-1 block w-fit mx-auto mt-4">
                 ตรวจสอบก่อนโอน มั่นใจปลอดภัย
               </span>
             </h1>
@@ -167,7 +132,7 @@ export default function Home1() {
           </div>
 
           {/* Top Scammers / Danger Zone */}
-          <div className="max-w-4xl w-full mx-auto animate-fade-in-up delay-200">
+          <div className="max-w-4xl w-full mx-auto animate-fade-in-up delay-200 mb-16">
             <div className="bg-white/80 backdrop-blur-md border border-red-100 rounded-2xl shadow-xl overflow-hidden dark:bg-slate-900/80 dark:border-red-900/30">
               <div className="bg-red-50/50 px-6 py-4 border-b border-red-100 flex items-center justify-between dark:bg-red-900/10 dark:border-red-900/30">
                 <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
@@ -211,15 +176,23 @@ export default function Home1() {
             </div>
           </div>
           
-          <div className="absolute bottom-20 animate-bounce text-slate-400 dark:text-slate-500">
+          <div className="absolute bottom-14 animate-bounce text-slate-400 dark:text-slate-500">
             <ChevronDown size={32} />
           </div>
         </div>
       </section>
 
       {/* SECTION 2: RECENT REPORTS */}
-      <section className="h-screen w-full snap-start flex flex-col justify-center bg-white dark:bg-slate-950 relative">
-        <div className="container mx-auto px-4 md:px-6">
+      <section className="h-screen w-full snap-start flex flex-col justify-center relative overflow-hidden bg-white dark:bg-black">
+        {/* BG Gradient */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-slate-950 dark:via-red-950 dark:to-slate-900">
+          {/* Animated blobs */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-red-400/15 blur-3xl rounded-full animate-pulse dark:bg-red-600/20" />
+          <div className="absolute bottom-1/4 left-0 w-80 h-80 bg-orange-300/20 blur-3xl rounded-full animate-pulse delay-1000 dark:bg-orange-600/20" />
+          <div className="absolute top-1/2 right-1/3 w-72 h-72 bg-amber-300/15 blur-3xl rounded-full animate-pulse delay-2000 dark:bg-amber-600/15" />
+        </div>
+
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="flex justify-between items-end mb-10">
             <div>
               <h2 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-2 dark:text-white">
@@ -344,11 +317,19 @@ export default function Home1() {
       </section>
 
       {/* SECTION 3: CTA & STATS */}
-      <section className="h-screen w-full snap-start flex flex-col justify-center bg-gradient-to-br from-blue-50 via-slate-50 to-white text-slate-900 overflow-hidden relative dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-950 dark:to-slate-950 dark:text-slate-100">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-blue-200/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none dark:bg-blue-600/25" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-200/40 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3 pointer-events-none dark:bg-purple-700/35" />
+      <section className="h-screen w-full snap-start flex flex-col justify-center relative overflow-hidden bg-white dark:bg-black">
+        {/* BG Gradient */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 dark:from-slate-950 dark:via-purple-950 dark:to-slate-900">
+          {/* Animated blobs */}
+          <div className="absolute -top-24 left-1/4 w-96 h-96 bg-purple-400/20 blur-3xl rounded-full animate-pulse dark:bg-purple-600/25" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-blue-300/20 blur-3xl rounded-full animate-pulse delay-1000 dark:bg-blue-600/20" />
+          <div className="absolute top-1/3 left-0 w-72 h-72 bg-cyan-300/15 blur-3xl rounded-full animate-pulse delay-2000 dark:bg-cyan-600/20" />
+        </div>
 
-        <div className="container mx-auto px-4 md:px-6 relative">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-blue-200/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none dark:bg-blue-600/25 z-0" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-200/40 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3 pointer-events-none dark:bg-purple-700/35 z-0" />
+
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-[2.0] text-slate-900 dark:text-white">

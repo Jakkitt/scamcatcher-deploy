@@ -74,15 +74,9 @@ export default function Navbar() {
             <>
               <NavLink
                 to="/login"
-                className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                {t('layout.nav.login')}
-              </NavLink>
-              <NavLink
-                to="/register"
                 className="px-3 py-1.5 rounded-lg bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 transition-colors"
               >
-                {t('layout.nav.register')}
+                {t('layout.nav.login')}
               </NavLink>
             </>
           ) : (

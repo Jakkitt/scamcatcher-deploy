@@ -98,15 +98,22 @@ export default function SearchDetail() {
       : "";
     const firstName = sanitizeText(raw.firstName || "");
     const lastName = sanitizeText(raw.lastName || "");
+    const isWallet = ['TrueMoney', 'ShopeePay', 'LINE Pay', 'พร้อมเพย์'].includes(raw.channel);
     const channelValue =
       raw.channel === "OTHER"
         ? sanitizeText(raw.channelOther || "")
         : raw.channel || "";
 
+    // ถ้าเป็น Wallet ให้ใช้ channelOther เป็น account (ถ้า account หลักว่างอยู่)
+    let finalAccount = accountDigits;
+    if (isWallet && !finalAccount && raw.channelOther) {
+      finalAccount = raw.channelOther.replace(/[^\d]/g, "");
+    }
+
     const params = {
       firstName,
       lastName,
-      account: accountDigits,
+      account: finalAccount,
       bank: raw.bank || "",
       channel: channelValue,
     };
@@ -138,20 +145,18 @@ export default function SearchDetail() {
     ) : null;
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 flex items-start justify-center">
-      {/* พื้นหลังแบบเดียวกับ Login/ForgotPassword */}
-      <div className="absolute inset-0">
-        {/* texture เบา ๆ */}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.07] dark:opacity-5" />
-
-        {/* แสงฟุ้งด้านบน */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-blue-400/20 blur-[110px] rounded-full pointer-events-none dark:bg-blue-600/25" />
-
-        {/* แสงฟุ้งด้านล่าง */}
-        <div className="absolute bottom-0 right-0 w-[700px] h-[520px] bg-cyan-300/15 blur-[100px] rounded-full pointer-events-none dark:bg-cyan-500/15" />
+    <div className="min-h-screen py-10 px-4 md:px-6 relative overflow-hidden bg-white dark:bg-black flex items-start justify-center">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/assets/cyber_network_bg.png"
+          alt="Background"
+          className="w-full h-full object-cover opacity-10 dark:opacity-30"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/50 to-white/90 dark:from-black/90 dark:via-black/50 dark:to-black/90" />
       </div>
 
-      <main className="container mx-auto px-4 md:px-6 py-10 relative z-10">
+      <div className="max-w-4xl mx-auto relative z-10 w-full">
         {/* Title + subtitle */}
         <div className="text-center mb-8 space-y-2">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -217,20 +222,25 @@ export default function SearchDetail() {
             <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
               {t("search.bankLabel")}
             </label>
-            <select
-              {...register("bank")}
-              className="appearance-none w-full h-12 px-4 rounded-xl
-                         bg-slate-50 border border-slate-300 text-slate-900
-                         focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
-                         dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
-            >
-              <option value="">{t("search.bankPlaceholder")}</option>
-              {BANKS.map((b) => (
-                <option key={b.value} value={b.value}>
-                  {b.label}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                {...register("bank")}
+                className="appearance-none w-full h-12 px-4 rounded-xl
+                           bg-slate-50 border border-slate-300 text-slate-900
+                           focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+              >
+                <option value="">{t("search.bankPlaceholder")}</option>
+                {BANKS.map((b) => (
+                  <option key={b.value} value={b.value}>
+                    {b.label}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 dark:text-slate-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+              </div>
+            </div>
           </div>
 
           {/* account (แสดงเมื่อเลือก bank แล้วเหมือนเดิม) */}
@@ -241,7 +251,8 @@ export default function SearchDetail() {
               </label>
               <input
                 {...register("account")}
-                onChange={onAccountChange}
+                maxLength="15"
+                onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
                 placeholder={t("search.accountPlaceholder")}
                 className="w-full h-12 px-4 rounded-xl
                            bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
@@ -258,23 +269,46 @@ export default function SearchDetail() {
               {t("search.channelLabel")}
             </label>
             <div className="grid md:grid-cols-2 gap-3">
-              <select
-                {...register("channel")}
-                className="appearance-none w-full h-12 px-4 rounded-xl
-                           bg-slate-50 border border-slate-300 text-slate-900
-                           focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
-                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
-              >
-                <option value="">{t("search.channelPlaceholder")}</option>
-                {TRANSFER_CHANNELS.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
+              <div className="relative">
+                <select
+                  {...register("channel")}
+                  className="appearance-none w-full h-12 px-4 rounded-xl
+                             bg-slate-50 border border-slate-300 text-slate-900
+                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+                >
+                  <option value="">{t("search.channelPlaceholder")}</option>
+                  {TRANSFER_CHANNELS.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                  <option value="OTHER">
+                    {t("search.channelOtherOption")}
                   </option>
-                ))}
-                <option value="OTHER">
-                  {t("search.channelOtherOption")}
-                </option>
-              </select>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 dark:text-slate-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+
+              {['TrueMoney', 'ShopeePay', 'LINE Pay', 'พร้อมเพย์'].includes(channelValue) && (
+                <input
+                  {...register('channelOther')}
+                  maxLength={channelValue === 'พร้อมเพย์' ? 14 : 10}
+                  onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
+                  placeholder={
+                    channelValue === 'พร้อมเพย์'
+                      ? 'ระบุเบอร์มือถือ/บัตรปชช.'
+                      : `ระบุเบอร์ ${channelValue}`
+                  }
+                  className="w-full h-12 px-4 rounded-xl
+                             bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
+                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+                />
+              )}
+
               {channelValue === "OTHER" && (
                 <input
                   {...register("channelOther")}
@@ -302,7 +336,7 @@ export default function SearchDetail() {
             </button>
           </div>
         </form>
-      </main>
+      </div>
     </div>
   );
 }

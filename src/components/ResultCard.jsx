@@ -12,12 +12,25 @@ export default function ResultCard({ item }) {
     const combined = [item?.firstName, item?.lastName].filter(Boolean).join(" ").trim();
     return combined || copy.unnamed || t('common.unknown');
   }, [item, copy]);
+  const resolveCategory = (cat) => {
+    const map = {
+      'investment': 'การลงทุน',
+      'shopping': 'ซื้อของออนไลน์',
+      'loan': 'กู้เงิน',
+      'job': 'หางาน',
+      'romance': 'หลอกให้รัก',
+      'identity': 'ปลอมแปลงเอกสาร',
+      'other': 'อื่นๆ'
+    };
+    return map[cat?.toLowerCase()] || cat || '-';
+  };
+
   return (
     <div className="border rounded-2xl p-5 space-y-2 bg-white dark:bg-gray-900">
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-lg">{displayName}</h3>
         <span className="text-xs px-3 py-1 rounded-full bg-red-100 text-red-600">
-          {item.category || copy.badge}
+          {resolveCategory(item.category) || copy.badge}
         </span>
       </div>
 

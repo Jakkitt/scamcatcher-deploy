@@ -34,20 +34,32 @@ export default function AdminDashboard(){
     { k: dashboardCopy?.tiles?.total || t('admin.dashboard.tiles.total'), v: stats.total },
   ];
 
+  const resolveCategory = (cat) => {
+    const map = {
+      'investment': 'การลงทุน',
+      'shopping': 'ซื้อของออนไลน์',
+      'loan': 'กู้เงิน',
+      'job': 'หางาน',
+      'romance': 'หลอกให้รัก',
+      'identity': 'ปลอมแปลงเอกสาร',
+      'other': 'อื่นๆ'
+    };
+    return map[cat?.toLowerCase()] || cat || '-';
+  };
+
   const renderPendingSubtitle = (category, dateStr) => {
-    const template = dashboardCopy?.pendingSubtitle;
-    if (typeof template === 'function') return template(category, dateStr);
-    return `Category: ${category} • ${dateStr}`;
+    return `หมวดหมู่: ${resolveCategory(category)} • ${dateStr}`;
   };
 
   const renderActivityLabel = (row) => {
-    const { id, status } = row;
+    const { name, status } = row;
     if (status === 'approved') {
-      const label = dashboardCopy?.activityApproved;
-      return typeof label === 'function' ? label(id) : `Approved report #${id}`;
+      return `อนุมัติ ${name}`;
     }
-    const label = dashboardCopy?.activityPending;
-    return typeof label === 'function' ? label(id) : `Pending/Rejected report #${id}`;
+    if (status === 'rejected') {
+      return `ปฏิเสธ ${name}`;
+    }
+    return `รอตรวจสอบ ${name}`;
   };
 
   return (
@@ -64,7 +76,7 @@ export default function AdminDashboard(){
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <div className="rounded-xl border bg-white dark:bg-gray-900 dark:border-gray-800 p-4">
+        <div className="rounded-xl border bg-white dark:bg-gray-900 dark:border-gray-800 p-4 h-[280px]">
           <h2 className="font-bold mb-3">{dashboardCopy?.notificationsTitle || t('admin.dashboard.notificationsTitle')}</h2>
           {loading ? (
             <div className="text-sm text-gray-500">{dashboardCopy?.loading || t('admin.dashboard.loading', t('common.loading'))}</div>
@@ -89,7 +101,7 @@ export default function AdminDashboard(){
           </ul>) }
         </div>
 
-        <div className="rounded-xl border bg-white dark:bg-gray-900 dark:border-gray-800 p-4">
+        <div className="rounded-xl border bg-white dark:bg-gray-900 dark:border-gray-800 p-4 h-[280px]">
           <h2 className="font-bold mb-3">{dashboardCopy?.activitiesTitle || t('admin.dashboard.activitiesTitle')}</h2>
           {loading ? (
             <div className="text-sm text-gray-500">{dashboardCopy?.loading || t('admin.dashboard.loading', t('common.loading'))}</div>
@@ -98,7 +110,15 @@ export default function AdminDashboard(){
             {(latest||[]).map((r)=> (
               <li key={r.id} className="flex items-center justify-between">
                 <span>{renderActivityLabel(r)}</span>
-                <span className="text-gray-500 dark:text-gray-400">{new Date(r.createdAt).toLocaleDateString()}</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {new Date(r.updatedAt || r.createdAt).toLocaleString('th-TH', {
+                    year: 'numeric',
+                    month: 'numeric',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
               </li>
             ))}
           </ul>) }

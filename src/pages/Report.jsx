@@ -187,39 +187,44 @@ export default function Report() {
     ) : null;
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
-      {/* 🎨 พื้นหลังแบบเดียวกับหน้า Login */}
-      <div className="absolute inset-0">
-        {/* texture เบา ๆ */}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.07] dark:opacity-5" />
-        {/* แสงฟุ้งด้านบน */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-blue-400/20 blur-[110px] rounded-full pointer-events-none dark:bg-blue-600/25" />
-        {/* แสงฟุ้งด้านล่าง */}
-        <div className="absolute bottom-0 right-0 w-[700px] h-[520px] bg-cyan-300/15 blur-[100px] rounded-full pointer-events-none dark:bg-cyan-500/15" />
+    <div className="min-h-screen py-10 px-4 md:px-6 relative overflow-hidden bg-white dark:bg-black flex items-start justify-center">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/assets/cyber_warning_bg.png"
+          alt="Background"
+          className="w-full h-full object-cover opacity-10 dark:opacity-30"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/50 to-white/90 dark:from-black/90 dark:via-black/50 dark:to-black/90" />
       </div>
 
-      <main className="container mx-auto px-4 md:px-6 relative z-10 py-10 flex justify-center">
-        <div className="w-full max-w-4xl">
-          <h1 className="text-3xl font-extrabold text-center text-slate-900 dark:text-white mb-6">
+      <main className="max-w-4xl mx-auto relative z-10 w-full">
+        <div className="text-center mb-8 space-y-2">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
             {copy.title}
           </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
+            ช่วยกันแจ้งเบาะแสเพื่อสังคมที่ปลอดภัย ตรวจสอบข้อมูลก่อนโอน
+          </p>
+        </div>
 
-          {/* การ์ดฟอร์ม: สไตล์เดียวกับการ์ด Login / ReportDetail */}
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="mt-4 grid md:grid-cols-2 gap-6 rounded-3xl p-6 sm:p-8 border border-slate-200/80 bg-white/95 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur
-                       dark:border-white/10 dark:bg-gradient-to-b dark:from-slate-900/90 dark:via-slate-950 dark:to-slate-950 dark:shadow-[0_24px_80px_rgba(15,23,42,0.9)]"
-          >
+        {/* การ์ดฟอร์ม: สไตล์เดียวกับการ์ด Login / ReportDetail */}
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="max-w-4xl mx-auto rounded-3xl p-6 sm:p-8 md:p-10 bg-white/95 border border-slate-200/80 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur
+                     dark:border-white/10 dark:bg-gradient-to-b dark:from-slate-900/90 dark:via-slate-950 dark:to-slate-950 dark:shadow-[0_24px_80px_rgba(15,23,42,0.9)]
+                     grid md:grid-cols-2 gap-6 text-slate-900 dark:text-slate-100"
+        >
             {/* ชื่อจริง */}
             <div>
-              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
+              <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
                 {fields.firstName?.label}
               </label>
               <input
                 {...register('firstName')}
                 placeholder={fields.firstName?.placeholder}
                 className="w-full h-12 px-4 rounded-xl
-                           bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                           bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
                            focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                            dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
               />
@@ -228,14 +233,14 @@ export default function Report() {
 
             {/* นามสกุล */}
             <div>
-              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
+              <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
                 {fields.lastName?.label}
               </label>
               <input
                 {...register('lastName')}
                 placeholder={fields.lastName?.placeholder}
                 className="w-full h-12 px-4 rounded-xl
-                           bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                           bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
                            focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                            dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
               />
@@ -244,14 +249,14 @@ export default function Report() {
 
             {/* หมวดหมู่ */}
             <div>
-              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
+              <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
                 {fields.category?.label}
               </label>
               <div className="relative">
                 <select
                   {...register('category')}
                   className="appearance-none w-full h-12 px-4 rounded-xl
-                             bg-white border border-slate-300 text-slate-900
+                             bg-slate-50 border border-slate-300 text-slate-900
                              focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                              dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
                 >
@@ -273,7 +278,7 @@ export default function Report() {
                   {...register('categoryOther')}
                   placeholder="ระบุหมวดหมู่อื่นๆ"
                   className="mt-2 w-full h-12 px-4 rounded-xl
-                             bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                             bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
                              focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                              dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
                 />
@@ -283,14 +288,14 @@ export default function Report() {
 
             {/* ช่องทางการขาย */}
             <div>
-              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
+              <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
                 {fields.channel?.label}
               </label>
               <div className="relative">
                 <select
                   {...register('channel')}
                   className="appearance-none w-full h-12 px-4 rounded-xl
-                             bg-white border border-slate-300 text-slate-900
+                             bg-slate-50 border border-slate-300 text-slate-900
                              focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                              dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
                 >
@@ -310,13 +315,14 @@ export default function Report() {
                 <input
                   {...register('channelOther')}
                   maxLength={channelValue === 'พร้อมเพย์' ? 14 : 10}
+                  onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
                   placeholder={
                     channelValue === 'พร้อมเพย์'
                       ? 'ระบุเบอร์มือถือ หรือเลขบัตรประชาชน (PromptPay ID)'
                       : `ระบุเบอร์โทรศัพท์ที่ผูกกับ ${channelValue}`
                   }
                   className="mt-2 w-full h-12 px-4 rounded-xl
-                             bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                             bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
                              focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                              dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
                 />
@@ -326,7 +332,7 @@ export default function Report() {
                   {...register('channelOther')}
                   placeholder={fields.channel?.otherPlaceholder}
                   className="mt-2 w-full h-12 px-4 rounded-xl
-                             bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                             bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
                              focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                              dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
                 />
@@ -335,14 +341,14 @@ export default function Report() {
 
             {/* ธนาคาร */}
             <div>
-              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
+              <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
                 {fields.bank?.label}
               </label>
               <div className="relative">
                 <select
                   {...register('bank')}
                   className="appearance-none w-full h-12 px-4 rounded-xl
-                             bg-white border border-slate-300 text-slate-900
+                             bg-slate-50 border border-slate-300 text-slate-900
                              focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                              dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
                 >
@@ -362,15 +368,16 @@ export default function Report() {
             {/* เลขบัญชี (แสดงเมื่อเลือกธนาคาร) */}
             {bankValue && (
               <div>
-                <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
+                <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
                   {fields.account?.label}
                 </label>
                 <input
                   {...register('account')}
                   maxLength="15"
+                  onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
                   placeholder={fields.account?.placeholder}
                   className="w-full h-12 px-4 rounded-xl
-                             bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                             bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
                              focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                              dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
                 />
@@ -380,7 +387,7 @@ export default function Report() {
 
             {/* ยอดโอน */}
             <div>
-              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
+              <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
                 {fields.amount?.label}
               </label>
               <input
@@ -389,7 +396,7 @@ export default function Report() {
                 {...register('amount')}
                 placeholder={fields.amount?.placeholder}
                 className="w-full h-12 px-4 rounded-xl
-                           bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                           bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
                            focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                            dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
               />
@@ -398,14 +405,14 @@ export default function Report() {
 
             {/* วันที่โอน */}
             <div>
-              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
+              <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
                 {fields.date?.label}
               </label>
               <input
                 type="date"
                 {...register('date')}
                 className="w-full h-12 px-4 rounded-xl
-                           bg-white border border-slate-300 text-slate-900
+                           bg-slate-50 border border-slate-300 text-slate-900
                            focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                            dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
               />
@@ -414,7 +421,7 @@ export default function Report() {
 
             {/* รายละเอียดเพิ่มเติม */}
             <div className="md:col-span-2">
-              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
+              <label className="block text-sm mb-1 font-medium text-slate-700 dark:text-sky-200">
                 {fields.desc?.label}
               </label>
               <textarea
@@ -422,7 +429,7 @@ export default function Report() {
                 rows="4"
                 placeholder={fields.desc?.placeholder}
                 className="w-full rounded-2xl
-                           bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                           bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400
                            focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
                            dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
               />
@@ -430,7 +437,7 @@ export default function Report() {
 
             {/* อัปโหลดรูป */}
             <div className="md:col-span-2">
-              <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-2 font-medium">
+              <label className="block text-sm mb-2 font-medium text-slate-700 dark:text-sky-200">
                 {fields.photos?.label}
               </label>
               <div className="flex flex-wrap gap-4">
@@ -485,7 +492,6 @@ export default function Report() {
               </button>
             </div>
           </form>
-        </div>
       </main>
     </div>
   );

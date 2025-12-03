@@ -45,6 +45,7 @@ const ActionButton = ({ label, onClick, variant = 'primary', disabled }) => {
       disabled={disabled}
       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition 
         ${styles[variant]} disabled:opacity-40`}
+      style={{minWidth: '80px'}}
     >
       {label}
     </button>
@@ -58,6 +59,7 @@ const DetailButton = ({ expanded, onClick }) => (
     className="px-3 py-1.5 rounded-lg text-xs font-semibold transition
              bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200
              dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+    style={{minWidth: '120px'}}
   >
     {expanded ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียด'}
   </button>
@@ -264,8 +266,8 @@ export default function AdminReports() {
 
   const confirmMessage = pendingAction
     ? pendingAction.type === 'approve'
-      ? `คุณต้องการอนุมัติรายการรหัส ${pendingAction.row.id} ใช่หรือไม่?`
-      : `คุณต้องการปฏิเสธรายการรหัส ${pendingAction.row.id} ใช่หรือไม่?`
+      ? `คุณต้องการอนุมัติรายงานของ ${resolveName(pendingAction.row)} ใช่หรือไม่?`
+      : `คุณต้องการปฏิเสธรายงานของ ${resolveName(pendingAction.row)} ใช่หรือไม่?`
     : '';
 
   const adminCopy = t('admin') || {};
@@ -305,9 +307,9 @@ export default function AdminReports() {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-6 min-w-full w-fit">
         {/* HEADER */}
-        <div className="flex flex-wrap items-center gap-4 justify-between">
+        <div className="flex flex-wrap items-start gap-4 justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">จัดการรายงานมิจฉาชีพ</h1>
             <p className="text-gray-600 dark:text-gray-400 text-sm">ตรวจสอบสถานะรายงาน ปรับสถานะ และดูรายละเอียดหลักฐาน</p>
@@ -370,8 +372,7 @@ export default function AdminReports() {
         </div>
 
         {/* TABLE CARD */}
-        <div className="rounded-3xl border border-gray-200 bg-white shadow-xl overflow-hidden dark:border-slate-800 dark:bg-[#020617]/95">
-          <div className="overflow-x-auto">
+        <div className="rounded-3xl border border-gray-200 bg-white shadow-xl dark:border-slate-800 dark:bg-[#020617]/95 min-w-full w-fit">
             <table className="w-full">
               {/* HEADER */}
               <thead className="bg-gray-50 border-b border-gray-100 dark:border-slate-800/70 dark:bg-transparent">
@@ -380,7 +381,7 @@ export default function AdminReports() {
                   <th className="px-6 py-4 text-left">หมวดหมู่</th>
                   <th className="px-6 py-4 text-left">วันที่รายงาน</th>
                   <th className="px-6 py-4 text-left">จำนวนเงิน</th>
-                  <th className="px-6 py-4 text-right">สถานะ</th>
+                  <th className="px-6 py-4 text-right" style={{minWidth: '520px'}}></th>
                 </tr>
               </thead>
 
@@ -431,10 +432,10 @@ export default function AdminReports() {
                           <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-200">
                             {fmt(row.createdAt)}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-200">
+                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-200 whitespace-nowrap">
                             {money(row.amount)}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4" style={{minWidth: '520px'}}>
                             <div className="flex items-center justify-end gap-3 whitespace-nowrap">
                               <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${meta.badge}`}>
                                 {meta.label}
@@ -518,7 +519,6 @@ export default function AdminReports() {
                 )}
               </tbody>
             </table>
-          </div>
         </div>
       </div>
 

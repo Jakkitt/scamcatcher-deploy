@@ -110,22 +110,14 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900 dark:bg-gray-950 dark:text-slate-100 overflow-hidden flex items-center justify-center py-16">
       {/* พื้นหลังโทนเดียวกับ Home1 hero */}
-      <div className="absolute inset-0 -z-10">
-        {/* base gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-sky-50 to-slate-50 dark:bg-gradient-to-b dark:from-slate-900 dark:via-slate-950 dark:to-black" />
-
-        {/* blobs light */}
-        <div className="absolute -top-24 -left-10 w-[420px] h-[420px] bg-sky-200/70 blur-3xl rounded-full pointer-events-none dark:hidden" />
-        <div className="absolute top-[-10%] right-[-10%] w-[520px] h-[520px] bg-cyan-200/60 blur-3xl rounded-full pointer-events-none dark:hidden" />
-        <div className="absolute bottom-[-20%] left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-indigo-100/60 blur-3xl rounded-full pointer-events-none dark:hidden" />
-
-        {/* blobs dark */}
-        <div className="hidden dark:block absolute -top-24 -left-10 w-[420px] h-[420px] bg-blue-800/40 blur-[120px] rounded-full pointer-events-none" />
-        <div className="hidden dark:block absolute top-[-10%] right-[-10%] w-[520px] h-[520px] bg-cyan-700/35 blur-[130px] rounded-full pointer-events-none" />
-        <div className="hidden dark:block absolute bottom-[-20%] left-1/2 -translate-x-1/2 w-[700px] h-[420px] bg-purple-900/40 blur-[130px] rounded-full pointer-events-none" />
-
-        {/* texture */}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.04] dark:opacity-[0.08]" />
+      {/* Background */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/assets/cyber_circuit_bg.png"
+          alt="Background"
+          className="w-full h-full object-cover opacity-10 dark:opacity-30"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/50 to-white/90 dark:from-black/90 dark:via-black/50 dark:to-black/90" />
       </div>
 
       <div className="relative z-10 w-full max-w-2xl mx-4">
