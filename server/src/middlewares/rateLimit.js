@@ -18,7 +18,7 @@ export const authRateLimiter = baseLimiter({
 
 export const reportSubmissionLimiter = baseLimiter({
   windowMs: 5 * 60 * 1000,
-  limit: 100, // Increased for testing
+  limit: 5,
   message: { error: { message: 'ส่งรายงานถี่เกินไป กรุณารอสักครู่แล้วลองใหม่' } },
 });
 
