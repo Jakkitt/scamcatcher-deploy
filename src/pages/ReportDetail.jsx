@@ -171,6 +171,7 @@ export default function ReportDetail() {
                       label="ชื่อ-นามสกุล"
                       value={report?.name || t('common.unknown')}
                       emphasize
+                      className="text-xl font-bold text-gray-900 dark:text-white"
                     />
                     <DetailRow
                       label="ยอดโอน"
@@ -180,6 +181,8 @@ export default function ReportDetail() {
                     <DetailRow
                       label="หมายเลขบัญชีธนาคาร"
                       value={report?.account || t('common.unknown')}
+                      emphasize
+                      className="text-lg font-bold tracking-wider"
                     />
                     <DetailRow
                       label="ช่องทางการขาย"
@@ -344,10 +347,10 @@ export default function ReportDetail() {
   );
 }
 
-function DetailRow({ label, value, emphasize }) {
-  const textClass = emphasize
-    ? 'text-base font-semibold text-gray-900 dark:text-white'
-    : 'text-base';
+function DetailRow({ label, value, emphasize, className }) {
+  const textClass = className || (emphasize
+    ? 'text-lg font-semibold text-gray-900 dark:text-white'
+    : 'text-base');
   return (
     <div className="space-y-1">
       <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">

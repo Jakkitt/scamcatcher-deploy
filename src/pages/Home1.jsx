@@ -23,6 +23,7 @@ import {
   fetchReportStats,
   fetchRecentReports,
   fetchFraudCategories,
+  fetchTopScammers,
 } from '../services/reports';
 
 const STAT_TEMPLATE = [
@@ -66,6 +67,7 @@ export default function Home1() {
   );
   const [recent, setRecent] = useState([]);
   const [fraudStats, setFraudStats] = useState({ total: 0, items: [] });
+  const [topScammers, setTopScammers] = useState([]);
 
   useEffect(() => {
     let alive = true;
@@ -107,6 +109,16 @@ export default function Home1() {
         });
       } catch (err) {
         console.warn('fetchFraudCategories failed', err);
+      }
+    })();
+
+    (async () => {
+      try {
+        const top = await fetchTopScammers(5);
+        if (!alive) return;
+        setTopScammers(top || []);
+      } catch (err) {
+        console.warn('fetchTopScammers failed', err);
       }
     })();
 
@@ -154,60 +166,49 @@ export default function Home1() {
             </p>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full mx-auto animate-fade-in-up delay-200">
-            {stats.map((stat) => {
-              const Icon = stat.icon || BarChart3;
-              const isUp = stat.trend !== 'down';
-              return (
-                <div
-                  key={stat.label}
-                  className="relative bg-gradient-to-br p-6 rounded-2xl border border-slate-200 shadow-md shadow-slate-200/80 overflow-hidden group hover:-translate-y-1 hover:shadow-xl transition-all duration-300 dark:border-slate-700 dark:shadow-slate-900/50"
-                >
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${stat.gradient}`}
-                    aria-hidden="true"
-                  ></div>
-                  <div className="absolute inset-0 opacity-30 group-hover:opacity-40 transition-opacity bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.7),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(59,130,246,0.18),transparent_35%)] dark:bg-[radial-gradient(circle_at_20%_20%,rgba(148,163,184,0.35),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(56,189,248,0.25),transparent_40%)]" />
-
-                  <div className="relative flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-900 group-hover:scale-110 transition-transform dark:bg-slate-900/70 dark:border-slate-600 dark:text-white">
-                        <Icon size={22} />
-                      </div>
-                      <div className="text-sm text-slate-700 dark:text-slate-200">
-                        {stat.label}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="relative">
-                    <div className={`text-3xl font-bold mb-1 ${stat.color}`}>{stat.value}</div>
-                    <div className="text-slate-600 text-sm dark:text-slate-300">
-                      {stat.subtext}
-                    </div>
-                  </div>
-
-                  {stat.change && (
-                    <div className="relative mt-4 flex items-center gap-2 text-sm font-semibold">
-                      <span
-                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full border ${
-                          isUp
-                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-400/40 dark:text-emerald-200'
-                            : 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-500/10 dark:border-rose-400/40 dark:text-rose-200'
-                        }`}
-                      >
-                        {isUp ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                        {stat.change}
-                      </span>
-                      <span className="text-slate-500 dark:text-slate-400 font-normal text-xs">
-                        เทียบช่วงก่อนหน้า
-                      </span>
-                    </div>
-                  )}
+          {/* Top Scammers / Danger Zone */}
+          <div className="max-w-4xl w-full mx-auto animate-fade-in-up delay-200">
+            <div className="bg-white/80 backdrop-blur-md border border-red-100 rounded-2xl shadow-xl overflow-hidden dark:bg-slate-900/80 dark:border-red-900/30">
+              <div className="bg-red-50/50 px-6 py-4 border-b border-red-100 flex items-center justify-between dark:bg-red-900/10 dark:border-red-900/30">
+                <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                  <AlertTriangle className="animate-pulse" />
+                  <h3 className="font-bold text-lg">บัญชีอันตรายที่ต้องระวัง (Top 5)</h3>
                 </div>
-              );
-            })}
+                <span className="text-xs text-red-500 font-medium bg-red-100 px-2 py-1 rounded-full dark:bg-red-900/30 dark:text-red-300">
+                  มีการรายงานเข้ามาบ่อยที่สุด
+                </span>
+              </div>
+              
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {topScammers.length > 0 ? (
+                  topScammers.map((item, idx) => (
+                    <div key={idx} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors dark:hover:bg-slate-800/50">
+                      <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-sm dark:bg-red-900/30 dark:text-red-400">
+                          {idx + 1}
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-800 dark:text-slate-200">{item.name}</div>
+                          <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                            <span>{item.bank}</span>
+                            <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                            <span className="font-mono">{item.account}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-red-600 font-bold text-lg dark:text-red-400">{item.count}</div>
+                        <div className="text-xs text-slate-400 dark:text-slate-500">ครั้งที่รายงาน</div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+                    ยังไม่มีข้อมูลบัญชีอันตรายในขณะนี้
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           
           <div className="absolute bottom-20 animate-bounce text-slate-400 dark:text-slate-500">
@@ -335,6 +336,10 @@ export default function Home1() {
               </div>
             );
           })()}
+        </div>
+        
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 animate-bounce text-slate-400 dark:text-slate-500">
+          <ChevronDown size={32} />
         </div>
       </section>
 

@@ -16,6 +16,7 @@ import {
   listRecentPublic,
   listPublicReports,
   getFraudCategories,
+  getTopScammers,
 } from '../controllers/reports.controller.js';
 import { validate, validateQuery } from '../middlewares/validate.js';
 import { createReportSchema, searchReportsSchema } from '../validators/reports.schema.js';
@@ -72,6 +73,7 @@ router.get('/stats/summary', getReportStats);
 router.get('/public/recent', listRecentPublic);
 router.get('/public/all', listPublicReports);
 router.get('/stats/fraud', getFraudCategories);
+router.get('/stats/top', getTopScammers);
 
 // search endpoint: optionalAuth เพื่อให้สามารถค้นหาได้โดยไม่ต้อง login
 router.get('/search', optionalAuth, reportSearchLimiter, validateQuery(searchReportsSchema), searchReports);

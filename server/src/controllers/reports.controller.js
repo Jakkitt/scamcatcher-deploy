@@ -212,6 +212,41 @@ export async function getFraudCategories(req, res) {
   }
 }
 
+export async function getTopScammers(req, res) {
+  try {
+    const limit = Number(req.query.limit || 5);
+    const pipeline = [
+      { $match: { status: 'approved' } },
+      {
+        $group: {
+          _id: {
+            name: { $ifNull: ['$name', { $concat: ['$firstName', ' ', '$lastName'] }] },
+            account: '$account',
+            bank: '$bank',
+          },
+          count: { $sum: 1 },
+          lastReported: { $max: '$createdAt' },
+        },
+      },
+      { $sort: { count: -1, lastReported: -1 } },
+      { $limit: limit },
+    ];
+
+    const aggregation = await Report.aggregate(pipeline);
+    const items = aggregation.map((item) => ({
+      name: item._id.name ? item._id.name.trim() : 'ไม่ระบุชื่อ',
+      account: item._id.account || '',
+      bank: item._id.bank || '',
+      count: item.count || 0,
+      lastReported: item.lastReported,
+    }));
+
+    return res.json(items);
+  } catch (e) {
+    return res.status(500).json({ error: { message: e.message } });
+  }
+}
+
 export async function getReportById(req, res) {
   try {
     const doc = await Report.findById(req.params.id);

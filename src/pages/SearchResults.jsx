@@ -223,14 +223,15 @@ export default function SearchResults() {
   return (
     <main className="container py-10">
       {/* Summary */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        <section className="lg:col-span-2">
+      {/* Summary */}
+      <div className="space-y-6">
+        <section>
           <div className="rounded-2xl p-6 bg-white text-gray-900 shadow-soft border border-gray-200 dark:bg-gray-900 dark:text-white dark:border-gray-800">
             <h2 className="text-3xl font-extrabold mb-6 text-center">
               {foundCount > 0 ? copy.heroFound : copy.heroEmpty}
             </h2>
 
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {summaryCards.map((card) => (
                 <div key={card.label} className="rounded-xl p-4 text-center border border-gray-200 dark:border-gray-800">
                   <div className="text-4xl font-extrabold">{card.value}</div>

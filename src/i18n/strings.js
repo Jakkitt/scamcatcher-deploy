@@ -424,7 +424,7 @@ export const STRINGS = {
       category: { label: 'หมวดหมู่ *', placeholder: 'เช่น การลงทุน' },
       bank: { label: 'ธนาคาร', placeholder: '-- เลือกธนาคาร --' },
       account: { label: 'เลขบัญชี', placeholder: 'เช่น 123-4-56789-0' },
-      channel: { label: 'ช่องทาง', placeholder: '— เลือกช่องทาง —', other: 'อื่น ๆ / ระบุเอง', otherPlaceholder: 'ระบุช่องทาง (ถ้าเลือก อื่น ๆ)' },
+      channel: { label: 'ช่องทาง', placeholder: '-- เลือกช่องทาง --', other: 'อื่น ๆ / ระบุเอง', otherPlaceholder: 'ระบุช่องทาง (ถ้าเลือก อื่น ๆ)' },
       amount: { label: 'ยอดโอน (บาท) *', placeholder: 'ระบุจำนวนเงิน' },
       date: { label: 'วันที่โอนเงิน *' },
       desc: { label: 'รายละเอียดเพิ่มเติม', placeholder: 'อธิบายเหตุการณ์โดยย่อ' },

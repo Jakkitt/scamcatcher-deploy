@@ -39,10 +39,13 @@ const schema = z.object({
     .string()
     .optional()
     .refine(
-      (v) => !v || String(v).replace(/\D/g, '').length >= 6,
-      validationCopy.accountShort,
+      (v) => {
+        const len = String(v || '').replace(/\D/g, '').length;
+        return !v || (len >= 10 && len <= 13);
+      },
+      'เลขบัญชีต้องมีความยาว 10-13 หลัก',
     ),
-  amount: z.coerce.number().min(1, validationCopy.amountRequired),
+  amount: z.coerce.number().min(0, 'จำนวนเงินต้องไม่ติดลบ').min(1, validationCopy.amountRequired),
   date: z.string().min(1, validationCopy.dateRequired),
   category: z.string().min(1, validationCopy.categoryRequired),
   categoryOther: z.string().optional(),
@@ -244,22 +247,27 @@ export default function Report() {
               <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
                 {fields.category?.label}
               </label>
-              <select
-                {...register('category')}
-                className="appearance-none w-full h-12 px-4 rounded-xl
-                           bg-white border border-slate-300 text-slate-900
-                           focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
-                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
-              >
-                <option value="">-- เลือกหมวดหมู่ --</option>
-                <option value="investment">หลอกลงทุน</option>
-                <option value="shopping">ซื้อของออนไลน์</option>
-                <option value="job">หลอกทำงาน</option>
-                <option value="loan">เงินกู้</option>
-                <option value="romance">หลอกให้รัก</option>
-                <option value="bill">บิล/ภาษีปลอม</option>
-                <option value="OTHER">อื่นๆ</option>
-              </select>
+              <div className="relative">
+                <select
+                  {...register('category')}
+                  className="appearance-none w-full h-12 px-4 rounded-xl
+                             bg-white border border-slate-300 text-slate-900
+                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+                >
+                  <option value="">-- เลือกหมวดหมู่ --</option>
+                  <option value="investment">หลอกลงทุน</option>
+                  <option value="shopping">ซื้อของออนไลน์</option>
+                  <option value="job">หลอกทำงาน</option>
+                  <option value="loan">เงินกู้</option>
+                  <option value="romance">หลอกให้รัก</option>
+                  <option value="bill">บิล/ภาษีปลอม</option>
+                  <option value="OTHER">อื่น ๆ / ระบุเอง</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 dark:text-slate-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
               {categoryValue === 'OTHER' && (
                 <input
                   {...register('categoryOther')}
@@ -278,21 +286,41 @@ export default function Report() {
               <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
                 {fields.channel?.label}
               </label>
-              <select
-                {...register('channel')}
-                className="appearance-none w-full h-12 px-4 rounded-xl
-                           bg-white border border-slate-300 text-slate-900
-                           focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
-                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
-              >
-                <option value="">{fields.channel?.placeholder}</option>
-                {TRANSFER_CHANNELS.map((channel) => (
-                  <option key={channel.value} value={channel.value}>
-                    {channel.label}
-                  </option>
-                ))}
-                <option value="OTHER">{fields.channel?.other}</option>
-              </select>
+              <div className="relative">
+                <select
+                  {...register('channel')}
+                  className="appearance-none w-full h-12 px-4 rounded-xl
+                             bg-white border border-slate-300 text-slate-900
+                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+                >
+                  <option value="">{fields.channel?.placeholder}</option>
+                  {TRANSFER_CHANNELS.map((channel) => (
+                    <option key={channel.value} value={channel.value}>
+                      {channel.label}
+                    </option>
+                  ))}
+                  <option value="OTHER">{fields.channel?.other}</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 dark:text-slate-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+              {['TrueMoney', 'ShopeePay', 'LINE Pay', 'พร้อมเพย์'].includes(channelValue) && (
+                <input
+                  {...register('channelOther')}
+                  maxLength={channelValue === 'พร้อมเพย์' ? 14 : 10}
+                  placeholder={
+                    channelValue === 'พร้อมเพย์'
+                      ? 'ระบุเบอร์มือถือ หรือเลขบัตรประชาชน (PromptPay ID)'
+                      : `ระบุเบอร์โทรศัพท์ที่ผูกกับ ${channelValue}`
+                  }
+                  className="mt-2 w-full h-12 px-4 rounded-xl
+                             bg-white border border-slate-300 text-slate-900 placeholder-slate-500
+                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+                />
+              )}
               {channelValue === 'OTHER' && (
                 <input
                   {...register('channelOther')}
@@ -310,20 +338,25 @@ export default function Report() {
               <label className="block text-sm text-slate-600 dark:text-cyan-300 mb-1 font-medium">
                 {fields.bank?.label}
               </label>
-              <select
-                {...register('bank')}
-                className="appearance-none w-full h-12 px-4 rounded-xl
-                           bg-white border border-slate-300 text-slate-900
-                           focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
-                           dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
-              >
-                <option value="">{fields.bank?.placeholder}</option>
-                {BANKS.map((bank) => (
-                  <option key={bank.value} value={bank.value}>
-                    {bank.label}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  {...register('bank')}
+                  className="appearance-none w-full h-12 px-4 rounded-xl
+                             bg-white border border-slate-300 text-slate-900
+                             focus:border-sky-500 focus:ring-2 focus:ring-sky-400/40 outline-none transition-all
+                             dark:bg-slate-900/70 dark:border-slate-700 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/30"
+                >
+                  <option value="">{fields.bank?.placeholder}</option>
+                  {BANKS.map((bank) => (
+                    <option key={bank.value} value={bank.value}>
+                      {bank.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500 dark:text-slate-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
             </div>
 
             {/* เลขบัญชี (แสดงเมื่อเลือกธนาคาร) */}
@@ -334,6 +367,7 @@ export default function Report() {
                 </label>
                 <input
                   {...register('account')}
+                  maxLength="15"
                   placeholder={fields.account?.placeholder}
                   className="w-full h-12 px-4 rounded-xl
                              bg-white border border-slate-300 text-slate-900 placeholder-slate-500
@@ -351,6 +385,7 @@ export default function Report() {
               </label>
               <input
                 type="number"
+                min="0"
                 {...register('amount')}
                 placeholder={fields.amount?.placeholder}
                 className="w-full h-12 px-4 rounded-xl

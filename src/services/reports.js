@@ -106,3 +106,7 @@ export async function fetchFraudCategories(days = 30){
 export async function fetchPublicReports(limit = 50){
   return request(`/reports/public/all?limit=${limit}`);
 }
+
+export async function fetchTopScammers(limit = 5){
+  return request(`/reports/stats/top?limit=${limit}`);
+}
