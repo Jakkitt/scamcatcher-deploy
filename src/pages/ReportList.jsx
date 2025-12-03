@@ -143,7 +143,7 @@ export default function ReportList() {
                           t("common.unknown")}
                       </div>
                       <div className="text-sm text-slate-500 dark:text-slate-300">
-                        {copy.cardCategory}: {r.category || "-"} · {copy.cardDate}{" "}
+                        {copy.cardCategory}: {t(`admin.categories.${r.category}`) || r.category || "-"} · {copy.cardDate}{" "}
                         {r.createdAt
                           ? new Date(r.createdAt).toLocaleDateString("th-TH")
                           : "-"}

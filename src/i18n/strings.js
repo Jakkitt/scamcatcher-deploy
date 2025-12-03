@@ -147,6 +147,15 @@ export const STRINGS = {
       approved: 'อนุมัติแล้ว',
       rejected: 'ปฏิเสธแล้ว',
     },
+    categories: {
+      investment: 'หลอกลงทุน',
+      shopping: 'ซื้อของออนไลน์',
+      job: 'หลอกทำงาน',
+      loan: 'เงินกู้',
+      romance: 'หลอกให้รัก',
+      bill: 'บิล/ภาษีปลอม',
+      other: 'อื่นๆ',
+    },
     dashboard: {
       title: 'แดชบอร์ดผู้ดูแลระบบ',
       tiles: {
