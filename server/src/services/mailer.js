@@ -30,6 +30,8 @@ function ensureTransporter() {
     port,
     secure,
     auth: user ? { user, pass } : undefined,
+    connectionTimeout: 10000, // 10 seconds
+    socketTimeout: 10000, // 10 seconds
   });
 
   return transporter;
