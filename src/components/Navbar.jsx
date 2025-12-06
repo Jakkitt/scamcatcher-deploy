@@ -30,7 +30,7 @@ export default function Navbar() {
         {/* Nav + Theme toggle */}
         <nav className="flex items-center gap-3 text-sm">
           <NavLink
-            to="/search/detail"
+            to="/search"
             className={({ isActive }) =>
               `px-2 py-1 rounded-md font-medium transition-colors ${
                 isActive
