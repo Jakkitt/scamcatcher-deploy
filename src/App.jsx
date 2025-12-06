@@ -48,6 +48,7 @@ export default function App() {
                 <Route path="/about" element={<About />} />
 
                 {/* search & report detail: เข้าดูได้เลย ไม่ต้องล็อกอิน */}
+                <Route path="/search" element={<SearchDetail />} />
                 <Route path="/search/detail" element={<SearchDetail />} />
                 <Route path="/search/results" element={<SearchResults />} />
                 <Route path="/reports/:id" element={<ReportDetail />} />
