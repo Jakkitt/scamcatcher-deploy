@@ -26,3 +26,14 @@ export async function updateExternalChecksSetting(enabled){
     body: { enabled },
   });
 }
+
+export async function getAutoApproveSetting(){
+  return request('/admin/settings/auto-approve');
+}
+
+export async function updateAutoApproveSetting({ enabled, threshold }){
+  return request('/admin/settings/auto-approve', {
+    method: 'PATCH',
+    body: { enabled, threshold },
+  });
+}

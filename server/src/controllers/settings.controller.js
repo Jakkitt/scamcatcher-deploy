@@ -20,3 +20,27 @@ export async function updateExternalChecksSetting(req, res) {
     return res.status(500).json({ error: { message: err.message } });
   }
 }
+
+const AUTO_APPROVE_ENABLED_KEY = 'auto_approve_enabled';
+const AUTO_APPROVE_THRESHOLD_KEY = 'auto_approve_threshold';
+
+export async function getAutoApproveSetting(req, res) {
+  try {
+    const enabled = await getSetting(AUTO_APPROVE_ENABLED_KEY, false);
+    const threshold = await getSetting(AUTO_APPROVE_THRESHOLD_KEY, 5);
+    return res.json({ enabled, threshold });
+  } catch (err) {
+    return res.status(500).json({ error: { message: err.message } });
+  }
+}
+
+export async function updateAutoApproveSetting(req, res) {
+  try {
+    const { enabled, threshold } = req.body || {};
+    if (enabled !== undefined) await setSetting(AUTO_APPROVE_ENABLED_KEY, enabled);
+    if (threshold !== undefined) await setSetting(AUTO_APPROVE_THRESHOLD_KEY, threshold);
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: { message: err.message } });
+  }
+}

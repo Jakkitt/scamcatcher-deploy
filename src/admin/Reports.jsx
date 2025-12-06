@@ -4,11 +4,9 @@ import {
   adminListReports,
   approveReport,
   rejectReport,
-  purgeOrphans,
-  countOrphans,
   resetReportStatus,
 } from '../services/reports';
-import { getExternalChecksSetting, updateExternalChecksSetting } from '../services/admin';
+import { Zap } from 'lucide-react';
 import { t } from '../i18n/strings';
 import { resolveAssetUrl } from '../utils/api';
 
@@ -109,13 +107,9 @@ export default function AdminReports() {
   const [rows, setRows] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
-  const [purgeState, setPurgeState] = React.useState(null);
   const [expandedId, setExpandedId] = React.useState(null);
   const [acting, setActing] = React.useState('');
   const [lightboxState, setLightboxState] = React.useState(null);
-  const [externalEnabled, setExternalEnabled] = React.useState(true);
-  const [externalSettingLoading, setExternalSettingLoading] = React.useState(true);
-  const [externalSettingSaving, setExternalSettingSaving] = React.useState(false);
 
   // สำหรับ popup ยืนยันอนุมัติ/ปฏิเสธ
   // { type: 'approve' | 'reject', row }
@@ -159,11 +153,6 @@ export default function AdminReports() {
     } finally {
       setLoading(false);
     }
-
-    try {
-      const orphanInfo = await countOrphans();
-      setPurgeState(orphanInfo);
-    } catch {}
   }, []);
 
   React.useEffect(() => {
@@ -191,13 +180,7 @@ export default function AdminReports() {
   const onReject = (id) => performAction(id, rejectReport, 'reject');
   const onReset = (id) => performAction(id, resetReportStatus, 'reset');
 
-  const onPurge = async () => {
-    try {
-      await purgeOrphans();
-      toast.success('ลบข้อมูลขยะแล้ว');
-      refresh();
-    } catch {}
-  };
+
 
   const unknown = '-';
   const fmt = (v) => (v ? new Date(v).toLocaleDateString('th-TH') : unknown);
@@ -273,37 +256,7 @@ export default function AdminReports() {
   const adminCopy = t('admin') || {};
   const externalControlCopy = adminCopy.externalChecks || {};
 
-  React.useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const setting = await getExternalChecksSetting();
-        if (!alive) return;
-        setExternalEnabled(setting?.enabled !== false);
-      } catch (err) {
-        console.warn(err);
-      } finally {
-        if (alive) setExternalSettingLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
 
-  const toggleExternalChecks = async () => {
-    const next = !externalEnabled;
-    setExternalSettingSaving(true);
-    try {
-      const updated = await updateExternalChecksSetting(next);
-      setExternalEnabled(updated?.enabled !== false);
-      toast.success(next ? externalControlCopy.toastOn : externalControlCopy.toastOff);
-    } catch (err) {
-      toast.error(err?.message || adminCopy.actionFailed);
-    } finally {
-      setExternalSettingSaving(false);
-    }
-  };
 
   return (
     <>
@@ -313,61 +266,6 @@ export default function AdminReports() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">จัดการรายงานมิจฉาชีพ</h1>
             <p className="text-gray-600 dark:text-gray-400 text-sm">ตรวจสอบสถานะรายงาน ปรับสถานะ และดูรายละเอียดหลักฐาน</p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-            <button
-              onClick={onPurge}
-              className="px-4 py-2 rounded-xl text-sm font-semibold
-                       bg-red-700 text-white hover:bg-red-600 
-                       border border-red-800 shadow-lg h-full sm:self-end"
-            >
-              ลบข้อมูลขยะ {purgeState?.count ? `(${purgeState.count})` : ''}
-            </button>
-            <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm dark:border-white/20 dark:bg-white/5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-gray-900 dark:text-white">{externalControlCopy.label}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{externalControlCopy.hint}</p>
-                </div>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full border ${
-                    externalEnabled
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-200 dark:border-emerald-500/40"
-                      : "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"
-                  }`}
-                >
-                  {externalEnabled ? externalControlCopy.enabled : externalControlCopy.disabled}
-                </span>
-              </div>
-              <button
-                onClick={toggleExternalChecks}
-                disabled={externalSettingLoading || externalSettingSaving}
-                role="switch"
-                aria-checked={externalEnabled}
-                className={`mt-2 flex items-center justify-center gap-3 rounded-2xl border px-3 py-2 text-sm font-semibold transition
-                  ${externalEnabled
-                    ? "border-emerald-400 text-emerald-700 dark:text-emerald-200"
-                    : "border-gray-200 text-gray-700 dark:border-gray-600 dark:text-gray-200"
-                  }
-                  ${externalSettingSaving || externalSettingLoading ? "opacity-60 cursor-not-allowed" : "hover:border-emerald-300"}
-                `}
-              >
-                <span
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200
-                    ${externalEnabled ? "bg-emerald-500" : "bg-gray-400 dark:bg-gray-600"}
-                  `}
-                >
-                  <span
-                    className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200"
-                    style={{ transform: externalEnabled ? 'translateX(22px)' : 'translateX(0px)' }}
-                  />
-                </span>
-                <span className="text-sm font-semibold">
-                  {externalEnabled ? externalControlCopy.toggleOff : externalControlCopy.toggleOn}
-                </span>
-              </button>
-            </div>
           </div>
         </div>
 
@@ -381,7 +279,7 @@ export default function AdminReports() {
                   <th className="px-6 py-4 text-left">หมวดหมู่</th>
                   <th className="px-6 py-4 text-left">วันที่รายงาน</th>
                   <th className="px-6 py-4 text-left">จำนวนเงิน</th>
-                  <th className="px-6 py-4 text-right" style={{minWidth: '520px'}}></th>
+                  <th className="px-6 py-4 text-right" style={{minWidth: '460px'}}></th>
                 </tr>
               </thead>
 
@@ -435,8 +333,16 @@ export default function AdminReports() {
                           <td className="px-6 py-4 text-sm text-gray-900 dark:text-slate-200 whitespace-nowrap">
                             {money(row.amount)}
                           </td>
-                          <td className="px-6 py-4" style={{minWidth: '520px'}}>
-                            <div className="flex items-center justify-end gap-3 whitespace-nowrap">
+                          <td className="px-6 py-4" style={{minWidth: '460px'}}>
+                            <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                              {/* Auto-Approve Badge */}
+                              {row.verificationMethod === 'auto_volume' && (
+                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/30">
+                                  <Zap size={10} className="fill-current" />
+                                  ตรวจสอบอัตโนมัติ
+                                </span>
+                              )}
+                              
                               <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${meta.badge}`}>
                                 {meta.label}
                               </span>

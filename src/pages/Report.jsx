@@ -52,6 +52,9 @@ const schema = z.object({
   channel: z.string().optional(),
   channelOther: z.string().optional(),
   desc: z.string().optional(),
+}).refine((data) => data.bank || data.channel, {
+  message: "กรุณาระบุ ธนาคาร หรือ ช่องทาง อย่างน้อย 1 อย่าง",
+  path: ["bank"], // แสดง error ที่ช่องธนาคาร
 });
 
 export default function Report() {
@@ -181,10 +184,13 @@ export default function Report() {
     }
   };
 
-  const renderError = (field) =>
-    errors[field] ? (
-      <p className="text-sm text-red-500 mt-1">{errors[field]?.message}</p>
-    ) : null;
+  const renderError = (field) => (
+    <div className="min-h-[20px] mt-1">
+      {errors[field] ? (
+        <p className="text-sm text-red-500 animate-fadeIn">{errors[field]?.message}</p>
+      ) : null}
+    </div>
+  );
 
   return (
     <div className="min-h-screen py-10 px-4 md:px-6 relative overflow-hidden bg-white dark:bg-black flex items-start justify-center">
@@ -393,7 +399,9 @@ export default function Report() {
               <input
                 type="number"
                 min="0"
+                step="0.01"
                 {...register('amount')}
+                onKeyDown={(e) => ["-", "e", "E", "+"].includes(e.key) && e.preventDefault()}
                 placeholder={fields.amount?.placeholder}
                 className="w-full h-12 px-4 rounded-xl
                            bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400

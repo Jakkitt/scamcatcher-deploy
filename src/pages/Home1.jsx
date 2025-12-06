@@ -108,16 +108,18 @@ export default function Home1() {
       
       {/* SECTION 1: HERO */}
       <section className="h-screen w-full snap-start relative flex flex-col justify-center items-center overflow-hidden bg-white dark:bg-black">
-        {/* BG Gradient */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-blue-50 via-cyan-50 to-emerald-50 dark:from-slate-950 dark:via-blue-950 dark:to-slate-900">
-          {/* Animated blobs */}
-          <div className="absolute -top-24 -left-10 w-96 h-96 bg-blue-400/20 blur-3xl rounded-full animate-pulse dark:bg-blue-600/30" />
-          <div className="absolute top-1/3 right-0 w-80 h-80 bg-cyan-300/20 blur-3xl rounded-full animate-pulse delay-1000 dark:bg-cyan-600/20" />
-          <div className="absolute bottom-0 left-1/3 w-72 h-72 bg-emerald-300/15 blur-3xl rounded-full animate-pulse delay-2000 dark:bg-emerald-600/20" />
+        {/* BG Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/assets/home_hero_bg_final.png"
+            alt="Background"
+            className="w-full h-full object-cover opacity-20 dark:opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/40 to-white/90 dark:from-black/80 dark:via-black/40 dark:to-black/90" />
         </div>
 
         <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center justify-center h-full">
-          <div className="max-w-4xl mx-auto text-center mb-12">
+          <div className="max-w-4xl mx-auto text-center mb-6">
             <h1 className="text-4xl md:text-6xl font-bold text-slate-900 dark:text-white mt-5 mb-6 leading-normal animate-fade-in-up">
               รู้ทันโจรไซเบอร์
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 py-1 block w-fit mx-auto mt-4">
@@ -125,7 +127,7 @@ export default function Home1() {
               </span>
             </h1>
 
-            <p className="text-slate-600 dark:text-slate-300 text-lg md:text-xl mb-10 max-w-2xl mx-auto animate-fade-in-up delay-100">
+            <p className="text-slate-600 dark:text-slate-300 text-lg md:text-xl mb-6 max-w-2xl mx-auto animate-fade-in-up delay-100">
               {t('layout.brand')} ช่วยให้คุณตรวจสอบประวัติการโกง เช็คเบอร์โทรและเลขบัญชีต้องสงสัย
               จากฐานข้อมูลที่รวบรวมโดยชุมชนผู้ใช้งานจริงทั่วประเทศ
             </p>
@@ -184,12 +186,14 @@ export default function Home1() {
 
       {/* SECTION 2: RECENT REPORTS */}
       <section className="h-screen w-full snap-start flex flex-col justify-center relative overflow-hidden bg-white dark:bg-black">
-        {/* BG Gradient */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 dark:from-slate-950 dark:via-red-950 dark:to-slate-900">
-          {/* Animated blobs */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-red-400/15 blur-3xl rounded-full animate-pulse dark:bg-red-600/20" />
-          <div className="absolute bottom-1/4 left-0 w-80 h-80 bg-orange-300/20 blur-3xl rounded-full animate-pulse delay-1000 dark:bg-orange-600/20" />
-          <div className="absolute top-1/2 right-1/3 w-72 h-72 bg-amber-300/15 blur-3xl rounded-full animate-pulse delay-2000 dark:bg-amber-600/15" />
+        {/* BG Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/assets/home_reports_bg_final.png"
+            alt="Background"
+            className="w-full h-full object-cover opacity-15 dark:opacity-30"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/50 to-white/90 dark:from-black/90 dark:via-black/50 dark:to-black/90" />
         </div>
 
         <div className="container mx-auto px-4 md:px-6 relative z-10">
@@ -318,12 +322,14 @@ export default function Home1() {
 
       {/* SECTION 3: CTA & STATS */}
       <section className="h-screen w-full snap-start flex flex-col justify-center relative overflow-hidden bg-white dark:bg-black">
-        {/* BG Gradient */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 dark:from-slate-950 dark:via-purple-950 dark:to-slate-900">
-          {/* Animated blobs */}
-          <div className="absolute -top-24 left-1/4 w-96 h-96 bg-purple-400/20 blur-3xl rounded-full animate-pulse dark:bg-purple-600/25" />
-          <div className="absolute bottom-0 right-0 w-80 h-80 bg-blue-300/20 blur-3xl rounded-full animate-pulse delay-1000 dark:bg-blue-600/20" />
-          <div className="absolute top-1/3 left-0 w-72 h-72 bg-cyan-300/15 blur-3xl rounded-full animate-pulse delay-2000 dark:bg-cyan-600/20" />
+        {/* BG Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/assets/home_stats_bg_final.png"
+            alt="Background"
+            className="w-full h-full object-cover opacity-15 dark:opacity-30"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/40 to-white/90 dark:from-black/80 dark:via-black/40 dark:to-black/90" />
         </div>
 
         <div className="absolute top-0 right-0 w-72 h-72 bg-blue-200/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none dark:bg-blue-600/25 z-0" />

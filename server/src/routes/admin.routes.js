@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middlewares/auth.js';
 import { listUsers, suspendUser, unsuspendUser, deleteUserAdmin } from '../controllers/admin.controller.js';
-import { getExternalChecksSetting, updateExternalChecksSetting } from '../controllers/settings.controller.js';
+import { getExternalChecksSetting, updateExternalChecksSetting, getAutoApproveSetting, updateAutoApproveSetting } from '../controllers/settings.controller.js';
 
 const router = Router();
 
@@ -13,5 +13,7 @@ router.patch('/users/:id/unsuspend', unsuspendUser);
 router.delete('/users/:id', deleteUserAdmin);
 router.get('/settings/external-checks', getExternalChecksSetting);
 router.patch('/settings/external-checks', updateExternalChecksSetting);
+router.get('/settings/auto-approve', getAutoApproveSetting);
+router.patch('/settings/auto-approve', updateAutoApproveSetting);
 
 export default router;

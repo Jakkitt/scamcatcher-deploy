@@ -1,5 +1,6 @@
 ﻿import sanitizeHtml from "sanitize-html";
 import Report from "../models/Report.js";
+import { getSetting } from "./settings.js";
 
 const MAX_LIMIT = 200;
 
@@ -9,6 +10,27 @@ export const sanitizeDescription = (value = "") =>
   sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }).trim();
 
 const sanitizeNamePart = (value = "") => String(value || "").trim();
+
+const stripTitle = (name = "") => {
+  if (!name) return "";
+  const titles = [
+    // Thai full
+    "เด็กชาย", "เด็กหญิง", "นาย", "นางสาว", "นาง", "พล.ต.อ.", "พล.ต.ท.", "พล.ต.ต.", "พ.ต.อ.", "พ.ต.ท.", "พ.ต.ต.", "ร.ต.อ.", "ร.ต.ท.", "ร.ต.ต.", 
+    // Thai short
+    "ด.ช.", "ด.ญ.", "น.ส.", "ดร.", "ผศ.", "รศ.", "ศ.", 
+    // English
+    "mr.", "mrs.", "miss.", "ms.", "dr."
+  ];
+  
+  // Create a regex from titles
+  // We want to match titles at the beginning of the string, case insensitive
+  // Be careful with dots in titles needing escape, but mostly plain text is fine or handled by regex engine if not special chars
+  // Sort by length desc to match longest title first (e.g. "นางสาว" before "นาง")
+  const sortedTitles = titles.sort((a, b) => b.length - a.length);
+  const pattern = new RegExp(`^(${sortedTitles.join("|").replace(/\./g, "\\.")})\\s*`, "i");
+  
+  return name.replace(pattern, "").trim();
+};
 
 const buildDisplayName = (firstName = "", lastName = "", fallback = "") => {
   const first = sanitizeNamePart(firstName);
@@ -23,21 +45,53 @@ export async function createReportRecord({ ownerId, payload = {}, photos = [] })
   const firstName = sanitizeNamePart(payload.firstName);
   const lastName = sanitizeNamePart(payload.lastName);
   const displayName = buildDisplayName(firstName, lastName, payload.name);
+  const normalizedAccount = normalizeAccount(payload.account || "");
+  const bank = payload.bank || "";
+
+  // Auto-Approve Logic (Volume Threshold) - Dynamic Settings
+  let initialStatus = 'pending';
+  let verificationMethod = 'manual';
+
+  if (firstName && lastName && bank && normalizedAccount) {
+    // Check settings first
+    const autoApproveEnabled = await getSetting('auto_approve_enabled', false);
+    const threshold = await getSetting('auto_approve_threshold', 5);
+
+    if (autoApproveEnabled) {
+      const existingCount = await Report.countDocuments({
+        firstName,
+        lastName,
+        bank,
+        account: normalizedAccount,
+        status: { $ne: 'rejected' }
+      });
+
+      // Logic: IF (existing + this_new_report) >= threshold
+      // So checking if existing >= (threshold - 1)
+      if (existingCount >= (Math.max(threshold, 1) - 1)) {
+        initialStatus = 'approved';
+        verificationMethod = 'auto_volume';
+      }
+    }
+  }
 
   const doc = await Report.create({
     owner: ownerId,
     name: displayName,
     firstName,
     lastName,
-    bank: payload.bank || "",
-    account: normalizeAccount(payload.account || ""),
+    bank,
+    account: normalizedAccount,
     amount: payload.amount,
     date: payload.date,
     category: payload.category,
     channel: payload.channel || "",
     desc: sanitizeDescription(payload.desc || ""),
     photos,
+    status: initialStatus,
+    verificationMethod: verificationMethod
   });
+
   return doc;
 }
 
@@ -59,8 +113,8 @@ export function buildSearchCondition(filters = {}) {
 
   // 1. Structured Match
   const structuredCriteria = {};
-  const first = sanitizeNamePart(filters.firstName);
-  const last = sanitizeNamePart(filters.lastName);
+  const first = stripTitle(sanitizeNamePart(filters.firstName));
+  const last = stripTitle(sanitizeNamePart(filters.lastName));
   
   if (first) structuredCriteria.firstName = { $regex: first, $options: "i" };
   if (last) structuredCriteria.lastName = { $regex: last, $options: "i" };

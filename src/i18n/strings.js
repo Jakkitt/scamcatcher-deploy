@@ -86,9 +86,12 @@ export const STRINGS = {
   admin: {
     sidebarTitle: 'แอดมิน',
     menu: {
+      mainMenu: 'เมนูหลัก',
       dashboard: 'แดชบอร์ด',
       reports: 'รายงานมิจฉาชีพ',
       users: 'จัดการผู้ใช้งาน',
+      systemSettings: 'ตั้งค่าระบบ',
+      generalSettings: 'การตั้งค่าทั่วไป',
     },
     reportsTitle: 'จัดการรายงานมิจฉาชีพ',
     reportsSubtitle: 'ตรวจสอบสถานะรายงาน ปรับสถานะ และดูรายละเอียดหลักฐาน',

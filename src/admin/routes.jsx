@@ -4,6 +4,7 @@ import AdminLayout from './AdminLayout';
 import AdminDashboard from './Dashboard';
 import AdminReports from './Reports';
 import AdminUsers from './Users';
+import AdminSettings from './Settings';
 
 export default function AdminRoutes(){
   return (
@@ -12,6 +13,7 @@ export default function AdminRoutes(){
         <Route index element={<AdminDashboard />} />
         <Route path="reports" element={<AdminReports />} />
         <Route path="users" element={<AdminUsers />} />
+        <Route path="settings" element={<AdminSettings />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Route>
     </Routes>

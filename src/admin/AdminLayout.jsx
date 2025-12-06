@@ -1,17 +1,23 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { LayoutDashboard, AlertCircle, Users, Settings } from 'lucide-react';
 import { t } from '../i18n/strings';
 
-function Item({ to, children }){
+function Item({ to, children, icon }){
   return (
     <NavLink
       to={to}
       end={to === '/admin'}
       className={({ isActive }) =>
-        `block px-4 py-2 rounded-lg text-sm whitespace-nowrap ${isActive ? 'bg-gray-100 dark:bg-gray-800 font-semibold' : 'text-gray-700 dark:text-gray-300'}`
+        `flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all duration-200 whitespace-nowrap ${
+          isActive 
+            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 font-medium' 
+            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
+        }`
       }
     >
-      {children}
+      <div className="shrink-0">{icon}</div>
+      <span className="truncate">{children}</span>
     </NavLink>
   );
 }
@@ -25,16 +31,31 @@ export default function AdminLayout(){
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-gray-950 via-transparent opacity-70" />
       </div>
-      <div className="container max-w-[1600px] relative z-10 py-6 min-h-[calc(100vh-160px)] grid lg:grid-cols-12 gap-6">
-        <aside className="lg:col-span-2">
+      <div className="container max-w-[1600px] relative z-10 py-6 min-h-[calc(100vh-160px)] flex flex-col lg:flex-row gap-6">
+        <aside className="lg:w-fit shrink-0">
           <div className="sticky top-6 space-y-2 border rounded-xl p-4 bg-white/90 dark:bg-gray-900/90 dark:border-gray-800">
-            <div className="text-lg font-bold mb-2 text-gray-800 dark:text-gray-100">{t('admin.sidebarTitle')}</div>
-            <Item to="/admin">{t('admin.menu.dashboard')}</Item>
-            <Item to="/admin/reports">{t('admin.menu.reports')}</Item>
-            <Item to="/admin/users">{t('admin.menu.users')}</Item>
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-4">
+              {t('admin.menu.mainMenu') || 'เมนูหลัก'}
+            </div>
+            <Item to="/admin" icon={<LayoutDashboard size={18} />}>
+              {t('admin.menu.dashboard')}
+            </Item>
+            <Item to="/admin/reports" icon={<AlertCircle size={18} />}>
+              {t('admin.menu.reports')}
+            </Item>
+            <Item to="/admin/users" icon={<Users size={18} />}>
+              {t('admin.menu.users')}
+            </Item>
+
+            <div className="mt-6 mb-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              {t('admin.menu.systemSettings') || 'ตั้งค่าระบบ'}
+            </div>
+            <Item to="/admin/settings" icon={<Settings size={18} />}>
+              {t('admin.menu.generalSettings') || 'การตั้งค่าทั่วไป'}
+            </Item>
           </div>
         </aside>
-        <section className="lg:col-span-10">
+        <section className="flex-1 min-w-0">
           <Outlet />
         </section>
       </div>

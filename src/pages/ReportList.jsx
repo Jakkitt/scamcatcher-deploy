@@ -4,6 +4,7 @@ import ProfileSidebar from "../components/ProfileSidebar";
 import { listMyReports, removeReport } from "../services/reports";
 import toast from "react-hot-toast";
 import { t } from "../i18n/strings";
+import { translateCategory, translateStatus } from "../utils/translate";
 
 export default function ReportList() {
   const copy = t("reportListPage") || {};
@@ -49,17 +50,11 @@ export default function ReportList() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
-      {/* พื้นหลังสไตล์เดียวกับ Settings / Profile / Register / Login */}
-      <div className="absolute inset-0">
-        {/* texture เบา ๆ */}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.07] dark:opacity-5" />
-
-        {/* แสงฟุ้งด้านบน */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-blue-400/20 blur-[110px] rounded-full pointer-events-none dark:bg-blue-600/25" />
-
-        {/* แสงฟุ้งด้านล่าง */}
-        <div className="absolute bottom-0 right-0 w-[700px] h-[520px] bg-cyan-300/15 blur-[100px] rounded-full pointer-events-none dark:bg-cyan-500/15" />
+    <div className="min-h-screen relative overflow-hidden bg-slate-50 text-slate-900 dark:bg-gradient-to-br dark:from-gray-950 dark:via-slate-950 dark:to-black dark:text-gray-100">
+      <div className="absolute inset-0 pointer-events-none hidden dark:block">
+        <div className="absolute w-96 h-96 bg-cyan-400/30 rounded-full blur-3xl" style={{ left: '8%', top: '15%' }} />
+        <div className="absolute w-96 h-96 bg-blue-400/25 rounded-full blur-3xl" style={{ right: '8%', bottom: '20%' }} />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.03)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
       </div>
 
       <main className="container mx-auto px-4 md:px-6 py-10 relative z-10 grid md:grid-cols-3 gap-8">
@@ -143,7 +138,7 @@ export default function ReportList() {
                           t("common.unknown")}
                       </div>
                       <div className="text-sm text-slate-500 dark:text-slate-300">
-                        {copy.cardCategory}: {t(`admin.categories.${r.category}`) || r.category || "-"} · {copy.cardDate}{" "}
+                        {copy.cardCategory}: {translateCategory(r.category)} · {copy.cardDate}{" "}
                         {r.createdAt
                           ? new Date(r.createdAt).toLocaleDateString("th-TH")
                           : "-"}
@@ -159,7 +154,7 @@ export default function ReportList() {
                             : "text-rose-600 border-rose-200 bg-rose-50 dark:text-rose-200 dark:border-rose-500/40 dark:bg-rose-500/10"
                         }`}
                       >
-                        {t(`admin.statuses.${r.status}`) || r.status}
+                        {translateStatus(r.status)}
                       </span>
                       <button
                         onClick={() => onDelete(r.id)}

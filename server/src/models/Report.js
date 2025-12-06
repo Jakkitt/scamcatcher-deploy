@@ -14,7 +14,8 @@ const reportSchema = new mongoose.Schema(
     channel: { type: String, default: '' },
     desc: { type: String, default: '' },
     photos: { type: [String], default: [] },
-    status: { type: String, enum: ['pending','approved','rejected'], default: 'pending', index: true }
+    status: { type: String, enum: ['pending','approved','rejected'], default: 'pending', index: true },
+    verificationMethod: { type: String, default: 'manual' } // manual, auto_volume, auto_api
   },
   { timestamps: true }
 );

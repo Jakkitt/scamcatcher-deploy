@@ -66,16 +66,14 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
-      {/* พื้นหลังแบบเดียวกับ Login */}
-      <div className="absolute inset-0">
-        {/* texture เบา ๆ */}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.07] dark:opacity-5" />
-
-        {/* แสงฟุ้งด้านบน */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-blue-400/20 blur-[110px] rounded-full pointer-events-none dark:bg-blue-600/25" />
-
-        {/* แสงฟุ้งด้านล่าง */}
-        <div className="absolute bottom-0 right-0 w-[700px] h-[520px] bg-cyan-300/15 blur-[100px] rounded-full pointer-events-none dark:bg-cyan-500/15" />
+      {/* Background */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/assets/cyber_circuit_bg.png"
+          alt="Background"
+          className="w-full h-full object-cover opacity-10 dark:opacity-30"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/50 to-white/90 dark:from-black/90 dark:via-black/50 dark:to-black/90" />
       </div>
 
       <div className="container mx-auto px-4 md:px-6 relative z-10 flex justify-center">
